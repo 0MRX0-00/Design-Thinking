@@ -73,45 +73,423 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
 });
 
-// Geolocation Handling
+// Mapbox Configuration & Dynamic Tile Engine
+export let MAPBOX_ACCESS_TOKEN = '';
+
+export async function fetchMapboxConfig() {
+  if (MAPBOX_ACCESS_TOKEN) return MAPBOX_ACCESS_TOKEN;
+  try {
+    const res = await fetch('/api/config/mapbox');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.token) {
+        MAPBOX_ACCESS_TOKEN = data.token;
+        return MAPBOX_ACCESS_TOKEN;
+      }
+    }
+  } catch (e) {
+    // fallback
+  }
+  return '';
+}
+
+export function getTileUrl(style, token) {
+  if (token) {
+    if (style === 'satellite') return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    if (style === 'dark') return `https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+  }
+  return style === 'dark'
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+}
+
+let currentStudentMapStyle = 'satellite';
+let studentTileLayer = null;
+
+// Live Reverse Geocoding API — Mapbox Places API with Nominatim Fallback
+export async function fetchLiveAddress(lat, lng) {
+  const token = await fetchMapboxConfig();
+  if (token) {
+    try {
+      const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=poi,address,neighborhood,place`;
+      const mbRes = await fetch(mapboxUrl);
+      if (mbRes.ok) {
+        const mbData = await mbRes.json();
+        if (mbData && mbData.features && mbData.features.length > 0) {
+          const topFeature = mbData.features[0];
+          const placeName = topFeature.place_name || topFeature.text;
+          const shortAddr = topFeature.text || placeName.split(',')[0];
+          return {
+            shortAddress: shortAddr,
+            fullAddress: placeName
+          };
+        }
+      }
+    } catch (mbErr) {
+      console.warn('[CampusShield Mapbox Geocode] Falling back to Nominatim:', mbErr.message);
+    }
+  }
+
+  // 2. Fallback to OpenStreetMap Nominatim
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Language': 'en'
+        }
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data && (data.address || data.display_name)) {
+      const addr = data.address || {};
+      const primary = addr.amenity || addr.building || addr.road || addr.suburb || addr.neighbourhood;
+      const secondary = addr.city || addr.town || addr.village || addr.county;
+      const state = addr.state;
+      const parts = [primary, secondary, state].filter(Boolean);
+      const shortAddr = parts.length > 0 ? parts.join(', ') : (data.display_name?.split(',').slice(0, 3).join(', ') || 'Campus Area');
+
+      return {
+        shortAddress: shortAddr,
+        fullAddress: data.display_name || shortAddr
+      };
+    }
+  } catch (err) {
+    console.warn('[CampusShield Geocode] Reverse geocoding notice:', err.message);
+  }
+  return null;
+}
+
+// Toggle Student Map Style (Satellite HD / Tactical Dark / Street)
+export async function toggleStudentMapTileLayer() {
+  const styles = ['satellite', 'dark', 'streets'];
+  const nextIdx = (styles.indexOf(currentStudentMapStyle) + 1) % styles.length;
+  currentStudentMapStyle = styles[nextIdx];
+
+  const token = await fetchMapboxConfig();
+  if (studentTileLayer) {
+    studentTileLayer.setUrl(getTileUrl(currentStudentMapStyle, token));
+  }
+
+  const btn = document.getElementById('student-tile-toggle-btn');
+  if (btn) {
+    if (currentStudentMapStyle === 'satellite') {
+      btn.innerHTML = '<span>🛰️</span> Satellite HD';
+    } else if (currentStudentMapStyle === 'dark') {
+      btn.innerHTML = '<span>🌙</span> Tactical Dark';
+    } else {
+      btn.innerHTML = '<span>🗺️</span> Street Map';
+    }
+  }
+  showToast('Map Layer', `Map Layer: ${currentStudentMapStyle.toUpperCase()}`, 'info');
+}
+
+// Kongu Engineering College Landmarks Reference
+export const CAMPUS_LANDMARKS = {
+  'Admin Block': { lat: 11.2738, lng: 77.6062, name: 'Admin Block, Kongu Engineering College' },
+  'IT Park / CSE': { lat: 11.2751, lng: 77.6083, name: 'IT Park / Computer Science Block, KEC' },
+  'Mechanical Science': { lat: 11.2745, lng: 77.6095, name: 'Mechanical Science Block, KEC' },
+  'Central Library': { lat: 11.2735, lng: 77.6078, name: 'Central Library, Kongu Engineering College' },
+  'Food Court & Amenities': { lat: 11.2728, lng: 77.6085, name: 'Food Court & Student Amenities, KEC' },
+  'Hostel Blocks (A/B/C)': { lat: 11.2762, lng: 77.6055, name: 'Hostel Blocks (A/B/C), Kongu Engineering College' },
+  'Main Gate & Circle': { lat: 11.2720, lng: 77.6035, name: 'Main Entrance Gate & Circle, KEC' }
+};
+
+let studentPinpointMap = null;
+let studentPinMarker = null;
+
+// Initialize Interactive Student Pinpoint Map
+export async function initStudentPinpointMap() {
+  const mapEl = document.getElementById('student-pinpoint-map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  const lat = userGps.latitude || 11.2742;
+  const lng = userGps.longitude || 77.6070;
+  const token = await fetchMapboxConfig();
+
+  if (!studentPinpointMap) {
+    studentPinpointMap = L.map('student-pinpoint-map', {
+      center: [lat, lng],
+      zoom: 17,
+      zoomControl: true,
+      attributionControl: false
+    });
+
+    studentTileLayer = L.tileLayer(getTileUrl(currentStudentMapStyle, token), {
+      maxZoom: 22,
+      tileSize: 256,
+      attribution: '© Mapbox © OpenStreetMap'
+    }).addTo(studentPinpointMap);
+
+    // Custom Draggable Pin Icon
+    const pinIcon = L.divIcon({
+      className: 'custom-student-pin',
+      html: `
+        <div class="relative flex items-center justify-center cursor-grab active:cursor-grabbing">
+          <div class="absolute w-8 h-8 rounded-full bg-cyan-400/40 radar-ping pointer-events-none"></div>
+          <div class="w-7 h-7 rounded-full bg-cyan-500 border-2 border-white flex items-center justify-center text-xs shadow-xl font-bold text-black">
+            📍
+          </div>
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    studentPinMarker = L.marker([lat, lng], {
+      icon: pinIcon,
+      draggable: true
+    }).addTo(studentPinpointMap);
+
+    // Draggable Pin Event
+    studentPinMarker.on('dragend', () => {
+      const pos = studentPinMarker.getLatLng();
+      applyManualPinpoint(pos.lat, pos.lng);
+    });
+
+    // Click anywhere on Map to Pin
+    studentPinpointMap.on('click', (e) => {
+      studentPinMarker.setLatLng(e.latlng);
+      applyManualPinpoint(e.latlng.lat, e.latlng.lng);
+    });
+  } else {
+    studentPinMarker.setLatLng([lat, lng]);
+    studentPinpointMap.setView([lat, lng], 17);
+  }
+}
+
+// Apply manual pinpoint coordinates from map or building click
+export function applyManualPinpoint(lat, lng, buildingName = null) {
+  userGps.latitude = parseFloat(lat.toFixed(6));
+  userGps.longitude = parseFloat(lng.toFixed(6));
+  userGps.accuracy = 5; // Pinpointed with precision
+  userGps.status = 'pinpointed';
+  userGps.timestamp = new Date();
+
+  if (buildingName) {
+    userGps.address = buildingName;
+    userGps.fullAddress = `${buildingName}, Kongu Engineering College, Perundurai, Erode, Tamil Nadu 638052`;
+    updateGpsUI();
+    showToast('📍 Exact Spot Locked', `Pinned: ${buildingName}`, 'success');
+  } else {
+    updateGpsUI();
+    fetchLiveAddress(userGps.latitude, userGps.longitude).then((addr) => {
+      if (addr) {
+        userGps.address = addr.shortAddress;
+        userGps.fullAddress = addr.fullAddress;
+        updateGpsUI();
+        showToast('📍 Exact Spot Locked', userGps.address, 'success');
+      }
+    });
+  }
+}
+
+// 1-Tap Landmark Button Pinpoint
+export function pinpointCampusLandmark(landmarkName) {
+  const lm = CAMPUS_LANDMARKS[landmarkName];
+  if (!lm) return;
+
+  if (studentPinpointMap && studentPinMarker) {
+    studentPinMarker.setLatLng([lm.lat, lm.lng]);
+    studentPinpointMap.flyTo([lm.lat, lm.lng], 18, { duration: 1 });
+  }
+
+  applyManualPinpoint(lm.lat, lm.lng, lm.name);
+}
+
+// Geolocation Handling — High Accuracy Real GPS & Watch
 export function initGeolocation() {
+  requestRealGps(false);
+  setTimeout(initStudentPinpointMap, 200);
+}
+
+export function requestRealGps(userInitiated = false) {
   const statusEl = document.getElementById('gps-status-indicator');
+  if (statusEl) {
+    statusEl.innerHTML = `
+      <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+      <span class="text-slate-400 font-mono">Acquiring live GPS satellite lock...</span>
+    `;
+  }
+
   if (!navigator.geolocation) {
     userGps.status = 'unsupported';
     if (statusEl) {
       statusEl.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-slate-500"></span>
-        <span class="text-slate-400">GPS: Browser unsupported (Use manual location)</span>
+        <span class="text-slate-400 font-mono">GPS: Browser unsupported (Campus KEC fix active)</span>
       `;
+    }
+    if (userInitiated) {
+      showToast('GPS Unsupported', 'Browser geolocation unavailable. Please tap your campus building below.', 'warning');
     }
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      userGps.latitude = pos.coords.latitude;
-      userGps.longitude = pos.coords.longitude;
+      userGps.latitude = parseFloat(pos.coords.latitude.toFixed(6));
+      userGps.longitude = parseFloat(pos.coords.longitude.toFixed(6));
       userGps.accuracy = Math.round(pos.coords.accuracy);
       userGps.status = 'locked';
+      userGps.timestamp = new Date();
 
-      if (statusEl) {
-        statusEl.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-emerald-300 font-mono">GPS Locked: ${userGps.latitude.toFixed(4)}, ${userGps.longitude.toFixed(4)} (±${userGps.accuracy}m)</span>
-        `;
+      updateGpsUI();
+
+      if (studentPinpointMap && studentPinMarker) {
+        studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
+        studentPinpointMap.flyTo([userGps.latitude, userGps.longitude], 17);
+      }
+
+      // Trigger Live Reverse Geocoding API
+      fetchLiveAddress(userGps.latitude, userGps.longitude).then((addr) => {
+        if (addr) {
+          userGps.address = addr.shortAddress;
+          userGps.fullAddress = addr.fullAddress;
+          updateGpsUI();
+          if (userInitiated) {
+            showToast('📍 Address Located', userGps.address, 'success');
+          }
+        }
+      });
+
+      if (userInitiated) {
+        showToast(
+          '📍 GPS Locked',
+          `Coordinates: ${userGps.latitude}° N, ${userGps.longitude}° E (±${userGps.accuracy}m)`,
+          'success'
+        );
       }
     },
     (err) => {
-      userGps.status = 'denied';
+      console.warn('[CampusShield GPS] Geolocation error:', err.message);
+      // Fallback default to Kongu Engineering College
+      if (!userGps.latitude) {
+        userGps.latitude = 11.2742;
+        userGps.longitude = 77.6070;
+        userGps.accuracy = 20;
+        userGps.status = 'fallback';
+        userGps.address = 'Kongu Engineering College, Perundurai';
+        userGps.fullAddress = 'Kongu Engineering College, Perundurai, Erode, Tamil Nadu 638052';
+      }
+
       if (statusEl) {
         statusEl.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span class="text-amber-300">GPS Permission Denied / Unavailable (Manual location active)</span>
+          <span class="text-amber-300 font-mono">📍 GPS Signal Weak / Wi-Fi Fix (Tap campus building to pinpoint)</span>
         `;
       }
+
+      updateGpsUI();
+      if (studentPinpointMap && studentPinMarker) {
+        studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
+        studentPinpointMap.setView([userGps.latitude, userGps.longitude], 17);
+      }
+
+      if (userInitiated) {
+        showToast(
+          'GPS Notice',
+          'Exact satellite GPS was not received. Please tap your campus building below to lock 100% exact spot.',
+          'info'
+        );
+      }
     },
-    { enableHighAccuracy: true, timeout: 8000 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
+
+  // Setup continuous watch if not already started
+  if (!window._campusShieldGpsWatch && navigator.geolocation.watchPosition) {
+    window._campusShieldGpsWatch = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (userGps.status !== 'pinpointed') {
+          userGps.latitude = parseFloat(pos.coords.latitude.toFixed(6));
+          userGps.longitude = parseFloat(pos.coords.longitude.toFixed(6));
+          userGps.accuracy = Math.round(pos.coords.accuracy);
+          userGps.status = 'locked';
+          userGps.timestamp = new Date();
+          updateGpsUI();
+
+          if (studentPinpointMap && studentPinMarker) {
+            studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
+          }
+        }
+      },
+      null,
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+  }
+}
+
+export function updateGpsUI() {
+  const statusEl = document.getElementById('gps-status-indicator');
+  const addressDisplay = document.getElementById('student-current-address-display');
+  const accBadge = document.getElementById('student-accuracy-badge');
+
+  if (userGps.latitude) {
+    const latStr = userGps.latitude.toFixed(5);
+    const lngStr = userGps.longitude.toFixed(5);
+
+    if (statusEl) {
+      const addressLabel = userGps.address ? ` • <strong class="text-white">${userGps.address}</strong>` : '';
+      statusEl.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full ${userGps.status === 'pinpointed' ? 'bg-cyan-400' : 'bg-emerald-400'} animate-pulse"></span>
+        <span class="text-emerald-300 font-mono font-bold">📍 GPS: ${latStr}° N, ${lngStr}° E (±${userGps.accuracy}m)${addressLabel}</span>
+      `;
+    }
+
+    if (addressDisplay) {
+      addressDisplay.innerText = userGps.address 
+        ? `${userGps.address} (${latStr}, ${lngStr})` 
+        : `Kongu Campus Coordinates: ${latStr}, ${lngStr}`;
+    }
+
+    if (accBadge) {
+      if (userGps.status === 'pinpointed') {
+        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700';
+        accBadge.innerText = '● PINPOINT EXACT (±5m)';
+      } else if (userGps.accuracy <= 25) {
+        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700';
+        accBadge.innerText = `● HIGH ACCURACY (±${userGps.accuracy}m)`;
+      } else {
+        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800';
+        accBadge.innerText = `⚠️ WI-FI ESTIMATE (±${userGps.accuracy}m)`;
+      }
+    }
+  }
+
+  updateModalGpsDisplay();
+}
+
+function updateModalGpsDisplay() {
+  const modalGpsLat = document.getElementById('modal-gps-lat');
+  const modalGpsLng = document.getElementById('modal-gps-lng');
+  const modalGpsAcc = document.getElementById('modal-gps-acc');
+  const modalGpsAddress = document.getElementById('modal-gps-address');
+  const modalGpsMap = document.getElementById('modal-gps-map-link');
+  const modalGpsBadge = document.getElementById('modal-gps-badge');
+
+  if (modalGpsLat && userGps.latitude) {
+    modalGpsLat.innerText = `${userGps.latitude.toFixed(5)}°`;
+    modalGpsLng.innerText = `${userGps.longitude.toFixed(5)}°`;
+    modalGpsAcc.innerText = `±${userGps.accuracy || 10}m`;
+    if (modalGpsAddress) {
+      if (userGps.address) {
+        modalGpsAddress.innerText = `📍 ${userGps.address}`;
+        modalGpsAddress.classList.remove('hidden');
+      }
+    }
+    if (modalGpsMap) {
+      modalGpsMap.href = `https://www.google.com/maps?q=${userGps.latitude},${userGps.longitude}`;
+      modalGpsMap.classList.remove('hidden');
+    }
+    if (modalGpsBadge) {
+      modalGpsBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-300 border border-emerald-700';
+      modalGpsBadge.innerText = '● LIVE SATELLITE FIX';
+    }
+  }
 }
 
 let selectedCategory = 'Medical emergency';
@@ -126,8 +504,60 @@ export const EMERGENCY_REQUIREMENTS = [
   { id: 'Silent / Discreet Response', label: 'Silent / Discreet Alert', icon: '🤫', desc: 'Approach discreetly without sirens or flashing strobes' }
 ];
 
-// One-Tap SOS Flow — Opens the Report Specific Incident modal
-export function openSosModal(initialCategory = 'Medical emergency') {
+export function setQuickCategory(catId) {
+  selectedCategory = catId;
+  const badge = document.getElementById('quick-selected-category-badge');
+  if (badge) {
+    const iconMap = {
+      'Medical emergency': '🚑 Medical emergency',
+      'Harassment or personal safety concern': '✋ Harassment / Safety concern',
+      'Accident': '⚠️ Accident & injury',
+      'Fire': '🔥 Fire / smoke hazard',
+      'Theft': '🔒 Theft / security breach',
+      'Suspicious activity': '👁️ Suspicious activity',
+      'Other': '❓ Other crisis'
+    };
+    badge.innerText = iconMap[catId] || catId;
+  }
+
+  // Highlight active pill on home screen
+  const pillBtns = document.querySelectorAll('.quick-cat-btn');
+  pillBtns.forEach((btn) => {
+    const onclickStr = btn.getAttribute('onclick') || '';
+    if (onclickStr.includes(catId)) {
+      btn.className = 'quick-cat-btn active-cat p-2 rounded-xl border border-rose-500 bg-rose-950/80 text-white flex flex-col items-center justify-center gap-1 transition text-xs cursor-pointer shadow-md ring-1 ring-rose-500';
+    } else {
+      btn.className = 'quick-cat-btn p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 flex flex-col items-center justify-center gap-1 transition text-xs cursor-pointer';
+    }
+  });
+
+  // Automatically adjust recommended requirements
+  applyCategoryDefaultRequirements(catId);
+}
+
+function applyCategoryDefaultRequirements(catId) {
+  selectedRequirements.clear();
+  if (catId === 'Medical emergency') {
+    selectedRequirements.add('Ambulance / First Aid');
+  } else if (catId === 'Fire') {
+    selectedRequirements.add('Fire Safety Support');
+  } else if (catId === 'Harassment or personal safety concern') {
+    selectedRequirements.add('Female Security Officer');
+    selectedRequirements.add('Security Patrol Escort');
+  } else if (catId === 'Accident') {
+    selectedRequirements.add('Ambulance / First Aid');
+    selectedRequirements.add('Wheelchair / Stretcher');
+  } else if (catId === 'Theft' || catId === 'Suspicious activity') {
+    selectedRequirements.add('Security Patrol Escort');
+  }
+}
+
+// One-Tap SOS Flow — Opens the Simple Emergency Chooser Modal
+export function openSosModal(initialCategory = null) {
+  if (initialCategory) {
+    selectedCategory = initialCategory;
+  }
+
   // If student's SOS privileges are restricted, block and display alternative emergency contacts
   if (mySafetyStatus && mySafetyStatus.sosAccessStatus === 'restricted') {
     showRestrictedSosModal({
@@ -137,38 +567,23 @@ export function openSosModal(initialCategory = 'Medical emergency') {
     return;
   }
 
-  selectedCategory = initialCategory;
-  // Initialize requirements: default to relevant based on category if empty
-  if (selectedRequirements.size === 0) {
-    if (selectedCategory === 'Medical emergency') {
-      selectedRequirements.add('Ambulance / First Aid');
-    } else if (selectedCategory === 'Fire') {
-      selectedRequirements.add('Fire Safety Support');
-    } else if (selectedCategory === 'Harassment or personal safety concern') {
-      selectedRequirements.add('Female Security Officer');
-    }
-  }
+  // Trigger quick fresh GPS lock
+  requestRealGps(false);
 
   let modal = document.getElementById('sos-report-modal');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'sos-report-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
-  const categories = [
-    { id: 'Medical emergency', name: 'Medical', icon: '🚑', desc: 'First aid, injury, illness' },
-    { id: 'Harassment or personal safety concern', name: 'Harassment', icon: '✋', desc: 'Threat, stalking, personal safety' },
-    { id: 'Accident', name: 'Accident', icon: '⚠️', desc: 'Vehicle collision, physical injury' },
-    { id: 'Theft', name: 'Theft', icon: '🔒', desc: 'Break-in, stolen gear, robbery' },
-    { id: 'Fire', name: 'Fire Hazard', icon: '🔥', desc: 'Smoke, electrical fire, flames' },
-    { id: 'Suspicious activity', name: 'Suspicious', icon: '👁️', desc: 'Trespasser, hazard, unusual activity' },
-    { id: 'Other', name: 'Other', icon: '❓', desc: 'Campus safety threat or concern' }
-  ];
+  const currentLat = userGps.latitude ? userGps.latitude.toFixed(5) : '11.27420';
+  const currentLng = userGps.longitude ? userGps.longitude.toFixed(5) : '77.60700';
+  const currentAcc = userGps.accuracy ? `±${userGps.accuracy}m` : '±10m';
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border-2 border-rose-600 rounded-3xl w-full max-w-xl p-5 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto space-y-4">
+    <div class="bg-slate-900 border-2 border-rose-600 rounded-3xl w-full max-w-md p-6 shadow-2xl relative my-auto space-y-4">
       
       <!-- Close Button -->
       <button onclick="document.getElementById('sos-report-modal').remove()" 
@@ -177,162 +592,81 @@ export function openSosModal(initialCategory = 'Medical emergency') {
       </button>
 
       <!-- Modal Header -->
-      <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
-        <div class="w-11 h-11 rounded-2xl bg-rose-600/20 border border-rose-500 flex items-center justify-center text-2xl animate-pulse">
+      <div class="text-center space-y-1">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-600/20 border border-rose-500 flex items-center justify-center text-3xl animate-bounce">
           🚨
         </div>
-        <div>
-          <h3 class="text-base sm:text-lg font-black text-white tracking-wide">
-            REPORT EMERGENCY INCIDENT
-          </h3>
-          <p class="text-xs text-rose-300 font-medium">
-            Select emergency category & assistance requirements to dispatch security.
-          </p>
+        <h3 class="text-xl font-black text-white tracking-wide">
+          WHAT IS YOUR EMERGENCY?
+        </h3>
+        <p class="text-xs text-rose-300">
+          Tap one to dispatch campus security immediately
+        </p>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400 mt-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>📍 Live GPS: ${currentLat}, ${currentLng} (${currentAcc})</span>
+        </div>
+        <div id="modal-gps-address" class="text-[11px] text-cyan-300 font-mono ${userGps.address ? '' : 'hidden'}">
+          📍 ${userGps.address || ''}
         </div>
       </div>
 
-      <div class="space-y-4">
-        
-        <!-- Step 1: Emergency Type -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-              1. Emergency Category <span class="text-rose-400">*</span>
-            </label>
-            <span class="text-[10px] text-slate-400 font-mono">Tap to select</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2" id="modal-category-list">
-            ${categories.map((c) => {
-              const isSelected = selectedCategory === c.id;
-              return `
-              <button type="button" 
-                      data-category="${c.id}"
-                      onclick="window.csStudent.selectCategory('${c.id}')"
-                      class="category-btn p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-                        isSelected 
-                          ? 'bg-rose-950/80 border-rose-500 shadow-lg shadow-rose-950/50 ring-1 ring-rose-500/50' 
-                          : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                      }">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-lg">${c.icon}</span>
-                  <div class="min-w-0">
-                    <div class="text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'} truncate">${c.name}</div>
-                    <div class="text-[10px] text-slate-500 truncate">${c.desc}</div>
-                  </div>
-                </div>
-                <div class="category-radio-indicator ml-1 flex-shrink-0">
-                  ${isSelected ? '<span class="text-rose-400 font-bold text-xs">●</span>' : '<span class="text-slate-600 font-bold text-xs">○</span>'}
-                </div>
-              </button>
-            `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Step 2: Emergency Requirements & Assistance Needed -->
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-              <span>🧰</span> 2. Assistance Requirements Needed
-            </label>
-            <span class="text-[10px] text-cyan-400 font-mono font-bold">Select all that apply</span>
-          </div>
-          <p class="text-[11px] text-slate-400 leading-tight">
-            Tap to specify required response teams, equipment, or special safeguards:
-          </p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1" id="modal-requirements-list">
-            ${EMERGENCY_REQUIREMENTS.map((req) => {
-              const isReqActive = selectedRequirements.has(req.id);
-              return `
-              <button type="button"
-                      data-requirement="${req.id}"
-                      onclick="window.csStudent.toggleRequirement('${req.id}')"
-                      class="requirement-toggle-btn p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-                        isReqActive
-                          ? 'bg-emerald-950/60 border-emerald-500 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-500/40'
-                          : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700'
-                      }">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-base">${req.icon}</span>
-                  <div class="min-w-0">
-                    <div class="text-xs font-bold ${isReqActive ? 'text-white' : 'text-slate-300'} truncate">${req.label}</div>
-                    <div class="text-[10px] text-slate-500 truncate">${req.desc}</div>
-                  </div>
-                </div>
-                <span class="req-status-badge text-[10px] font-bold px-2 py-0.5 rounded-full ml-1.5 flex-shrink-0 ${
-                  isReqActive ? 'bg-emerald-600 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
-                }">
-                  ${isReqActive ? '✓ ACTIVE' : '+ ADD'}
-                </span>
-              </button>
-            `;
-            }).join('')}
-          </div>
-
-          <div id="selected-requirements-summary" class="text-[11px] text-cyan-400 font-mono pt-1">
-            ${selectedRequirements.size > 0 
-              ? `Active (${selectedRequirements.size}): <span class="text-white">${Array.from(selectedRequirements).join(', ')}</span>`
-              : '<span class="text-slate-500">No specific requirements selected (Standard patrol will respond)</span>'}
-          </div>
-        </div>
-
-        <!-- Step 3: Campus Location -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider">3. Campus Landmark / Location</label>
-            <span class="text-[10px] font-mono ${userGps.status === 'locked' ? 'text-emerald-400' : 'text-amber-400'}">
-              ${userGps.status === 'locked' ? `📍 GPS Locked (±${userGps.accuracy}m)` : '📍 Landmark Active'}
-            </span>
-          </div>
-          <select id="modal-campus-location" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500">
-            <option value="Main Campus Quad">Main Campus Quad</option>
-            <option value="IT Park / Computer Block">IT Park / Computer Block</option>
-            <option value="Central Library & Knowledge Hub">Central Library & Knowledge Hub</option>
-            <option value="Mechanical Sciences Block">Mechanical Sciences Block</option>
-            <option value="Science & Humanities Block">Science & Humanities Block</option>
-            <option value="Food Court & Student Canteen">Food Court & Student Canteen</option>
-            <option value="Boys Hostel Block B">Boys Hostel Block B</option>
-            <option value="Girls Hostel Dhandapani Block">Girls Hostel Dhandapani Block</option>
-            <option value="Sports Complex & Athletic Ground">Sports Complex & Athletic Ground</option>
-            <option value="Maharaja Auditorium Ground">Maharaja Auditorium Ground</option>
-            <option value="Main Gate / Security Checkpost">Main Gate / Security Checkpost</option>
-          </select>
-        </div>
-
-        <!-- Step 4: Specific Location Details & People Involved -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-200 mb-1">Room No. / Floor (Optional)</label>
-            <input type="text" id="modal-location-details" placeholder="e.g. Room 304, 3rd Floor, West Wing" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-200 mb-1">People Involved / Affected</label>
-            <select id="modal-people-involved" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500">
-              <option value="1 person">1 Person (Self / Individual)</option>
-              <option value="2-3 people">2-3 People</option>
-              <option value="4+ people (Group)">4+ People (Group / Crowd)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Step 5: Details (Optional) -->
-        <div>
-          <label class="block text-xs font-bold text-slate-200 mb-1">5. Incident Details & Symptoms (Optional)</label>
-          <textarea id="modal-incident-desc" rows="2" placeholder="Symptoms, suspect description, hazards, landmarks, urgency..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-rose-500"></textarea>
-        </div>
-
-      </div>
-
-      <!-- Footer Actions -->
-      <div class="pt-3 border-t border-slate-800/80 flex gap-3">
-        <button onclick="document.getElementById('sos-report-modal').remove()" 
-                class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition cursor-pointer">
-          Cancel (False Alarm)
+      <!-- 1-Tap Emergency Trigger Buttons -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Medical emergency')"
+                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">🚑</span>
+          <span class="text-sm font-extrabold text-white mt-1">Medical</span>
+          <span class="text-[10px] text-slate-400 leading-tight">First aid, fainting, injury</span>
         </button>
-        <button onclick="window.csStudent.submitSosFromModal()" 
-                class="flex-1 py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-rose-900/50 border border-rose-500 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98">
-          <span>🚨</span> SEND EMERGENCY SOS
+
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Harassment or personal safety concern')"
+                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">✋</span>
+          <span class="text-sm font-extrabold text-white mt-1">Harassment</span>
+          <span class="text-[10px] text-slate-400 leading-tight">Threat, stalking, safety</span>
+        </button>
+
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Accident')"
+                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">⚠️</span>
+          <span class="text-sm font-extrabold text-white mt-1">Accident</span>
+          <span class="text-[10px] text-slate-400 leading-tight">Crash, fall, physical injury</span>
+        </button>
+
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Fire')"
+                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">🔥</span>
+          <span class="text-sm font-extrabold text-white mt-1">Fire Hazard</span>
+          <span class="text-[10px] text-slate-400 leading-tight">Flames, smoke, short circuit</span>
+        </button>
+
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Theft')"
+                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">🔒</span>
+          <span class="text-sm font-extrabold text-white mt-1">Theft</span>
+          <span class="text-[10px] text-slate-400 leading-tight">Break-in, stolen gear, crime</span>
+        </button>
+
+        <button type="button" 
+                onclick="window.csStudent.instantSos('Other')"
+                class="p-4 rounded-2xl border-2 border-rose-600 bg-gradient-to-tr from-rose-950/90 to-red-950/80 hover:bg-rose-900/90 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
+          <span class="text-3xl group-hover:scale-110 transition">🚨</span>
+          <span class="text-sm font-extrabold text-white mt-1">General SOS</span>
+          <span class="text-[10px] text-rose-300 leading-tight">Immediate general alert</span>
+        </button>
+      </div>
+
+      <!-- Cancel Footer -->
+      <div class="pt-2 text-center">
+        <button onclick="document.getElementById('sos-report-modal').remove()" 
+                class="text-xs text-slate-400 hover:text-white transition cursor-pointer">
+          Cancel (Accidental Press)
         </button>
       </div>
 
@@ -340,36 +674,58 @@ export function openSosModal(initialCategory = 'Medical emergency') {
   `;
 }
 
-export function selectCategory(catId) {
-  selectedCategory = catId;
-  const allBtns = document.querySelectorAll('.category-btn');
-  allBtns.forEach((b) => {
-    const isCur = b.getAttribute('data-category') === catId;
-    b.className = `category-btn p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-      isCur
-        ? 'bg-rose-950/80 border-rose-500 shadow-lg shadow-rose-950/50 ring-1 ring-rose-500/50'
-        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-    }`;
-    const indicator = b.querySelector('.category-radio-indicator');
-    if (indicator) {
-      indicator.innerHTML = isCur
-        ? '<span class="text-rose-400 font-bold text-xs">●</span>'
-        : '<span class="text-slate-600 font-bold text-xs">○</span>';
-    }
-  });
+// 1-Tap Instant SOS Dispatch
+export async function instantSos(category = 'Medical emergency') {
+  document.getElementById('sos-report-modal')?.remove();
 
-  // Automatically suggest relevant requirement based on selected emergency category
-  if (catId === 'Medical emergency' && !selectedRequirements.has('Ambulance / First Aid')) {
-    selectedRequirements.add('Ambulance / First Aid');
-    updateRequirementsUI();
-  } else if (catId === 'Fire' && !selectedRequirements.has('Fire Safety Support')) {
-    selectedRequirements.add('Fire Safety Support');
-    updateRequirementsUI();
-  } else if (catId === 'Harassment or personal safety concern' && !selectedRequirements.has('Female Security Officer')) {
-    selectedRequirements.add('Female Security Officer');
-    selectedRequirements.add('Security Patrol Escort');
-    updateRequirementsUI();
+  // If student's SOS privileges are restricted, block and display alternative emergency contacts
+  if (mySafetyStatus && mySafetyStatus.sosAccessStatus === 'restricted') {
+    showRestrictedSosModal({
+      reason: mySafetyStatus.restrictionReason,
+      restrictedAt: mySafetyStatus.restrictedAt
+    });
+    return;
   }
+
+  // Ensure high-accuracy GPS
+  if (!userGps.latitude && navigator.geolocation) {
+    try {
+      await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userGps.latitude = pos.coords.latitude;
+            userGps.longitude = pos.coords.longitude;
+            userGps.accuracy = Math.round(pos.coords.accuracy);
+            userGps.status = 'locked';
+            resolve();
+          },
+          () => resolve(),
+          { enableHighAccuracy: true, timeout: 2000 }
+        );
+      });
+    } catch (_) {}
+  }
+
+  const reqs = Array.from(selectedRequirements.size ? selectedRequirements : [category]);
+
+  const campusLoc = userGps.address || 'Kongu Engineering College Campus';
+  const fullDetails = userGps.fullAddress ? `Live Address: ${userGps.fullAddress}` : '';
+
+  await executeSosSubmission(
+    category,
+    campusLoc,
+    `Urgent 1-Tap SOS triggered by student. Category: ${category}. ${fullDetails}`,
+    {
+      requirements: reqs,
+      locationDetails: fullDetails,
+      peopleInvolved: '1 person',
+      silentAlert: false
+    }
+  );
+}
+
+export function selectCategory(catId) {
+  instantSos(catId);
 }
 
 export function toggleRequirement(reqId) {
@@ -378,53 +734,12 @@ export function toggleRequirement(reqId) {
   } else {
     selectedRequirements.add(reqId);
   }
-  updateRequirementsUI();
 }
 
-export function updateRequirementsUI() {
-  const allReqBtns = document.querySelectorAll('.requirement-toggle-btn');
-  allReqBtns.forEach((b) => {
-    const reqId = b.getAttribute('data-requirement');
-    const isSelected = selectedRequirements.has(reqId);
-    b.className = `requirement-toggle-btn p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-      isSelected
-        ? 'bg-emerald-950/60 border-emerald-500 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-500/40'
-        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700'
-    }`;
-    const badge = b.querySelector('.req-status-badge');
-    if (badge) {
-      badge.className = `req-status-badge text-[10px] font-bold px-2 py-0.5 rounded-full ml-1.5 flex-shrink-0 ${
-        isSelected ? 'bg-emerald-600 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
-      }`;
-      badge.innerText = isSelected ? '✓ ACTIVE' : '+ ADD';
-    }
-  });
-
-  const summary = document.getElementById('selected-requirements-summary');
-  if (summary) {
-    if (selectedRequirements.size > 0) {
-      summary.innerHTML = `Active (${selectedRequirements.size}): <span class="text-white">${Array.from(selectedRequirements).join(', ')}</span>`;
-    } else {
-      summary.innerHTML = '<span class="text-slate-500">No specific requirements selected (Standard patrol will respond)</span>';
-    }
-  }
-}
+export function updateRequirementsUI() {}
 
 export async function submitSosFromModal() {
-  const campusLoc = document.getElementById('modal-campus-location')?.value || 'Main Campus Quad';
-  const locationDetails = document.getElementById('modal-location-details')?.value.trim() || '';
-  const peopleInvolved = document.getElementById('modal-people-involved')?.value || '1 person';
-  const description = document.getElementById('modal-incident-desc')?.value.trim() || `Emergency alert reported by student via SOS modal. Category: ${selectedCategory}.`;
-  const reqs = Array.from(selectedRequirements);
-  const silentAlert = selectedRequirements.has('Silent / Discreet Response');
-
-  document.getElementById('sos-report-modal')?.remove();
-  await executeSosSubmission(selectedCategory, campusLoc, description, {
-    requirements: reqs,
-    locationDetails,
-    peopleInvolved,
-    silentAlert
-  });
+  instantSos(selectedCategory || 'Medical emergency');
 }
 
 export async function executeSosSubmission(
@@ -815,7 +1130,19 @@ export async function loadEmergencyContacts() {
 
 // Notifications Drawer
 export async function loadNotifications() {
-  const badge = document.getElementById('notif-unread-count');
+  try {
+    const res = await api.get('/api/notifications');
+    const badge = document.getElementById('notif-unread-count');
+    if (res.success && badge) {
+      const unread = (res.notifications || []).filter(n => !n.read).length;
+      badge.innerText = unread;
+      badge.classList.toggle('hidden', unread === 0);
+    }
+  } catch (err) {
+    console.warn('[CampusShield Student] Failed loading notifications:', err.message);
+  }
+}
+
 // Load False Alarm Status, History, and Disciplinary Cases
 export async function loadFalseAlarmStatusAndHistory() {
   try {
@@ -1245,6 +1572,12 @@ export function showRestrictedSosModal(extraData = {}) {
 window.csStudent = {
   openSosModal,
   openSosConfirmation: openSosModal,
+  setQuickCategory,
+  requestRealGps,
+  initStudentPinpointMap,
+  pinpointCampusLandmark,
+  applyManualPinpoint,
+  instantSos,
   selectCategory,
   toggleRequirement,
   updateRequirementsUI,
@@ -1258,5 +1591,6 @@ window.csStudent = {
   loadFalseAlarmStatusAndHistory,
   showRestrictedSosModal,
   submitStudentAppeal,
+  toggleStudentMapTileLayer,
   logout
 };

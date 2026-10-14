@@ -26,6 +26,9 @@
     }
   </script>
   <link rel="stylesheet" href="./css/styles.css" />
+  <!-- Leaflet CSS & JS for Campus Pinpointing -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     if (typeof io === 'undefined') {
@@ -107,9 +110,16 @@
     
     <!-- Geolocation & Operational Status Bar -->
     <div class="tactical-glass p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs border border-slate-800">
-      <div id="gps-status-indicator" class="flex items-center gap-2 font-mono">
-        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-        <span class="text-slate-400">Acquiring GPS positioning...</span>
+      <div class="flex items-center gap-3">
+        <div id="gps-status-indicator" class="flex items-center gap-2 font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+          <span class="text-slate-400">Acquiring GPS positioning...</span>
+        </div>
+        <button type="button" 
+                onclick="window.csStudent?.requestRealGps(true)" 
+                class="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 hover:text-white rounded-lg flex items-center gap-1.5 transition text-[11px] font-mono cursor-pointer shadow-sm">
+          <span>📍</span> Refresh GPS
+        </button>
       </div>
       <div class="flex items-center gap-4 text-slate-400 text-[11px]">
         <span>🚨 KEC Control Room: <strong class="text-emerald-400 font-mono">Active (24x7)</strong></span>
@@ -123,43 +133,181 @@
     <!-- ACTIVE EMERGENCY LIVE TRACKER CONTAINER (Appears when student reports incident) -->
     <div id="active-tracker-container"></div>
 
+    <!-- VERIFIED LIVE GPS & CAMPUS PINPOINT (Ensures 100% Location Accuracy) -->
+    <section class="max-w-2xl mx-auto tactical-glass p-4 sm:p-5 rounded-3xl border border-cyan-900/50 space-y-3 bg-gradient-to-b from-[#0d1322] to-[#070a13] shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-cyan-600/20 border border-cyan-500/50 flex items-center justify-center text-base text-cyan-400">
+            📍
+          </div>
+          <div>
+            <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
+              Verified Emergency Location
+            </h3>
+            <p id="student-current-address-display" class="text-[11px] text-cyan-300 font-semibold truncate max-w-xs sm:max-w-md">
+              Locating live campus position...
+            </p>
+          </div>
+        </div>
+
+        <!-- Accuracy status badge & Satellite re-detect -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <span id="student-accuracy-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900 text-slate-400 border border-slate-700">
+            Acquiring...
+          </span>
+          <button type="button" id="student-tile-toggle-btn" onclick="window.csStudent?.toggleStudentMapTileLayer()" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[10px] font-mono text-cyan-300 hover:text-white transition cursor-pointer flex items-center gap-1">
+            <span>🛰️</span> Satellite HD
+          </button>
+          <button type="button" onclick="window.csStudent?.requestRealGps(true)" class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 rounded-lg text-[10px] font-mono text-cyan-300 hover:text-white transition cursor-pointer flex items-center gap-1">
+            <span>📡</span> GPS Fix
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Pinpoint Mini-Map -->
+      <div class="relative w-full h-44 sm:h-52 rounded-2xl border border-slate-800 overflow-hidden shadow-inner bg-[#070b14]">
+        <div id="student-pinpoint-map" class="w-full h-full z-0"></div>
+        <div class="absolute bottom-2 left-2 z-[400] bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] text-slate-300 font-mono pointer-events-none">
+          <span>🎯 Drag marker or click map to set exact spot</span>
+        </div>
+      </div>
+
+      <!-- Quick 1-Tap Campus Building Pills -->
+      <div>
+        <div class="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <span>⚡</span> Or tap your building for 100% exact dispatch:
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Admin Block')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            🏛️ Admin Block
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('IT Park / CSE')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            💻 IT Park / CSE
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Mechanical Science')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            ⚙️ Mech Block
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Central Library')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            📚 Library
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Food Court & Amenities')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            🍽️ Food Court
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Hostel Blocks (A/B/C)')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            🏢 Hostels
+          </button>
+          <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Main Gate & Circle')" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-600 text-[11px] text-slate-300 hover:text-cyan-300 transition cursor-pointer">
+            🚪 Main Gate
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- PRIMARY ONE-TAP SOS TRIGGER -->
-    <section class="max-w-2xl mx-auto tactical-glass p-8 sm:p-12 rounded-3xl border border-rose-900/60 flex flex-col items-center text-center justify-between relative overflow-hidden bg-gradient-to-b from-rose-950/30 via-[#0d1322] to-[#070a13] shadow-2xl">
+    <section class="max-w-2xl mx-auto tactical-glass p-6 sm:p-10 rounded-3xl border border-rose-900/60 flex flex-col items-center text-center justify-between relative overflow-hidden bg-gradient-to-b from-rose-950/30 via-[#0d1322] to-[#070a13] shadow-2xl">
       <div class="w-full">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
           <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-          Direct Emergency Response
+          Emergency Dispatch
         </div>
         <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">ONE-TAP EMERGENCY SOS</h2>
-        <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
-          Tap the SOS button to report an incident, share your location, and instantly dispatch campus security officers.
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
+          Tap the big SOS button or tap an emergency below to send your live GPS location immediately.
         </p>
       </div>
 
       <!-- Giant Centered SOS Button -->
-      <div class="my-10 relative flex items-center justify-center">
+      <div class="my-6 relative flex items-center justify-center">
         <div class="absolute w-64 h-64 rounded-full bg-rose-600/20 animate-ping pointer-events-none"></div>
         <div class="absolute w-52 h-52 rounded-full bg-rose-600/30 animate-pulse pointer-events-none"></div>
         
         <button id="sos-primary-btn" 
                 onclick="window.csStudent.openSosModal()" 
-                class="relative w-48 h-48 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-red-500 text-white font-black text-3xl tracking-widest shadow-2xl shadow-rose-900/90 border-4 border-rose-400 hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col items-center justify-center gap-1 group cursor-pointer">
+                class="relative w-44 h-44 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-red-500 text-white font-black text-3xl tracking-widest shadow-2xl shadow-rose-900/90 border-4 border-rose-400 hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col items-center justify-center gap-1 group cursor-pointer">
           <span class="text-4xl group-hover:scale-110 transition">🚨</span>
           <span>SOS</span>
-          <span class="text-[10px] font-mono uppercase tracking-normal opacity-90 font-bold">TAP TO REPORT</span>
+          <span class="text-[10px] font-mono uppercase tracking-normal opacity-90 font-bold">TAP FOR EMERGENCY</span>
         </button>
       </div>
 
-      <!-- Accidental Protection & Telemetry Notice -->
-      <div class="w-full flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 border-t border-slate-800/80 pt-5">
+      <!-- Direct 1-Tap Emergency Trigger Grid -->
+      <div class="w-full max-w-lg mt-2">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2">
+          <span>⚡</span> Or tap emergency directly to dispatch:
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Medical emergency')" 
+                  class="p-3 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">🚑</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">Medical</div>
+              <div class="text-[10px] text-slate-400 truncate">Injury, collapse</div>
+            </div>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Harassment or personal safety concern')" 
+                  class="p-3 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">✋</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">Harassment</div>
+              <div class="text-[10px] text-slate-400 truncate">Stalking, safety</div>
+            </div>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Accident')" 
+                  class="p-3 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">⚠️</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">Accident</div>
+              <div class="text-[10px] text-slate-400 truncate">Crash, fall</div>
+            </div>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Fire')" 
+                  class="p-3 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">🔥</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">Fire Hazard</div>
+              <div class="text-[10px] text-slate-400 truncate">Flames, smoke</div>
+            </div>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Theft')" 
+                  class="p-3 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">🔒</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">Theft / Crime</div>
+              <div class="text-[10px] text-slate-400 truncate">Robbery, stolen</div>
+            </div>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csStudent.instantSos('Other')" 
+                  class="p-3 rounded-2xl border-2 border-rose-600 bg-gradient-to-tr from-rose-950/90 to-red-950/80 hover:bg-rose-900/90 text-left transition flex items-center gap-2.5 cursor-pointer shadow-lg active:scale-95 group">
+            <span class="text-2xl group-hover:scale-110 transition">🚨</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-white truncate">General SOS</div>
+              <div class="text-[10px] text-rose-300 truncate">Urgent help</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Status Note -->
+      <div class="w-full flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 border-t border-slate-800/80 pt-4 mt-6">
         <div class="flex items-center gap-2">
-          <span>🛡️</span> <span>Accidental confirmation safeguard</span>
+          <span>⚡</span> <span>1-Tap Immediate Dispatch</span>
         </div>
         <div class="flex items-center gap-2">
-          <span>📍</span> <span>GPS & Landmark routing</span>
+          <span class="text-emerald-400">📍</span> <span>Real GPS Location Attached</span>
         </div>
         <div class="flex items-center gap-2">
-          <span>🚔</span> <span>Control Room direct dispatch</span>
+          <span>👮</span> <span>Security Control Room Alerts</span>
         </div>
       </div>
     </section>

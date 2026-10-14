@@ -187,3 +187,95 @@ body {
     opacity: 1;
   }
 }
+
+/* =========================================================
+   LEAFLET TACTICAL MAP STYLES & RADAR EFFECTS
+   ========================================================= */
+
+.leaflet-container {
+  background-color: #070a13 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  color: #f1f5f9 !important;
+}
+
+/* Custom Radar Waves */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.radar-ping {
+  animation: radar-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.radar-ping-fast {
+  animation: radar-pulse 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Tactical Dark Popups */
+.tactical-popup .leaflet-popup-content-wrapper {
+  background: rgba(13, 19, 34, 0.95) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid #1e2c4a !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(6, 182, 212, 0.15) !important;
+  color: #f1f5f9 !important;
+  padding: 0 !important;
+}
+
+.tactical-popup .leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.tactical-popup .leaflet-popup-tip {
+  background: #0d1322 !important;
+  border: 1px solid #1e2c4a !important;
+}
+
+.tactical-popup a.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 8px 8px 0 0 !important;
+}
+
+.tactical-popup a.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+}
+
+/* Custom Map Marker Icons */
+.custom-tactical-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Leaflet Zoom Control Tactical Theme */
+.leaflet-bar {
+  border: 1px solid #1e2c4a !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+.leaflet-bar a {
+  background-color: #0d1322 !important;
+  color: #06b6d4 !important;
+  border-bottom: 1px solid #1e2c4a !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #18233e !important;
+  color: #ffffff !important;
+}
+
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}

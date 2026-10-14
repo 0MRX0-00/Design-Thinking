@@ -26,6 +26,9 @@
     }
   </script>
   <link rel="stylesheet" href="./css/styles.css" />
+  <!-- Leaflet CSS & JS for Real Tactical Campus Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     if (typeof io === 'undefined') {
@@ -150,8 +153,36 @@
     </div>
   </section>
 
-  <!-- MAIN OPERATIONAL WORKSPACE (3-COLUMN TACTICAL LAYOUT) -->
-  <main class="flex-1 max-w-[1700px] w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+  <!-- VIEW SWITCHER STRIP (Operations Center vs Full Map Structure) -->
+  <section class="max-w-[1700px] w-full mx-auto px-4 pt-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="inline-flex p-1 bg-slate-950/80 border border-slate-800 rounded-xl shadow-lg">
+      <button id="view-tab-operations" 
+              onclick="window.csSecurity.switchView('operations')" 
+              class="px-4 py-2 text-xs font-bold rounded-lg bg-cyan-600 text-white shadow-sm flex items-center gap-2 transition cursor-pointer">
+        <span>🚨</span> Operations Console (3-Column)
+      </button>
+      <button id="view-tab-fullmap" 
+              onclick="window.csSecurity.switchView('fullmap')" 
+              class="px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 flex items-center gap-2 transition cursor-pointer">
+        <span>🗺️</span> Full Tactical Map Command
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+      </button>
+    </div>
+
+    <!-- Live Telemetry Badges -->
+    <div class="flex items-center gap-4 text-xs font-mono text-slate-400">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>GPS Satellites: <strong class="text-white">Active (OSM/CartoDB)</strong></span>
+      </div>
+      <div class="hidden sm:flex items-center gap-1.5">
+        <span>📍 KEC Datum: <strong class="text-cyan-400">11.2742° N, 77.6070° E</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 1: OPERATIONS CONSOLE (3-COLUMN WORKSPACE) -->
+  <div id="operations-center-view" class="flex-1 max-w-[1700px] w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
     
     <!-- LEFT COLUMN: INCIDENT QUEUE (3 COLUMNS) -->
     <div class="lg:col-span-3 flex flex-col gap-3">
@@ -175,16 +206,16 @@
 
         <!-- Filter Buttons -->
         <div class="flex flex-wrap gap-1 mb-3">
-          <button onclick="window.csSecurity.setQueueFilter('ALL')" data-filter="ALL" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white">
+          <button onclick="window.csSecurity.setQueueFilter('ALL')" data-filter="ALL" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white cursor-pointer">
             ALL
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('ACTIVE')" data-filter="ACTIVE" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onclick="window.csSecurity.setQueueFilter('ACTIVE')" data-filter="ACTIVE" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
             ACTIVE
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('SUBMITTED')" data-filter="SUBMITTED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onclick="window.csSecurity.setQueueFilter('SUBMITTED')" data-filter="SUBMITTED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
             NEW
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('RESOLVED')" data-filter="RESOLVED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onclick="window.csSecurity.setQueueFilter('RESOLVED')" data-filter="RESOLVED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
             RESOLVED
           </button>
         </div>
@@ -208,20 +239,37 @@
     <div class="lg:col-span-4 flex flex-col gap-4">
       
       <!-- TACTICAL CAMPUS MAP CARD -->
-      <div class="tactical-glass rounded-2xl border border-slate-800 overflow-hidden">
-        <div class="p-3 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
-          <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
-            <span>🗺️</span> Tactical Campus Map • Kongu Engineering College
-          </h3>
-          <span class="text-[10px] text-cyan-400 font-mono font-bold animate-pulse">● LIVE PINS</span>
+      <div class="tactical-glass rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+        <div class="p-3 border-b border-slate-800/80 bg-slate-950/80 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
+              <span>🗺️</span> Tactical Campus Map
+            </h3>
+            <span class="text-[10px] text-cyan-400 font-mono font-bold animate-pulse">● LIVE GPS</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="window.csSecurity.recenterMap()" title="Recenter Kongu Campus" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-[11px] text-slate-300 hover:text-white transition cursor-pointer">
+              🎯 Center
+            </button>
+            <button onclick="window.csSecurity.focusActiveEmergency()" title="Focus Emergency" class="px-2 py-1 bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-[11px] text-rose-300 hover:text-white rounded transition cursor-pointer">
+              🚨 SOS
+            </button>
+            <button onclick="window.csSecurity.switchView('fullmap')" title="Expand Full Map Structure" class="px-2.5 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-[11px] text-cyan-300 hover:text-white font-bold rounded flex items-center gap-1 transition cursor-pointer">
+              <span>⛶</span> Expand
+            </button>
+          </div>
         </div>
-        <div class="relative w-full h-[240px] bg-[#070b14] overflow-hidden">
-          <canvas id="tactical-campus-map-canvas" class="w-full h-full block"></canvas>
+        
+        <!-- Leaflet Map Container -->
+        <div class="relative w-full h-[320px] bg-[#070b14] overflow-hidden">
+          <div id="tactical-campus-map" class="w-full h-full z-0"></div>
         </div>
-        <div class="p-2.5 bg-slate-950/90 border-t border-slate-800 text-[10px] text-slate-400 flex justify-between">
-          <span>🔴 Red: Critical Alert</span>
-          <span>🟡 Yellow: Incident</span>
-          <span>🟢 Green: Patrol Unit</span>
+
+        <div class="p-2.5 bg-slate-950/90 border-t border-slate-800 text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-2 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Critical SOS</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Incident</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Patrol Unit</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> Landmark</span>
         </div>
       </div>
 
@@ -289,7 +337,100 @@
 
     </div>
 
-  </main>
+  </div> <!-- /operations-center-view -->
+
+  <!-- VIEW 2: FULL TACTICAL MAP STRUCTURE (COMMAND DECK) -->
+  <div id="full-map-view-container" class="hidden flex-1 max-w-[1700px] w-full mx-auto p-4 flex flex-col gap-4">
+    
+    <!-- TOP TACTICAL HUD CONTROL BAR -->
+    <div class="tactical-glass p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500 flex items-center justify-center text-xl text-cyan-300 shadow-md">
+          🗺️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-black tracking-wide text-white">KEC FULL TACTICAL MAP COMMAND CENTER</h2>
+            <span class="text-[10px] font-mono uppercase bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded font-bold animate-pulse">
+              ● REAL-TIME GPS TRACKING
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono">
+            Kongu Engineering College • 11.2742° N, 77.6070° E • Auto-synchronized with live mobile distress signals
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="window.csSecurity.recenterFullMap()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer">
+          <span>🎯</span> Recenter KEC
+        </button>
+        <button onclick="window.csSecurity.focusActiveEmergencyFull()" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 hover:text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Focus Active SOS
+        </button>
+        <button onclick="window.csSecurity.toggleMapTileLayer()" id="tile-toggle-btn" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 hover:text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer">
+          <span>🛰️</span> Satellite HD
+        </button>
+        <button onclick="window.csSecurity.switchView('operations')" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md cursor-pointer">
+          <span>📋</span> Operations Console
+        </button>
+      </div>
+    </div>
+
+    <!-- FULL MAP WORKSPACE: MAP VIEWPORT + FLOATING TACTICAL DRAWER -->
+    <div class="relative w-full h-[calc(100vh-230px)] min-h-[640px] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl bg-[#070b14]">
+      
+      <!-- Real Leaflet Full Map Viewport -->
+      <div id="full-tactical-campus-map" class="w-full h-full z-0"></div>
+
+      <!-- FLOATING HUD: LIVE INCIDENTS OVERLAY (LEFT PANEL) -->
+      <div class="absolute top-4 left-4 z-[500] w-80 sm:w-96 max-h-[calc(100%-32px)] flex flex-col pointer-events-none">
+        <div class="tactical-glass p-3.5 rounded-2xl border border-slate-700/80 shadow-2xl flex flex-col max-h-full pointer-events-auto backdrop-blur-xl">
+          
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-rose-400 font-black text-sm">🚨</span>
+              <h3 class="text-xs font-mono font-bold uppercase text-white">Active Distress Signals</h3>
+            </div>
+            <span id="fullmap-incident-count" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950/80 border border-rose-800 text-rose-300">
+              0 ACTIVE
+            </span>
+          </div>
+
+          <!-- Incidents Scroll List in Map -->
+          <div id="fullmap-incidents-list" class="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[460px]">
+            <!-- Dynamic Incident Cards for Map Injected via security.js -->
+          </div>
+
+          <div class="mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono flex items-center justify-between">
+            <span>💡 Tap card to fly & track pin</span>
+            <span class="text-cyan-400">● Live Auto-Sync</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLOATING HUD: PATROL FLEET RADAR & MAP LEGEND (BOTTOM RIGHT) -->
+      <div class="absolute bottom-4 right-4 z-[500] pointer-events-none hidden md:block">
+        <div class="tactical-glass p-3 rounded-2xl border border-slate-700/80 shadow-2xl pointer-events-auto backdrop-blur-xl font-mono text-[11px] space-y-1.5 w-64">
+          <div class="flex items-center justify-between font-bold text-white border-b border-slate-800 pb-1 text-xs">
+            <span>🚔 PATROL UNITS</span>
+            <span class="text-emerald-400 text-[10px]">RADAR ACTIVE</span>
+          </div>
+          <div id="fullmap-fleet-mini-list" class="space-y-1">
+            <!-- Responders Injected via security.js -->
+          </div>
+          <div class="pt-1.5 border-t border-slate-800/80 text-[10px] text-slate-400 flex flex-wrap gap-2">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Critical SOS</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Unit</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> KEC Zone</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 
   <!-- FOOTER DISCLAIMER -->
   <footer class="border-t border-slate-800/80 bg-[#090d16] px-4 py-3 text-center text-xs text-slate-500">
