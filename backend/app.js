@@ -54,6 +54,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime())
   });
+});
+
 // Public config endpoint for map services
 app.get('/api/config/mapbox', (req, res) => {
   res.json({

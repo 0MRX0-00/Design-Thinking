@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "CampusShield - Smart Campus Safety and Emergency Response System",
   "private": true,
+  "type": "module",
   "workspaces": [
     "backend"
   ],
