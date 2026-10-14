@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusShield — Security Personnel Command Center</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tactical: {
+              950: '#070a13',
+              900: '#0d1322',
+              850: '#121a2e',
+              800: '#18233e',
+              700: '#1e2c4a',
+              600: '#2c4270'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if (typeof io === 'undefined') {
+      document.write('<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body class="bg-[#070a13] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP COMMAND BAR -->
+  <header class="border-b border-slate-800 bg-[#0d1322]/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Institution -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/50 flex items-center justify-center text-2xl shadow-lg shadow-cyan-950/50">
+          🛡️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-black tracking-wider text-white">CAMPUSSHIELD</h1>
+            <span class="text-[10px] font-mono uppercase bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded font-bold">
+              COMMAND CENTER
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Kongu Engineering College • Smart Campus Emergency Response System
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation Portals -->
+      <nav class="flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+        <a href="/security" class="px-3 py-1.5 rounded-lg bg-cyan-600 text-white shadow-sm flex items-center gap-1.5">
+          <span>🚨</span> Command Center
+        </a>
+        <a href="/student" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
+          <span>📱</span> Student Safety
+        </a>
+        <a href="/admin" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
+          <span>⚙️</span> Administration
+        </a>
+      </nav>
+
+      <!-- System Status & Demo Persona Switcher -->
+      <div class="flex items-center gap-3">
+        <!-- Backend Status -->
+        <div id="backend-status-badge" class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-emerald-300 font-mono font-bold text-[11px]">BACKEND CONNECTED</span>
+        </div>
+
+        <!-- Socket Status -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+          <span id="socket-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="socket-status-text" class="text-slate-300 font-mono font-bold text-[11px]">ONLINE (REAL-TIME)</span>
+        </div>
+
+        <!-- User Badge & Logout -->
+        <div id="auth-user-badge" class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <span id="user-display-name" class="font-bold text-slate-200">Security Officer</span>
+        </div>
+        <button id="auth-logout-btn" 
+                onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
+                class="px-3 py-1.5 text-xs text-rose-400 hover:text-white hover:bg-rose-950/70 rounded-lg border border-rose-900/60 font-semibold flex items-center gap-1 transition cursor-pointer">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- DASHBOARD METRICS STRIP -->
+  <section class="border-b border-slate-800/80 bg-[#0a0f1d] px-4 py-3">
+    <div class="max-w-[1700px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
+      
+      <!-- Metric 1 -->
+      <div class="p-3.5 tactical-glass rounded-xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] uppercase font-mono text-slate-400 font-bold">Active Incidents</div>
+          <div id="stat-active-incidents" class="text-2xl font-black text-rose-400 font-mono mt-0.5">0</div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-rose-950/60 border border-rose-800/60 flex items-center justify-center text-lg text-rose-400">
+          ⚡
+        </div>
+      </div>
+
+      <!-- Metric 2 -->
+      <div class="p-3.5 tactical-glass rounded-xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] uppercase font-mono text-slate-400 font-bold">Critical Alarms</div>
+          <div id="stat-critical-alarms" class="text-2xl font-black text-amber-400 font-mono mt-0.5">0</div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-950/60 border border-amber-800/60 flex items-center justify-center text-lg text-amber-400">
+          🚨
+        </div>
+      </div>
+
+      <!-- Metric 3 -->
+      <div class="p-3.5 tactical-glass rounded-xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] uppercase font-mono text-slate-400 font-bold">Avg Response Time</div>
+          <div id="stat-avg-response" class="text-2xl font-black text-cyan-400 font-mono mt-0.5">0.0m</div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-cyan-950/60 border border-cyan-800/60 flex items-center justify-center text-lg text-cyan-400">
+          ⏱️
+        </div>
+      </div>
+
+      <!-- Metric 4 -->
+      <div class="p-3.5 tactical-glass rounded-xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] uppercase font-mono text-slate-400 font-bold">Fleet Readiness</div>
+          <div id="stat-fleet-readiness" class="text-2xl font-black text-emerald-400 font-mono mt-0.5">0/0</div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center text-lg text-emerald-400">
+          🚔
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MAIN OPERATIONAL WORKSPACE (3-COLUMN TACTICAL LAYOUT) -->
+  <main class="flex-1 max-w-[1700px] w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+    
+    <!-- LEFT COLUMN: INCIDENT QUEUE (3 COLUMNS) -->
+    <div class="lg:col-span-3 flex flex-col gap-3">
+      <div class="p-4 tactical-glass rounded-2xl border border-slate-800 flex-1 flex flex-col">
+        
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+            <span>🚨</span> Incident Queue
+          </h2>
+          <span id="queue-count-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900 border border-slate-700 text-slate-400">
+            0 INCIDENTS
+          </span>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative mb-3">
+          <input type="text" id="queue-search-input" oninput="window.csSecurity.renderIncidentQueue()" 
+                 placeholder="Search ID, category, location..." 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-1 mb-3">
+          <button onclick="window.csSecurity.setQueueFilter('ALL')" data-filter="ALL" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white">
+            ALL
+          </button>
+          <button onclick="window.csSecurity.setQueueFilter('ACTIVE')" data-filter="ACTIVE" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+            ACTIVE
+          </button>
+          <button onclick="window.csSecurity.setQueueFilter('SUBMITTED')" data-filter="SUBMITTED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+            NEW
+          </button>
+          <button onclick="window.csSecurity.setQueueFilter('RESOLVED')" data-filter="RESOLVED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+            RESOLVED
+          </button>
+        </div>
+
+        <!-- Queue Scroll Container -->
+        <div id="incident-queue-list" class="flex-1 overflow-y-auto space-y-2 max-h-[680px] pr-1">
+          <!-- Dynamic Cards Injected via security.js -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MIDDLE COLUMN: EMERGENCY DOSSIER & LIFECYCLE (5 COLUMNS) -->
+    <div class="lg:col-span-5 flex flex-col gap-3">
+      <div id="emergency-dossier-panel">
+        <!-- Dynamic Dossier Injected via security.js -->
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: TACTICAL MAP, CCTV PREVIEW & FLEET (4 COLUMNS) -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+      
+      <!-- TACTICAL CAMPUS MAP CARD -->
+      <div class="tactical-glass rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="p-3 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
+          <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
+            <span>🗺️</span> Tactical Campus Map • Kongu Engineering College
+          </h3>
+          <span class="text-[10px] text-cyan-400 font-mono font-bold animate-pulse">● LIVE PINS</span>
+        </div>
+        <div class="relative w-full h-[240px] bg-[#070b14] overflow-hidden">
+          <canvas id="tactical-campus-map-canvas" class="w-full h-full block"></canvas>
+        </div>
+        <div class="p-2.5 bg-slate-950/90 border-t border-slate-800 text-[10px] text-slate-400 flex justify-between">
+          <span>🔴 Red: Critical Alert</span>
+          <span>🟡 Yellow: Incident</span>
+          <span>🟢 Green: Patrol Unit</span>
+        </div>
+      </div>
+
+      <!-- CCTV PREVIEW PANEL -->
+      <div class="tactical-glass rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="p-3 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
+              <span>📹</span> CCTV Surveillance Feed
+            </h3>
+            <span class="text-[9px] text-amber-400 font-mono font-semibold">[SIMULATED SURVEILLANCE FEED - DEMO]</span>
+          </div>
+          
+          <!-- Camera Selector -->
+          <select onchange="window.csSecurity.switchCctvCamera(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-mono text-cyan-300 px-2 py-1">
+            <option value="CAM-01">CAM-01: Main Gate</option>
+            <option value="CAM-04">CAM-04: Admin Quad</option>
+            <option value="CAM-07">CAM-07: Hostel Walkway</option>
+            <option value="CAM-12">CAM-12: Library Lawn</option>
+          </select>
+        </div>
+
+        <!-- Simulated CRT Video Viewport -->
+        <div class="relative w-full h-[190px] bg-black scanlines flex items-center justify-center overflow-hidden">
+          <!-- Background Simulated Surveillance Camera Scene -->
+          <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-black opacity-90"></div>
+          
+          <!-- Geometric Campus Building Outlines Simulation -->
+          <svg class="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="95" x2="600" y2="95" stroke="#06b6d4" stroke-dasharray="4" />
+            <line x1="200" y1="0" x2="200" y2="190" stroke="#06b6d4" stroke-dasharray="4" />
+            <rect x="50" y="30" width="120" height="90" stroke="#3b82f6" fill="none" />
+            <rect x="230" y="40" width="140" height="80" stroke="#3b82f6" fill="none" />
+          </svg>
+
+          <!-- Camera Label HUD -->
+          <div class="absolute top-2 left-3 z-10 text-[10px] font-mono text-emerald-400 bg-black/70 px-2 py-0.5 rounded border border-emerald-900/60">
+            <span id="cctv-camera-name">CAM-01: Main Gate & Circle [PTZ OPTICAL]</span>
+          </div>
+
+          <div class="absolute top-2 right-3 z-10 text-[10px] font-mono text-red-500 bg-black/70 px-2 py-0.5 rounded border border-red-950 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span> REC
+          </div>
+
+          <!-- Bottom HUD Bar -->
+          <div class="absolute bottom-2 inset-x-3 z-10 text-[9px] font-mono text-slate-400 bg-black/80 px-2.5 py-1 rounded border border-slate-800 flex justify-between">
+            <span id="cctv-hud-timestamp">2026-10-12 06:15:00 UTC</span>
+            <span id="cctv-hud-fps">30.0 FPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET STATUS CARD -->
+      <div class="tactical-glass rounded-2xl border border-slate-800 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
+            <span>🚔</span> Security Patrol Fleet
+          </h3>
+          <span class="text-[10px] font-mono text-slate-400">ACTIVE PATROLS</span>
+        </div>
+        <div id="fleet-status-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+          <!-- Injected via security.js -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER DISCLAIMER -->
+  <footer class="border-t border-slate-800/80 bg-[#090d16] px-4 py-3 text-center text-xs text-slate-500">
+    <p>
+      🛡️ <strong>CampusShield</strong> • Kongu Engineering College (Perundurai, Erode) • Course 24ITL34 Design Thinking Lab Exercise 2
+    </p>
+    <p class="text-[10px] text-slate-600 mt-0.5">
+      Architected for student emergency response, real-time dispatching, and campus safety monitoring.
+    </p>
+  </footer>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="./js/api.js"></script>
+  <script type="module" src="./js/socket.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/security.js"></script>
+</body>
+</html>

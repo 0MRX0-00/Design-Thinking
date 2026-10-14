@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusShield — Secure Role-Based Authentication</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tactical: {
+              950: '#070a13',
+              900: '#0d1322',
+              850: '#121a2e',
+              800: '#18233e',
+              700: '#1e2c4a',
+              600: '#2c4270'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body class="bg-[#070a13] text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-[#0d1322]/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/50 flex items-center justify-center text-2xl shadow-lg shadow-cyan-950/50">
+          🛡️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-base font-black tracking-wider text-white">CAMPUSSHIELD</span>
+            <span class="text-[10px] font-mono uppercase bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded font-bold">
+              AUTH PORTAL
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Kongu Engineering College • Smart Campus Emergency Response System
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Emergency Hotline Badge -->
+      <div class="hidden sm:flex items-center gap-3 text-xs">
+        <span class="text-slate-400 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+          Emergency Control Room:
+        </span>
+        <a href="tel:+919443311223" class="font-mono font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-2.5 py-1 rounded-lg hover:bg-rose-900/80 transition">
+          📞 +91 94433 11223
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN AUTH CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:py-12 flex items-center justify-center">
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      
+      <!-- LEFT SECTION: BRANDING, VALUE PROPOSITION & HIGHLIGHTS -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- Institution & System Header -->
+        <div class="space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-700/50 text-cyan-300 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            Centralized Campus Safety & Emergency Response Grid
+          </div>
+          
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+            CampusShield
+          </h1>
+          <p class="text-lg sm:text-xl font-medium text-cyan-400 italic">
+            Your Campus. Your Safety. One Tap Away.
+          </p>
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+            A mission-critical emergency management system built for students, campus security units, and academic administration. Engineered for immediate distress broadcasts, live GPS telemetry, false alarm verification, and disciplinary accountability.
+          </p>
+        </div>
+
+        <!-- 3 COMPACT FEATURE HIGHLIGHTS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          
+          <div class="p-3.5 tactical-glass rounded-xl border border-slate-800/90 hover:border-cyan-500/50 transition">
+            <div class="w-8 h-8 rounded-lg bg-rose-950/70 border border-rose-700/60 flex items-center justify-center text-lg mb-2.5 text-rose-400">
+              🚨
+            </div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">One-Tap SOS Alerts</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+              Instant GPS distress broadcasting with automated dispatch & emergency hotline links.
+            </p>
+          </div>
+
+          <div class="p-3.5 tactical-glass rounded-xl border border-slate-800/90 hover:border-cyan-500/50 transition">
+            <div class="w-8 h-8 rounded-lg bg-cyan-950/70 border border-cyan-700/60 flex items-center justify-center text-lg mb-2.5 text-cyan-400">
+              📡
+            </div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Real-Time Tracking</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+              Bidirectional socket telemetry, live campus coordinate mapping & responder arrival tracking.
+            </p>
+          </div>
+
+          <div class="p-3.5 tactical-glass rounded-xl border border-slate-800/90 hover:border-cyan-500/50 transition">
+            <div class="w-8 h-8 rounded-lg bg-purple-950/70 border border-purple-700/60 flex items-center justify-center text-lg mb-2.5 text-purple-400">
+              🛡️
+            </div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Coordinated Security</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+              Investigative verification, false alarm threshold enforcement & disciplinary hearing management.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- CAMPUS SAFETY DIRECTORY CARD -->
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div>
+            <div class="font-bold text-white flex items-center gap-1.5">
+              <span>📍</span> Kongu Engineering College Safety Grid
+            </div>
+            <div class="text-[11px] text-slate-400">Perundurai, Erode • Direct Lines Always Accessible</div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="tel:+919842266778" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 font-mono text-[11px]">
+              🚑 Health: +91 98422 66778
+            </a>
+            <a href="tel:+919489000100" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 font-mono text-[11px]">
+              👩 Women Help: +91 94890 00100
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SECTION: MODERN AUTHENTICATION CARD -->
+      <div class="lg:col-span-5">
+        <div class="tactical-glass-elevated p-6 sm:p-8 rounded-2xl border border-slate-800 relative overflow-hidden shadow-2xl">
+          
+          <!-- Subtle Glow Accent Top Border -->
+          <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-500 via-rose-500 to-purple-600"></div>
+
+          <!-- Card Header -->
+          <div class="mb-5">
+            <h2 class="text-xl font-bold text-white flex items-center justify-between">
+              <span>Sign In to CampusShield</span>
+              <span id="role-pill-indicator" class="text-[10px] font-mono uppercase bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded font-bold">
+                STUDENT
+              </span>
+            </h2>
+            <p id="role-subtext" class="text-xs text-slate-400 mt-1">
+              Select your university role and enter your institutional credentials.
+            </p>
+          </div>
+
+          <!-- ROLE SELECTOR SEGMENTED CONTROL -->
+          <div class="mb-5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 grid grid-cols-3 gap-1 text-xs font-semibold">
+            
+            <button type="button" id="tab-student" onclick="selectRole('student')" 
+                    class="role-tab-btn py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 transition text-white bg-cyan-600 shadow">
+              <span>🎓</span> Student
+            </button>
+            
+            <button type="button" id="tab-security" onclick="selectRole('security')" 
+                    class="role-tab-btn py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-900">
+              <span>👮</span> Security
+            </button>
+            
+            <button type="button" id="tab-admin" onclick="selectRole('admin')" 
+                    class="role-tab-btn py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-900">
+              <span>⚙️</span> Admin
+            </button>
+
+          </div>
+
+          <!-- FEEDBACK & ALERT BANNER -->
+          <div id="auth-alert-banner" class="hidden mb-4 p-3 rounded-xl text-xs font-medium border flex items-start gap-2">
+            <span id="auth-alert-icon" class="text-base">⚠️</span>
+            <div id="auth-alert-msg" class="flex-1"></div>
+          </div>
+
+          <!-- LOGIN FORM -->
+          <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            
+            <!-- Email or Identifier Input -->
+            <div>
+              <label id="credential-label" for="login-credential" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                Institutional Email or Student Roll No.
+              </label>
+              <div class="relative">
+                <input type="text" id="login-credential" required autocomplete="username"
+                       placeholder="e.g. sumanth@kongu.edu or 25ITR146"
+                       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition font-mono" />
+                <span class="absolute right-3 top-2.5 text-slate-500 text-xs">🆔</span>
+              </div>
+              <p id="credential-helper" class="text-[10px] text-slate-500 mt-1">
+                Accepts university mail (@kongu.edu) or official student roll number.
+              </p>
+            </div>
+
+            <!-- Password Input with Visibility Toggle -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="login-password" class="block text-xs font-semibold text-slate-300">
+                  Password
+                </label>
+                <button type="button" onclick="openForgotPasswordModal()" class="text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline">
+                  Forgot Password?
+                </button>
+              </div>
+              <div class="relative">
+                <input type="password" id="login-password" required autocomplete="current-password"
+                       placeholder="Enter account password"
+                       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition pr-10" />
+                <button type="button" onclick="togglePasswordVisibility()" title="Toggle password visibility"
+                        class="absolute right-3 top-2.5 text-slate-400 hover:text-white text-xs">
+                  <span id="eye-icon">👁️</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me & Policy Agreement -->
+            <div class="flex items-center justify-between text-xs pt-1">
+              <label class="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-300 select-none">
+                <input type="checkbox" id="remember-me-checkbox" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-cyan-600 focus:ring-0" />
+                <span>Remember this terminal</span>
+              </label>
+              <span class="text-[11px] text-slate-500">256-Bit Encrypted</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="login-submit-btn" 
+                    class="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-950/60 transition flex items-center justify-center gap-2">
+              <span id="submit-spinner" class="hidden w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span id="submit-btn-text">Sign In as Student</span>
+            </button>
+
+          </form>
+
+          <!-- QUICK-FILL DEMO PERSONA CHIPS (FOR EVALUATORS) -->
+          <div class="mt-6 pt-5 border-t border-slate-800/80">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase text-slate-500 font-bold tracking-wider">
+                ⚡ Quick Demo Credentials:
+              </span>
+              <span class="text-[9px] text-slate-600 font-mono">1-Click Auto-Fill</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+              
+              <button type="button" onclick="quickFillPersona('student')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-cyan-950/60 border border-slate-800 hover:border-cyan-700 text-slate-300 hover:text-cyan-300 text-left transition flex items-center justify-between">
+                <span>🎓 Sumanth (Student - Clean)</span>
+                <span class="text-[9px] font-mono text-emerald-400">0 Alarms</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('student_warning')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/60 border border-slate-800 hover:border-amber-700 text-slate-300 hover:text-amber-300 text-left transition flex items-center justify-between">
+                <span>⚠️ Sangavi (Student - Warned)</span>
+                <span class="text-[9px] font-mono text-amber-400">2 Alarms</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('student_restricted')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-red-950/60 border border-slate-800 hover:border-red-700 text-slate-300 hover:text-red-300 text-left transition flex items-center justify-between">
+                <span>🛑 Karthik (Restricted SOS)</span>
+                <span class="text-[9px] font-mono text-rose-400">4 Alarms</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('security')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/60 border border-slate-800 hover:border-emerald-700 text-slate-300 hover:text-emerald-300 text-left transition flex items-center justify-between">
+                <span>👮 Officer Raman (Security)</span>
+                <span class="text-[9px] font-mono text-cyan-400">Control</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('security_medical')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/60 border border-slate-800 hover:border-emerald-700 text-slate-300 hover:text-emerald-300 text-left transition flex items-center justify-between">
+                <span>🚑 Nurse Deepa (Campus Health)</span>
+                <span class="text-[9px] font-mono text-emerald-400">Medical</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('admin')" 
+                      class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-purple-950/60 border border-slate-800 hover:border-purple-700 text-slate-300 hover:text-purple-300 text-left transition flex items-center justify-between">
+                <span>👑 Dr. S. Karthi (Admin)</span>
+                <span class="text-[9px] font-mono text-purple-400">Executive</span>
+              </button>
+
+              <button type="button" onclick="quickFillPersona('faculty')" 
+                      class="sm:col-span-2 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-blue-950/60 border border-slate-800 hover:border-blue-700 text-slate-300 hover:text-blue-300 text-left transition flex items-center justify-between">
+                <span>⚖️ Dr. V. Priya (Disciplinary Committee Head / Faculty)</span>
+                <span class="text-[9px] font-mono text-blue-400">Hearings</span>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Bottom Notice -->
+          <div class="mt-4 text-center">
+            <p class="text-[10px] text-slate-600">
+              Authorized Academic, Emergency & Security Personnel Only • KEC
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PASSWORD RECOVERY MODAL -->
+  <div id="forgot-password-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="tactical-glass-elevated max-w-md w-full p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>🔑</span> Institutional Password Recovery
+        </h3>
+        <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-white text-base">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Enter your institutional email or ID to generate a secure, audited password reset token.
+      </p>
+
+      <div id="reset-alert-box" class="hidden p-2.5 rounded-lg text-xs"></div>
+
+      <!-- Step 1: Request Reset Token Form -->
+      <form id="forgot-req-form" onsubmit="handleForgotPasswordRequest(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Institutional Email or Roll/Badge ID</label>
+          <input type="text" id="forgot-credential" required placeholder="e.g. sumanth@kongu.edu"
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono" />
+        </div>
+        <button type="submit" id="forgot-req-btn" class="w-full py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs">
+          Generate Recovery Token
+        </button>
+      </form>
+
+      <!-- Step 2: Reset Password Form (revealed when token is active) -->
+      <form id="reset-confirm-form" onsubmit="handlePasswordResetConfirm(event)" class="hidden space-y-3 pt-3 border-t border-slate-800">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Recovery Token</label>
+          <input type="text" id="reset-token-input" required placeholder="Paste recovery token"
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-cyan-300 font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">New Password (min 6 characters)</label>
+          <input type="password" id="reset-new-password" required minlength="6" placeholder="Enter new strong password"
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+        </div>
+        <button type="submit" id="reset-confirm-btn" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+          Update Password & Sign In
+        </button>
+      </form>
+
+      <div class="text-[11px] text-slate-500 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <span>Need in-person help?</span>
+        <span class="text-cyan-400">IT Helpdesk: Ext 404</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-[#090d16] px-4 py-3 text-center text-xs text-slate-500">
+    <p>
+      🛡️ <strong>CampusShield</strong> • Kongu Engineering College (Perundurai, Erode) • Course 24ITL34 Design Thinking Lab Exercise 2
+    </p>
+    <p class="text-[10px] text-slate-600 mt-0.5">
+      Direct Emergency Access • Real-Time Incident Telemetry • Disciplinary Accountability Grid
+    </p>
+  </footer>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="./js/api.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module">
+    import { login, initAuth, forgotPassword, resetPassword, DEMO_PERSONAS } from './js/auth.js';
+
+    let currentRole = 'student';
+
+    // Role configuration metadata
+    const ROLE_CONFIGS = {
+      student: {
+        pill: 'STUDENT',
+        subtext: 'Access student safety emergency portal, SOS distress button, and notifications.',
+        label: 'Student Email or Roll Number',
+        placeholder: 'e.g. sumanth@kongu.edu or 25ITR146',
+        helper: 'Accepts official student email (@kongu.edu) or university roll number.',
+        btnText: 'Sign In as Student',
+        btnBg: 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-950/60',
+        activeTabBg: 'bg-cyan-600 text-white shadow'
+      },
+      security: {
+        pill: 'SECURITY FORCE',
+        subtext: 'Access Security Personnel Command Center, incident queue, and fleet dispatch.',
+        label: 'Security Officer Email or Badge ID',
+        placeholder: 'e.g. security.raman@campusshield.kec.edu or SEC-KEC-001',
+        helper: 'Authorized security control room and quick reaction patrol personnel only.',
+        btnText: 'Sign In as Security Officer',
+        btnBg: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/60',
+        activeTabBg: 'bg-emerald-600 text-white shadow'
+      },
+      admin: {
+        pill: 'ADMINISTRATOR',
+        subtext: 'Access Administration & Governance Portal, audit logs, and disciplinary reviews.',
+        label: 'Administrator Email or Admin ID',
+        placeholder: 'e.g. admin@campusshield.kec.edu or ADMIN-KEC-01',
+        helper: 'Dean, Chief Safety Director, and authorized committee administrators.',
+        btnText: 'Sign In as Administrator',
+        btnBg: 'bg-purple-600 hover:bg-purple-500 shadow-purple-950/60',
+        activeTabBg: 'bg-purple-600 text-white shadow'
+      }
+    };
+
+    // Role selection handler
+    window.selectRole = function(role) {
+      currentRole = role;
+      const config = ROLE_CONFIGS[role];
+
+      // Update Tab Styles
+      ['student', 'security', 'admin'].forEach(r => {
+        const tabEl = document.getElementById(`tab-${r}`);
+        if (r === role) {
+          tabEl.className = `role-tab-btn py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 transition ${config.activeTabBg}`;
+        } else {
+          tabEl.className = 'role-tab-btn py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-900';
+        }
+      });
+
+      // Update UI Labels & Helpers
+      document.getElementById('role-pill-indicator').innerText = config.pill;
+      document.getElementById('role-subtext').innerText = config.subtext;
+      document.getElementById('credential-label').innerText = config.label;
+      document.getElementById('login-credential').placeholder = config.placeholder;
+      document.getElementById('credential-helper').innerText = config.helper;
+      
+      const submitBtn = document.getElementById('login-submit-btn');
+      submitBtn.className = `w-full py-3 px-4 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2 ${config.btnBg}`;
+      document.getElementById('submit-btn-text').innerText = config.btnText;
+
+      hideAlert();
+    };
+
+    // Quick Fill demo persona helper
+    window.quickFillPersona = function(personaKey) {
+      const persona = DEMO_PERSONAS[personaKey];
+      if (!persona) return;
+
+      const targetRoleTab = (persona.role === 'faculty') ? 'admin' : persona.role;
+      selectRole(targetRoleTab);
+      document.getElementById('login-credential').value = persona.email;
+      document.getElementById('login-password').value = persona.password;
+
+      hideAlert();
+      showInlineAlert(`Credentials loaded for ${persona.label}. Click '${ROLE_CONFIGS[targetRoleTab].btnText}' to proceed.`, 'info');
+    };
+
+    // Toggle password visibility
+    window.togglePasswordVisibility = function() {
+      const input = document.getElementById('login-password');
+      const icon = document.getElementById('eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerText = '🔒';
+      } else {
+        input.type = 'password';
+        icon.innerText = '👁️';
+      }
+    };
+
+    // Form submission
+    window.handleFormSubmit = async function(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const credential = document.getElementById('login-credential').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!credential || !password) {
+        showInlineAlert('Please enter both institutional credential and password.', 'error');
+        return;
+      }
+
+      setSubmitLoading(true);
+
+      try {
+        const result = await login(credential, password, currentRole);
+        
+        // Success feedback
+        showInlineAlert(`Authentication verified as ${result.user.name} (${result.user.role.toUpperCase()}). Redirecting...`, 'success');
+        
+        setTimeout(() => {
+          window.location.href = result.redirectUrl;
+        }, 600);
+      } catch (err) {
+        setSubmitLoading(false);
+        showInlineAlert(err.message || 'Authentication failed. Please verify credentials.', 'error');
+      }
+    };
+
+    // Alert display helper
+    function showInlineAlert(message, type = 'error') {
+      const banner = document.getElementById('auth-alert-banner');
+      const msg = document.getElementById('auth-alert-msg');
+      const icon = document.getElementById('auth-alert-icon');
+
+      banner.classList.remove('hidden', 'bg-rose-950/70', 'border-rose-700/80', 'text-rose-200',
+                             'bg-emerald-950/70', 'border-emerald-700/80', 'text-emerald-200',
+                             'bg-cyan-950/70', 'border-cyan-700/80', 'text-cyan-200');
+
+      if (type === 'success') {
+        banner.classList.add('bg-emerald-950/70', 'border-emerald-700/80', 'text-emerald-200');
+        icon.innerText = '✅';
+      } else if (type === 'info') {
+        banner.classList.add('bg-cyan-950/70', 'border-cyan-700/80', 'text-cyan-200');
+        icon.innerText = 'ℹ️';
+      } else {
+        banner.classList.add('bg-rose-950/70', 'border-rose-700/80', 'text-rose-200');
+        icon.innerText = '⚠️';
+      }
+
+      msg.innerText = message;
+    }
+
+    function hideAlert() {
+      const banner = document.getElementById('auth-alert-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function setSubmitLoading(isLoading) {
+      const btn = document.getElementById('login-submit-btn');
+      const spinner = document.getElementById('submit-spinner');
+      const btnText = document.getElementById('submit-btn-text');
+
+      if (isLoading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        spinner.classList.remove('hidden');
+        btnText.innerText = 'Verifying Credentials...';
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        spinner.classList.add('hidden');
+        btnText.innerText = ROLE_CONFIGS[currentRole].btnText;
+      }
+    }
+
+    // Forgot Password Modal Handlers
+    window.openForgotPasswordModal = function() {
+      document.getElementById('forgot-password-modal').classList.remove('hidden');
+      document.getElementById('reset-alert-box').classList.add('hidden');
+      const currentCred = document.getElementById('login-credential').value.trim();
+      if (currentCred) {
+        document.getElementById('forgot-credential').value = currentCred;
+      }
+    };
+
+    window.closeForgotPasswordModal = function() {
+      document.getElementById('forgot-password-modal').classList.add('hidden');
+    };
+
+    window.handleForgotPasswordRequest = async function(e) {
+      e.preventDefault();
+      const credential = document.getElementById('forgot-credential').value.trim();
+      const alertBox = document.getElementById('reset-alert-box');
+      const reqBtn = document.getElementById('forgot-req-btn');
+
+      reqBtn.disabled = true;
+      reqBtn.innerText = 'Generating Token...';
+
+      try {
+        const res = await forgotPassword(credential);
+        alertBox.className = 'p-2.5 rounded-lg text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-200';
+        alertBox.innerText = res.message;
+        alertBox.classList.remove('hidden');
+
+        // Reveal Step 2 and auto-fill token if returned in development/testing mode
+        document.getElementById('reset-confirm-form').classList.remove('hidden');
+        if (res.resetToken) {
+          document.getElementById('reset-token-input').value = res.resetToken;
+          alertBox.innerText += ' [Dev Token Auto-Populated]';
+        }
+      } catch (err) {
+        alertBox.className = 'p-2.5 rounded-lg text-xs bg-rose-950/80 border border-rose-700 text-rose-200';
+        alertBox.innerText = err.message || 'Password reset request failed.';
+        alertBox.classList.remove('hidden');
+      } finally {
+        reqBtn.disabled = false;
+        reqBtn.innerText = 'Generate Recovery Token';
+      }
+    };
+
+    window.handlePasswordResetConfirm = async function(e) {
+      e.preventDefault();
+      const token = document.getElementById('reset-token-input').value.trim();
+      const newPassword = document.getElementById('reset-new-password').value;
+      const alertBox = document.getElementById('reset-alert-box');
+      const confirmBtn = document.getElementById('reset-confirm-btn');
+
+      confirmBtn.disabled = true;
+      confirmBtn.innerText = 'Updating Password...';
+
+      try {
+        const res = await resetPassword(token, newPassword);
+        alertBox.className = 'p-2.5 rounded-lg text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-200';
+        alertBox.innerText = res.message;
+        alertBox.classList.remove('hidden');
+
+        setTimeout(() => {
+          closeForgotPasswordModal();
+          document.getElementById('login-password').value = newPassword;
+          showInlineAlert('Password successfully reset. You can now sign in.', 'success');
+        }, 1200);
+      } catch (err) {
+        alertBox.className = 'p-2.5 rounded-lg text-xs bg-rose-950/80 border border-rose-700 text-rose-200';
+        alertBox.innerText = err.message || 'Failed to update password.';
+        alertBox.classList.remove('hidden');
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = 'Update Password & Sign In';
+      }
+    };
+
+    // Auto-check if user is already authenticated
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check query param for preselected role
+      const params = new URLSearchParams(window.location.search);
+      const preRole = params.get('role');
+      if (preRole && ['student', 'security', 'admin'].includes(preRole)) {
+        selectRole(preRole);
+      }
+
+      // Check if user is already logged in
+      await initAuth();
+    });
+  </script>
+</body>
+</html>

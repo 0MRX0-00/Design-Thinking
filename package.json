@@ -1,0 +1,21 @@
+{
+  "name": "campusshield-workspace",
+  "version": "1.0.0",
+  "description": "CampusShield - Smart Campus Safety and Emergency Response System",
+  "private": true,
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "seed": "node backend/scripts/seed.js",
+    "test": "node --test backend/tests/campusshield.test.js"
+  },
+  "keywords": [
+    "campus-safety",
+    "emergency-response",
+    "sos",
+    "iot-security",
+    "design-thinking"
+  ],
+  "author": "CampusShield Team - Kongu Engineering College",
+  "license": "ISC"
+}

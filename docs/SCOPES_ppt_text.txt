@@ -1,0 +1,27 @@
+﻿Total slides: 13
+=== SLIDE 1 (ppt/slides/slide1.xml) ===
+Develop SCOPES template for your design challenge      TEAM  MEMBERS  :  SANGAVI S                   (25ITR125)                                      SUMANTH S                 (25ITR146)                                        THIRUKUMARAN S    (25ITR162)                                      YAZHINI S                    (25ITR180)   {5940675A-B579-460E-94D1-54222C63F5DA} COURSE : 24ITL34 û DESIGN THINKING LAB EXERCISE : 1 DATE : 22.07.2026
+=== SLIDE 2 (ppt/slides/slide2.xml) ===
+SCOPES Template
+=== SLIDE 3 (ppt/slides/slide3.xml) ===
+S û Situation / Problem 3 What are the  constraints  when trying to address the situation or  problem ? Limitations: Requires  a stable internet connection for real-time monitoring and  alerts . Camera  and sensor performance may be affected by bad weather or poor lighting . Power outages can interrupt the system unless a backup power source is available . Assumptions: The campus has reliable Wi-Fi or network connectivity . Continuous power supply is available (or backup power is provided ). Students and staff carry mobile phones to receive emergency alerts . Security personnel are available to respond immediately when an alert is triggered . The system is installed at key locations across the campus.  
+=== SLIDE 4 (ppt/slides/slide4.xml) ===
+C - Constraints 4 What is the  situation  or  challenge  that your trying to address ? There is a lack of a real-time campus safety and emergency response system.  During  emergencies such as medical incidents, harassment, theft, or accidents, students may not be able to quickly contact campus security, resulting in delayed assistance and increased safety risks.
+=== SLIDE 5 (ppt/slides/slide5.xml) ===
+O û Objectives & Outcomes 5 What are the  objectives  and intended  outcome  of this design  challenge ? Objectives: To improve the safety and security of students, staff, and visitors on campus . To  provide a real-time emergency alert system through an SOS button, CCTV, and  IoT  sensors . To  enable quick communication between users and campus security for faster emergency response . Expected Outcome: Faster emergency response by immediately notifying security personnel during  incidents . Enhanced  campus safety through continuous monitoring and instant  alerts . Reduced  response time and increased confidence among students and staff, creating a safer campus environment .
+=== SLIDE 6 (ppt/slides/slide6.xml) ===
+P û People 6 Who are the  people   that you are trying to help? Whose problem are you trying to address  A ffected by this problem:     The  problem mainly affects students, faculty, staff, visitors, campus security personnel, and the college administration. They require a safer campus environment with quick emergency response, better surveillance, and improved communication during accidents or security threats . Target users:       Students  û for quick access to help during emergencies, accidents, or  harassment . Faculty  and Staff û to ensure a safer working and learning  environment . Campus  Security Personnel û to receive instant alerts and respond quickly to  incidents . Visitors  û to access emergency assistance while on campus .
+=== SLIDE 7 (ppt/slides/slide7.xml) ===
+E  û Estimates 7 What are the  estimated  resources required for this design challenge ? {F5AB1C69-6EDB-4FF4-983F-18BD219EF322}                        Time 4û6 weeks to design, develop, test, and demonstrate the prototype .                         Tools Arduino  / ESP32,   Arduino  IDE, laptop/computer, internet connection                         Materials CCTV camera , SOS push button, buzzer, LED light, microphone, speaker, motion/smoke sensor, Wi-Fi module, cables, power supply, pole/frame                         Software Arduino  IDE,  IoT  platform ( Blynk / ThingSpeak  or similar), basic circuit design tools                         Human Effort Team of 4 students with guidance from  faculty mentor
+=== SLIDE 8 (ppt/slides/slide8.xml) ===
+S û Scope 8 Is there  sample  scope  to explore multiple alternatives to address the problem? Develop  a mobile safety app with an emergency SOS  feature. Install  AI-powered smart CCTV cameras for automatic threat detection . Use  wearable emergency devices (smart bands or ID cards) with panic buttons . Deploy  IoT -based smart safety poles with sensors, cameras, and two-way communication . Integrate  drone surveillance for monitoring large campus areas during emergencies . Potential  for Further  Exploration AI-based  suspicious activity detection . Face  recognition for authorized access and security . Solar-powered  smart safety poles . Integration  with campus management systems and mobile notifications . Predictive  analytics to identify high-risk areas and improve campus safety.
+=== SLIDE 9 (ppt/slides/slide9.xml) ===
+Design Challenge 9 How might we improve campus safety by providing a smart, real-time emergency response system that enables students and staff to quickly alert security and receive immediate assistance?
+=== SLIDE 10 (ppt/slides/slide10.xml) ===
+Geo Tag Photos
+=== SLIDE 11 (ppt/slides/slide11.xml) ===
+Any  photos 
+=== SLIDE 12 (ppt/slides/slide12.xml) ===
+Referen ces 12 Research papers on expense-sharing algorithms. Open-source libraries used. https://www.tricount.com/ https://settleup.io/
+=== SLIDE 13 (ppt/slides/slide13.xml) ===
+Thank you!

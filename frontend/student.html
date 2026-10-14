@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusShield — Student Safety Portal</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tactical: {
+              950: '#070a13',
+              900: '#0d1322',
+              850: '#121a2e',
+              800: '#18233e',
+              700: '#1e2c4a',
+              600: '#2c4270'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if (typeof io === 'undefined') {
+      document.write('<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body class="bg-[#070a13] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white">
+
+  <!-- TOP COMMAND / STUDENT BAR -->
+  <header class="border-b border-slate-800 bg-[#0d1322]/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Institution -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-600/20 border border-rose-500/50 flex items-center justify-center text-2xl shadow-lg shadow-rose-950/50">
+          🛡️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-black tracking-wider text-white">CAMPUSSHIELD</h1>
+            <span class="text-[10px] font-mono uppercase bg-rose-950 text-rose-300 border border-rose-800 px-1.5 py-0.5 rounded font-bold">
+              STUDENT SAFETY
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Kongu Engineering College • Smart Campus Emergency Response System
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation Portals -->
+      <nav class="flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+        <a href="/security" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
+          <span>🚨</span> Command Center
+        </a>
+        <a href="/student" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white shadow-sm flex items-center gap-1.5">
+          <span>📱</span> Student Safety
+        </a>
+        <a href="/admin" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
+          <span>⚙️</span> Administration
+        </a>
+      </nav>
+
+      <!-- System Status & Demo Persona Switcher -->
+      <div class="flex items-center gap-3">
+        <!-- Backend Status -->
+        <div id="backend-status-badge" class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-emerald-300 font-mono font-bold text-[11px]">BACKEND CONNECTED</span>
+        </div>
+
+        <!-- Socket Status -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+          <span id="socket-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="socket-status-text" class="text-slate-300 font-mono font-bold text-[11px]">ONLINE</span>
+        </div>
+
+        <!-- Profile Badge -->
+        <div id="auth-profile-badge" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+          <div class="w-6 h-6 rounded-full bg-cyan-600/30 border border-cyan-500 flex items-center justify-center font-bold text-[10px] text-cyan-300" id="user-avatar-initials">
+            CS
+          </div>
+          <span id="user-display-name" class="font-bold text-white max-w-[120px] truncate">Guest</span>
+        </div>
+
+        <!-- Sign Out Button -->
+        <button id="auth-logout-btn" 
+                onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
+                class="px-3 py-1.5 text-xs text-rose-400 hover:text-white hover:bg-rose-950/70 rounded-lg border border-rose-900/60 font-semibold flex items-center gap-1 transition cursor-pointer">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN STUDENT INTERFACE -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-8">
+    
+    <!-- Geolocation & Operational Status Bar -->
+    <div class="tactical-glass p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs border border-slate-800">
+      <div id="gps-status-indicator" class="flex items-center gap-2 font-mono">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+        <span class="text-slate-400">Acquiring GPS positioning...</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400 text-[11px]">
+        <span>🚨 KEC Control Room: <strong class="text-emerald-400 font-mono">Active (24x7)</strong></span>
+        <span>⚡ Average Response: <strong class="text-cyan-400 font-mono">&lt; 3 Mins</strong></span>
+      </div>
+    </div>
+
+    <!-- STUDENT FALSE ALARM / RESTRICTION / WARNING BANNER CONTAINER -->
+    <div id="student-safety-banner-container"></div>
+
+    <!-- ACTIVE EMERGENCY LIVE TRACKER CONTAINER (Appears when student reports incident) -->
+    <div id="active-tracker-container"></div>
+
+    <!-- PRIMARY ONE-TAP SOS TRIGGER -->
+    <section class="max-w-2xl mx-auto tactical-glass p-8 sm:p-12 rounded-3xl border border-rose-900/60 flex flex-col items-center text-center justify-between relative overflow-hidden bg-gradient-to-b from-rose-950/30 via-[#0d1322] to-[#070a13] shadow-2xl">
+      <div class="w-full">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-4">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+          Direct Emergency Response
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">ONE-TAP EMERGENCY SOS</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
+          Tap the SOS button to report an incident, share your location, and instantly dispatch campus security officers.
+        </p>
+      </div>
+
+      <!-- Giant Centered SOS Button -->
+      <div class="my-10 relative flex items-center justify-center">
+        <div class="absolute w-64 h-64 rounded-full bg-rose-600/20 animate-ping pointer-events-none"></div>
+        <div class="absolute w-52 h-52 rounded-full bg-rose-600/30 animate-pulse pointer-events-none"></div>
+        
+        <button id="sos-primary-btn" 
+                onclick="window.csStudent.openSosModal()" 
+                class="relative w-48 h-48 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-red-500 text-white font-black text-3xl tracking-widest shadow-2xl shadow-rose-900/90 border-4 border-rose-400 hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col items-center justify-center gap-1 group cursor-pointer">
+          <span class="text-4xl group-hover:scale-110 transition">🚨</span>
+          <span>SOS</span>
+          <span class="text-[10px] font-mono uppercase tracking-normal opacity-90 font-bold">TAP TO REPORT</span>
+        </button>
+      </div>
+
+      <!-- Accidental Protection & Telemetry Notice -->
+      <div class="w-full flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 border-t border-slate-800/80 pt-5">
+        <div class="flex items-center gap-2">
+          <span>🛡️</span> <span>Accidental confirmation safeguard</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span>📍</span> <span>GPS & Landmark routing</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span>🚔</span> <span>Control Room direct dispatch</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECONDARY WORKFLOWS: SAFE WALK & EMERGENCY DIRECTORY -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Safe Walk Companion Module -->
+      <div class="lg:col-span-6 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500 flex items-center justify-center text-sm">
+              🚶
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Campus Safe Walk Companion</h3>
+              <p class="text-[11px] text-slate-400">Night escort & route session with panic shortcut</p>
+            </div>
+          </div>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-bold">
+            SAFE WALK
+          </span>
+        </div>
+
+        <!-- Safe Walk Dynamic Card -->
+        <div id="safewalk-card-container"></div>
+      </div>
+
+      <!-- Kongu Campus Emergency Directory -->
+      <div class="lg:col-span-6 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500 flex items-center justify-center text-sm">
+              📞
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Campus Emergency Directory</h3>
+              <p class="text-[11px] text-slate-400">Verified institutional helplines & control rooms</p>
+            </div>
+          </div>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 font-bold">
+            DIRECT HELPLINES
+          </span>
+        </div>
+
+        <div id="emergency-contacts-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+          <!-- Dynamically populated from /api/admin/contacts -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PERSONAL INCIDENT HISTORY -->
+    <section class="tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500 flex items-center justify-center text-sm">
+            📜
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">My Incident History</h3>
+            <p class="text-[11px] text-slate-400">Your logged alerts and resolution records</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="my-incident-history-list" class="space-y-2">
+        <div class="p-6 text-center text-slate-500 text-xs">
+          Loading your incident records...
+        </div>
+      </div>
+    </section>
+
+    <!-- FALSE ALARM HISTORY & ACCOUNT PRIVILEGE DOSSIER -->
+    <section class="tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-600/20 border border-amber-500 flex items-center justify-center text-sm">
+            ⚖️
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">False Alarm History & Safety Privilege Status</h3>
+            <p class="text-[11px] text-slate-400">Institutional record of verified incident classifications & audit logs</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2" id="student-status-badge-container">
+          <!-- Populated from student.js -->
+        </div>
+      </div>
+
+      <!-- Quick Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-500 uppercase font-mono block">CONFIRMED INTENTIONAL</span>
+          <div id="student-confirmed-false-alarms" class="text-xl font-black text-rose-400 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-500">Threshold: max 3</span>
+        </div>
+        <div class="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-500 uppercase font-mono block">WARNING STATUS</span>
+          <div id="student-warning-level-text" class="text-sm font-bold text-emerald-400 font-mono mt-1">Normal</div>
+          <span class="text-[10px] text-slate-500">Policy tier</span>
+        </div>
+        <div class="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-500 uppercase font-mono block">SOS ACCESS STATUS</span>
+          <div id="student-sos-privilege-text" class="text-sm font-bold text-emerald-400 font-mono mt-1">Active</div>
+          <span class="text-[10px] text-slate-500">Emergency triggers</span>
+        </div>
+        <div class="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-500 uppercase font-mono block">DISCIPLINARY STATUS</span>
+          <div id="student-disciplinary-status-text" class="text-sm font-bold text-slate-300 font-mono mt-1">None</div>
+          <span class="text-[10px] text-slate-500">Committee review</span>
+        </div>
+      </div>
+
+      <!-- History Table / Cards -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+              <th class="p-3">Incident Reference</th>
+              <th class="p-3">Classification</th>
+              <th class="p-3">Verification Notes</th>
+              <th class="p-3">Investigated By</th>
+              <th class="p-3 text-right">Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="student-false-alarm-table-body">
+            <tr>
+              <td colspan="5" class="p-6 text-center text-slate-500 text-xs">Loading false alarm history...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DISCIPLINARY COMMITTEE CASES & REPRESENTATION -->
+    <section class="tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4" id="disciplinary-cases-section">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-rose-600/20 border border-rose-500 flex items-center justify-center text-sm">
+            🏛️
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Disciplinary Committee Cases & Formal Appeals</h3>
+            <p class="text-[11px] text-slate-400">Hearings, scheduled committee meetings, and student representation</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="student-disciplinary-cases-container" class="space-y-3">
+        <div class="p-6 text-center text-slate-500 text-xs">Loading disciplinary case status...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-[#070a13] py-4 text-center text-xs text-slate-500">
+    <p>CampusShield — Smart Campus Safety and Emergency Response System • Kongu Engineering College</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="./js/api.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/student.js"></script>
+</body>
+</html>
