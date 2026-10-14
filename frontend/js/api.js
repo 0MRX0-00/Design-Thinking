@@ -3,8 +3,16 @@ const getApiBase = () => {
   if (typeof window === 'undefined') return 'http://localhost:5000';
   const { protocol, hostname, port, origin } = window.location;
   if (protocol === 'file:') return 'http://localhost:5000';
+
+  // If hosted on production / cloud domain (Render, Vercel, Localtunnel, etc.)
+  if (hostname && !['localhost', '127.0.0.1'].includes(hostname) && !hostname.startsWith('192.168.') && !hostname.startsWith('10.')) {
+    return origin;
+  }
+
+  // If accessing directly on port 5000 (localhost or LAN IP:5000)
   if (port === '5000') return origin;
-  // If running via Live Server (5500, etc.) or another port, point to backend on 5000
+
+  // If running via Live Server (5500, etc.), point to local backend on 5000
   return `http://${hostname || 'localhost'}:5000`;
 };
 
