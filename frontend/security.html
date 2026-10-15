@@ -261,7 +261,7 @@
         </div>
         
         <!-- Leaflet Map Container -->
-        <div class="relative w-full h-[320px] bg-[#070b14] overflow-hidden">
+        <div class="relative w-full h-[460px] bg-[#070b14] overflow-hidden">
           <div id="tactical-campus-map" class="w-full h-full z-0"></div>
         </div>
 
@@ -270,55 +270,6 @@
           <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Incident</span>
           <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Patrol Unit</span>
           <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> Landmark</span>
-        </div>
-      </div>
-
-      <!-- CCTV PREVIEW PANEL -->
-      <div class="tactical-glass rounded-2xl border border-slate-800 overflow-hidden">
-        <div class="p-3 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
-          <div>
-            <h3 class="text-xs font-mono font-bold uppercase text-white flex items-center gap-1.5">
-              <span>📹</span> CCTV Surveillance Feed
-            </h3>
-            <span class="text-[9px] text-amber-400 font-mono font-semibold">[SIMULATED SURVEILLANCE FEED - DEMO]</span>
-          </div>
-          
-          <!-- Camera Selector -->
-          <select onchange="window.csSecurity.switchCctvCamera(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-mono text-cyan-300 px-2 py-1">
-            <option value="CAM-01">CAM-01: Main Gate</option>
-            <option value="CAM-04">CAM-04: Admin Quad</option>
-            <option value="CAM-07">CAM-07: Hostel Walkway</option>
-            <option value="CAM-12">CAM-12: Library Lawn</option>
-          </select>
-        </div>
-
-        <!-- Simulated CRT Video Viewport -->
-        <div class="relative w-full h-[190px] bg-black scanlines flex items-center justify-center overflow-hidden">
-          <!-- Background Simulated Surveillance Camera Scene -->
-          <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-black opacity-90"></div>
-          
-          <!-- Geometric Campus Building Outlines Simulation -->
-          <svg class="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="95" x2="600" y2="95" stroke="#06b6d4" stroke-dasharray="4" />
-            <line x1="200" y1="0" x2="200" y2="190" stroke="#06b6d4" stroke-dasharray="4" />
-            <rect x="50" y="30" width="120" height="90" stroke="#3b82f6" fill="none" />
-            <rect x="230" y="40" width="140" height="80" stroke="#3b82f6" fill="none" />
-          </svg>
-
-          <!-- Camera Label HUD -->
-          <div class="absolute top-2 left-3 z-10 text-[10px] font-mono text-emerald-400 bg-black/70 px-2 py-0.5 rounded border border-emerald-900/60">
-            <span id="cctv-camera-name">CAM-01: Main Gate & Circle [PTZ OPTICAL]</span>
-          </div>
-
-          <div class="absolute top-2 right-3 z-10 text-[10px] font-mono text-red-500 bg-black/70 px-2 py-0.5 rounded border border-red-950 flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span> REC
-          </div>
-
-          <!-- Bottom HUD Bar -->
-          <div class="absolute bottom-2 inset-x-3 z-10 text-[9px] font-mono text-slate-400 bg-black/80 px-2.5 py-1 rounded border border-slate-800 flex justify-between">
-            <span id="cctv-hud-timestamp">2026-10-12 06:15:00 UTC</span>
-            <span id="cctv-hud-fps">30.0 FPS</span>
-          </div>
         </div>
       </div>
 
