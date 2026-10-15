@@ -78,6 +78,13 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    let warmupTimer = null;
+    if (API_BASE.includes('onrender.com')) {
+      warmupTimer = setTimeout(() => {
+        showToast('Waking Cloud Server ⏳', 'Render cloud instance is waking up from sleep (~15-25s)...', 'info');
+      }, 1800);
+    }
+
     try {
       const response = await fetch(url.toString(), {
         method: options.method || 'GET',
@@ -111,9 +118,11 @@ class ApiClient {
       } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
         this.isBackendOnline = false;
         updateBackendConnectionBadge(false);
-        err.message = `Cannot connect to CampusShield Backend at ${API_BASE}. Ensure the server is running (npm start / start.bat).`;
+        err.message = `Cannot connect to CampusShield Backend at ${API_BASE}. Ensure the server is running.`;
       }
       throw err;
+    } finally {
+      if (warmupTimer) clearTimeout(warmupTimer);
     }
   }
 
@@ -137,27 +146,56 @@ class ApiClient {
 export const api = new ApiClient();
 
 // Connection status indicator helper
-export function updateBackendConnectionBadge(isOnline) {
+export function updateBackendConnectionBadge(isOnline, latencyMs = null) {
   const badge = document.getElementById('backend-status-badge');
+  const serverLabel = API_BASE.includes('10.229.94.151') || API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')
+    ? 'LOCAL WI-FI ⚡'
+    : 'CLOUD (RENDER) 🌐';
+  const latencyLabel = latencyMs ? ` (${latencyMs}ms)` : '';
+
   if (badge) {
     if (isOnline) {
       badge.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-emerald-300 font-mono text-[11px] font-bold">BACKEND CONNECTED</span>
+        <span class="text-emerald-300 font-mono text-[11px] font-bold">${serverLabel}${latencyLabel}</span>
         <span class="text-[10px] text-emerald-400 opacity-70">⚙️</span>
       `;
-      badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs cursor-pointer';
-      badge.title = `Connected to ${API_BASE}. Click to change backend URL.`;
+      badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs cursor-pointer hover:bg-emerald-900/60 transition';
+      badge.title = `Connected to ${API_BASE}. Click to test speed or change server.`;
       badge.onclick = () => showBackendSettingsModal();
     } else {
       badge.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-        <span class="text-rose-300 font-mono text-[11px] font-bold">BACKEND DISCONNECTED</span>
-        <span class="text-[10px] text-rose-300 underline font-bold ml-1">Configure</span>
+        <span class="text-rose-300 font-mono text-[11px] font-bold">CONNECTING / RETRY</span>
+        <span class="text-[10px] text-rose-300 underline font-bold ml-1">Settings</span>
       `;
       badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/80 border border-rose-600 text-xs cursor-pointer';
       badge.title = `Cannot connect to ${API_BASE}. Click to configure server URL.`;
       badge.onclick = () => showBackendSettingsModal();
+    }
+  }
+
+  // Update login card server display if on index.html
+  updateLoginCardDisplay(isOnline, latencyMs);
+}
+
+export function updateLoginCardDisplay(isOnline, latencyMs = null) {
+  const nameEl = document.getElementById('login-server-name');
+  const dotEl = document.getElementById('login-server-dot');
+  if (nameEl) {
+    const isLocal = API_BASE.includes('10.229.94.151') || API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1');
+    const latStr = latencyMs ? ` • ${latencyMs}ms` : '';
+    if (isOnline) {
+      if (isLocal) {
+        nameEl.innerHTML = `<span class="text-emerald-400 font-bold">Local Wi-Fi Server (10.229.94.151)${latStr} ⚡</span>`;
+        if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0';
+      } else {
+        nameEl.innerHTML = `<span class="text-cyan-300 font-bold">Render Cloud (Live)${latStr} 🌐</span>`;
+        if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shrink-0';
+      }
+    } else {
+      nameEl.innerHTML = `<span class="text-rose-400 font-bold">Connecting to ${isLocal ? 'Local Wi-Fi' : 'Cloud'}...</span>`;
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0';
     }
   }
 }
@@ -179,47 +217,64 @@ export function showBackendSettingsModal() {
     <div class="tactical-glass max-w-md w-full p-6 rounded-2xl border border-slate-700 bg-slate-900/95 shadow-2xl text-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
-          <span class="text-xl">🌐</span>
-          <h3 class="font-bold text-white text-base">Backend Server Configuration</h3>
+          <span class="text-xl">⚡</span>
+          <h3 class="font-bold text-white text-base">Backend Connection & Speed</h3>
         </div>
         <button onclick="document.getElementById('backend-settings-modal').remove()" 
                 class="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 rounded bg-slate-800">✕</button>
       </div>
 
-      <p class="text-xs text-slate-400 leading-relaxed">
-        If running as an installed Android app or on a mobile phone, connect to your live cloud server or your computer's local Wi-Fi IP address:
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Choose your connection mode. <b>Local Wi-Fi</b> gives instant 1ms response on campus. <b>Render Cloud</b> works anywhere globally.
       </p>
 
-      <div class="space-y-1.5">
-        <label class="block text-[11px] font-mono font-bold text-cyan-300">ACTIVE SERVER URL</label>
-        <input type="text" 
-               id="custom-backend-url-input" 
-               value="${currentUrl}" 
-               placeholder="https://your-service.onrender.com or http://10.229.94.151:5000"
-               class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs text-white focus:outline-none focus:border-cyan-400" />
+      <!-- Quick 1-Tap Preset Buttons -->
+      <div class="space-y-2">
+        <div class="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider">TAP TO SWITCH INSTANTLY</div>
+        <div class="grid grid-cols-1 gap-2 text-xs">
+          
+          <button type="button" 
+                  onclick="window.csApi?.quickSwitchBackend('http://10.229.94.151:5000')"
+                  class="p-3 text-left ${API_BASE.includes('10.229.94.151') ? 'bg-emerald-950/70 border-emerald-500' : 'bg-slate-800/80 hover:bg-emerald-950/40 border-slate-700 hover:border-emerald-600'} border rounded-xl flex items-center justify-between transition cursor-pointer group">
+            <div>
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span>📶</span> Local Wi-Fi (10.229.94.151:5000)
+                ${API_BASE.includes('10.229.94.151') ? '<span class="text-[9px] bg-emerald-500 text-black px-1.5 py-0.2 rounded font-bold font-mono">ACTIVE</span>' : ''}
+              </div>
+              <div class="text-[11px] text-emerald-400 mt-0.5">⚡ Instant 1ms response time (Best for campus testing)</div>
+            </div>
+            <span class="text-xs text-emerald-400 font-bold px-2 py-1 rounded bg-emerald-900/50 group-hover:bg-emerald-600 group-hover:text-black transition">Connect</span>
+          </button>
+
+          <button type="button" 
+                  onclick="window.csApi?.quickSwitchBackend('https://design-thinking-7ne9.onrender.com')"
+                  class="p-3 text-left ${API_BASE.includes('onrender.com') ? 'bg-cyan-950/70 border-cyan-500' : 'bg-slate-800/80 hover:bg-cyan-950/40 border-slate-700 hover:border-cyan-600'} border rounded-xl flex items-center justify-between transition cursor-pointer group">
+            <div>
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span>🌐</span> Render Cloud (design-thinking-7ne9)
+                ${API_BASE.includes('onrender.com') ? '<span class="text-[9px] bg-cyan-500 text-black px-1.5 py-0.2 rounded font-bold font-mono">ACTIVE</span>' : ''}
+              </div>
+              <div class="text-[11px] text-cyan-300 mt-0.5">🌍 Global access anywhere (Pings active 24/7)</div>
+            </div>
+            <span class="text-xs text-cyan-400 font-bold px-2 py-1 rounded bg-cyan-900/50 group-hover:bg-cyan-600 group-hover:text-black transition">Connect</span>
+          </button>
+
+        </div>
       </div>
 
-      <!-- Quick Preset Buttons -->
-      <div class="space-y-1.5">
-        <div class="text-[10px] font-mono text-slate-400 uppercase font-bold">QUICK PRESETS</div>
-        <div class="grid grid-cols-1 gap-1.5 text-xs">
+      <div class="space-y-1.5 pt-1">
+        <label class="block text-[10px] font-mono font-bold text-slate-400 uppercase">CUSTOM SERVER URL</label>
+        <div class="flex gap-2">
+          <input type="text" 
+                 id="custom-backend-url-input" 
+                 value="${currentUrl}" 
+                 placeholder="http://10.229.94.151:5000"
+                 class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs text-white focus:outline-none focus:border-cyan-400" />
           <button type="button" 
-                  onclick="document.getElementById('custom-backend-url-input').value='http://10.229.94.151:5000'"
-                  class="p-2 text-left bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-between text-slate-300 hover:text-white transition cursor-pointer">
-            <span class="font-mono text-[11px]">📶 Local Wi-Fi (10.229.94.151:5000)</span>
-            <span class="text-[10px] text-cyan-400 font-bold">Select</span>
-          </button>
-          <button type="button" 
-                  onclick="document.getElementById('custom-backend-url-input').value='https://design-thinking-7ne9.onrender.com'"
-                  class="p-2 text-left bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-700/60 rounded-lg flex items-center justify-between text-cyan-200 hover:text-white transition cursor-pointer">
-            <span class="font-mono text-[11px]">🌐 Render Cloud (design-thinking-7ne9.onrender.com)</span>
-            <span class="text-[10px] text-cyan-400 font-bold">Select</span>
-          </button>
-          <button type="button" 
-                  onclick="document.getElementById('custom-backend-url-input').value='http://localhost:5000'"
-                  class="p-2 text-left bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-between text-slate-300 hover:text-white transition cursor-pointer">
-            <span class="font-mono text-[11px]">💻 Localhost (127.0.0.1:5000)</span>
-            <span class="text-[10px] text-cyan-400 font-bold">Select</span>
+                  id="btn-test-save-backend"
+                  onclick="window.csApi?.testAndSaveBackend()"
+                  class="px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition cursor-pointer">
+            Save
           </button>
         </div>
       </div>
@@ -227,23 +282,94 @@ export function showBackendSettingsModal() {
       <div id="backend-test-status" class="hidden text-xs p-2.5 rounded-lg font-mono"></div>
 
       <!-- Actions -->
-      <div class="pt-2 flex items-center gap-2">
-        <button type="button" 
-                id="btn-test-save-backend"
-                onclick="window.csApi?.testAndSaveBackend()"
-                class="flex-1 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-lg shadow-cyan-900/40">
-          ⚡ Test Connection & Save
+      <div class="pt-2 flex items-center justify-between border-t border-slate-800 text-xs">
+        <button type="button"
+                onclick="window.csApi?.runLatencyTest()"
+                class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-xl font-mono text-xs transition cursor-pointer flex items-center gap-1.5">
+          <span>⏱️</span> Test Server Latency
         </button>
         <button type="button"
                 onclick="localStorage.removeItem('cs_backend_url'); window.location.reload();"
-                class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-mono transition cursor-pointer">
-          Reset
+                class="px-3 py-2 text-slate-400 hover:text-white rounded-xl text-xs font-mono transition cursor-pointer">
+          Reset Default
         </button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
+}
+
+export async function quickSwitchBackend(targetUrl) {
+  const statusEl = document.getElementById('backend-test-status');
+  if (statusEl) {
+    statusEl.className = 'text-xs p-2.5 rounded-lg font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 block';
+    statusEl.innerText = `⏳ Connecting to ${targetUrl}...`;
+  }
+
+  try {
+    const start = performance.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(`${targetUrl}/api/health`, { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const ping = Math.round(performance.now() - start);
+      localStorage.setItem('cs_backend_url', targetUrl);
+      API_BASE = targetUrl;
+      showToast('Switched! ⚡', `Connected to ${targetUrl} (${ping}ms latency). Reloading...`, 'success');
+      setTimeout(() => window.location.reload(), 700);
+      return;
+    }
+  } catch (err) {
+    showToast('Connection Failed', `Could not reach ${targetUrl}. Is device on same Wi-Fi?`, 'critical');
+    if (statusEl) {
+      statusEl.className = 'text-xs p-2.5 rounded-lg font-mono bg-rose-950/80 text-rose-300 border border-rose-700 block';
+      statusEl.innerText = `❌ Failed to connect: ${err.message}`;
+    }
+  }
+}
+
+export async function runLatencyTest() {
+  const statusEl = document.getElementById('backend-test-status');
+  if (statusEl) {
+    statusEl.className = 'text-xs p-2.5 rounded-lg font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 block';
+    statusEl.innerText = '⏱️ Measuring response times to Local Wi-Fi & Render Cloud...';
+  }
+
+  const results = [];
+
+  // Test Local Wi-Fi
+  try {
+    const t0 = performance.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1500);
+    const r = await fetch('http://10.229.94.151:5000/api/health', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    const time = Math.round(performance.now() - t0);
+    results.push(`📶 Local Wi-Fi: ${r.ok ? `<b>${time}ms</b> (Ultra Fast ⚡)` : 'Offline'}`);
+  } catch {
+    results.push('📶 Local Wi-Fi: Unreachable from this network');
+  }
+
+  // Test Render Cloud
+  try {
+    const t0 = performance.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4500);
+    const r = await fetch('https://design-thinking-7ne9.onrender.com/api/health', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    const time = Math.round(performance.now() - t0);
+    results.push(`🌐 Render Cloud: ${r.ok ? `<b>${time}ms</b> (Online)` : 'Offline'}`);
+  } catch {
+    results.push('🌐 Render Cloud: Timed out / Sleeping');
+  }
+
+  if (statusEl) {
+    statusEl.className = 'text-xs p-3 rounded-lg font-mono bg-slate-950 text-slate-200 border border-slate-700 block space-y-1';
+    statusEl.innerHTML = `<div class="font-bold text-cyan-300 mb-1">📊 SPEED TEST RESULTS:</div>${results.map(r => `<div>${r}</div>`).join('')}`;
+  }
 }
 
 export async function testAndSaveBackend() {
@@ -270,11 +396,13 @@ export async function testAndSaveBackend() {
   if (btn) btn.disabled = true;
 
   try {
+    const start = performance.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     const res = await fetch(`${url}/api/health`, { signal: controller.signal });
     clearTimeout(timeout);
+    const ping = Math.round(performance.now() - start);
 
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -283,10 +411,10 @@ export async function testAndSaveBackend() {
 
       if (statusEl) {
         statusEl.className = 'text-xs p-2.5 rounded-lg font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700 block';
-        statusEl.innerHTML = `✅ Connected Successfully! DB: <b>${data.dbConnected ? 'Online' : 'Pending'}</b>. Reloading...`;
+        statusEl.innerHTML = `✅ Connected in <b>${ping}ms</b>! DB: <b>${data.dbConnected ? 'Online' : 'Pending'}</b>. Reloading...`;
       }
 
-      showToast('Connected! ✅', `Backend active at ${url}. Applying changes...`, 'success');
+      showToast('Connected! ✅', `Backend active at ${url} (${ping}ms). Applying changes...`, 'success');
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -312,6 +440,8 @@ window.csApi = {
   updateBackendConnectionBadge,
   showBackendSettingsModal,
   testAndSaveBackend,
+  quickSwitchBackend,
+  runLatencyTest,
   showToast
 };
 
@@ -349,3 +479,70 @@ export function showToast(title, message, type = 'info') {
     if (toast.parentElement) toast.remove();
   }, 5000);
 }
+
+// Auto-detect fast Local Wi-Fi server or pre-warm Render
+export async function autoDetectFastestBackend() {
+  if (typeof window === 'undefined') return;
+
+  // If user already saved a custom preference, ping that and display latency
+  const saved = localStorage.getItem('cs_backend_url');
+  if (saved) {
+    try {
+      const t0 = performance.now();
+      const r = await fetch(`${saved}/api/health`, { cache: 'no-store' });
+      if (r.ok) {
+        updateBackendConnectionBadge(true, Math.round(performance.now() - t0));
+        return;
+      }
+    } catch {}
+    updateBackendConnectionBadge(false);
+    return;
+  }
+
+  // Probe Local Wi-Fi IP (10.229.94.151:5000) with short 1000ms timeout
+  try {
+    const t0 = performance.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1000);
+    const r = await fetch('http://10.229.94.151:5000/api/health', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    if (r.ok) {
+      const ping = Math.round(performance.now() - t0);
+      console.log(`[CampusShield] Fast Local Wi-Fi detected (${ping}ms)! Auto-connecting...`);
+      API_BASE = 'http://10.229.94.151:5000';
+      localStorage.setItem('cs_backend_url', API_BASE);
+      updateBackendConnectionBadge(true, ping);
+      showToast('Turbo Speed ⚡', `Connected to ultra-fast local Wi-Fi backend (${ping}ms)!`, 'success');
+      return;
+    }
+  } catch {}
+
+  // Fallback to Render Cloud
+  try {
+    const t0 = performance.now();
+    const r = await fetch(`${API_BASE}/api/health`, { cache: 'no-store' });
+    if (r.ok) {
+      updateBackendConnectionBadge(true, Math.round(performance.now() - t0));
+    } else {
+      updateBackendConnectionBadge(false);
+    }
+  } catch {
+    updateBackendConnectionBadge(false);
+  }
+}
+
+// Background Keep-Alive & Auto-Discovery Engine
+if (typeof window !== 'undefined') {
+  // Run auto-discovery on startup
+  autoDetectFastestBackend();
+
+  // Periodic keep-alive heartbeat every 4 minutes
+  setInterval(() => {
+    if (navigator.onLine) {
+      fetch(`${API_BASE}/api/health`, { method: 'GET', cache: 'no-store' })
+        .then((r) => { if (r.ok) updateBackendConnectionBadge(true); })
+        .catch(() => updateBackendConnectionBadge(false));
+    }
+  }, 4 * 60 * 1000);
+}
+

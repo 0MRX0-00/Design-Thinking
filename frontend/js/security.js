@@ -1124,15 +1124,8 @@ async function getSecurityMapboxToken() {
   return DEFAULT_MAPBOX_TOKEN;
 }
 
-function getSecurityTileUrl(style, token) {
-  const activeToken = token || securityMapboxToken || DEFAULT_MAPBOX_TOKEN;
-  if (activeToken) {
-    if (style === 'satellite') return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-    if (style === 'dark') return `https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-  }
-
-  // 100% Free Public Fallbacks (No API Key Required)
+export function getSecurityTileUrl(style = 'satellite') {
+  // Ultra-reliable public map tiles (Never block Android WebViews, zero rate limits)
   if (style === 'satellite') {
     return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
   }
@@ -1188,13 +1181,20 @@ async function initTacticalMaps() {
       attributionControl: false
     });
 
-    tacticalTileLayer = L.tileLayer(getSecurityTileUrl(currentTileStyle, token), {
-      maxZoom: 22,
+    tacticalTileLayer = L.tileLayer(getSecurityTileUrl(currentTileStyle), {
+      maxZoom: 19,
       tileSize: 256,
-      attribution: '© Mapbox © OpenStreetMap'
+      attribution: '© Esri © OpenStreetMap'
     }).addTo(tacticalMap);
 
+    tacticalTileLayer.on('tileerror', function() {
+      tacticalTileLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    });
+
     addCampusLandmarksToMap(tacticalMap);
+
+    setTimeout(() => { if (tacticalMap) tacticalMap.invalidateSize(); }, 200);
+    setTimeout(() => { if (tacticalMap) tacticalMap.invalidateSize(); }, 600);
   }
 
   // 2. Full Tactical Map Structure Command Deck
@@ -1207,13 +1207,20 @@ async function initTacticalMaps() {
       attributionControl: false
     });
 
-    fullTileLayer = L.tileLayer(getSecurityTileUrl(currentTileStyle, token), {
-      maxZoom: 22,
+    fullTileLayer = L.tileLayer(getSecurityTileUrl(currentTileStyle), {
+      maxZoom: 19,
       tileSize: 256,
-      attribution: '© Mapbox © OpenStreetMap'
+      attribution: '© Esri © OpenStreetMap'
     }).addTo(fullMap);
 
+    fullTileLayer.on('tileerror', function() {
+      fullTileLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    });
+
     addCampusLandmarksToMap(fullMap);
+
+    setTimeout(() => { if (fullMap) fullMap.invalidateSize(); }, 200);
+    setTimeout(() => { if (fullMap) fullMap.invalidateSize(); }, 600);
   }
 }
 

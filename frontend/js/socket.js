@@ -119,9 +119,15 @@ export async function initSocket() {
 function loadSocketIoScript() {
   return new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+    script.src = './js/socket.io.min.js';
     script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
+    script.onerror = () => {
+      const fallbackScript = document.createElement('script');
+      fallbackScript.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+      fallbackScript.onload = () => resolve(true);
+      fallbackScript.onerror = () => resolve(false);
+      document.head.appendChild(fallbackScript);
+    };
     document.head.appendChild(script);
   });
 }

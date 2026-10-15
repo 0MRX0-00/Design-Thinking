@@ -202,6 +202,21 @@
             <div id="auth-alert-msg" class="flex-1"></div>
           </div>
 
+          <!-- ACTIVE BACKEND SERVER INDICATOR & SPEED SWITCHER -->
+          <div class="mb-4 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="login-server-dot" class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+              <div class="min-w-0">
+                <div class="text-[9px] font-mono text-slate-400 uppercase tracking-wider font-bold">CONNECTED SERVER</div>
+                <div id="login-server-name" class="font-mono text-xs text-cyan-300 font-bold truncate">Render Cloud (Checking...)</div>
+              </div>
+            </div>
+            <button type="button" onclick="window.csApi?.showBackendSettingsModal()" 
+                    class="shrink-0 px-2.5 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/70 text-cyan-200 text-[11px] font-mono font-bold transition flex items-center gap-1 cursor-pointer">
+              <span>⚡ Switch / Speed</span>
+            </button>
+          </div>
+
           <!-- LOGIN FORM -->
           <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
             

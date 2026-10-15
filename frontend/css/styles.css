@@ -193,9 +193,18 @@ body {
    ========================================================= */
 
 .leaflet-container {
-  background-color: #070a13 !important;
+  background-color: #0d1527 !important;
   font-family: 'Plus Jakarta Sans', sans-serif !important;
   color: #f1f5f9 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#student-pinpoint-map, #tactical-campus-map, #full-tactical-campus-map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 180px !important;
+  background-color: #0d1527 !important;
 }
 
 /* Custom Radar Waves */

@@ -81,31 +81,11 @@ const DEFAULT_MAPBOX_TOKEN = atob('cGsuZXlKMUlqb2ljM1Z0WVc1MGFEQXdOeUlzSW1FaU9pS
 export let MAPBOX_ACCESS_TOKEN = DEFAULT_MAPBOX_TOKEN;
 
 export async function fetchMapboxConfig() {
-  if (MAPBOX_ACCESS_TOKEN && MAPBOX_ACCESS_TOKEN !== '') return MAPBOX_ACCESS_TOKEN;
-  try {
-    const res = await fetch('/api/config/mapbox');
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.token) {
-        MAPBOX_ACCESS_TOKEN = data.token;
-        return MAPBOX_ACCESS_TOKEN;
-      }
-    }
-  } catch (e) {
-    // fallback
-  }
   return DEFAULT_MAPBOX_TOKEN;
 }
 
-export function getTileUrl(style, token) {
-  const activeToken = token || MAPBOX_ACCESS_TOKEN || DEFAULT_MAPBOX_TOKEN;
-  if (activeToken) {
-    if (style === 'satellite') return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-    if (style === 'dark') return `https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${activeToken}`;
-  }
-
-  // 100% Free Public Fallbacks (No API Key Required)
+export function getTileUrl(style = 'satellite') {
+  // Ultra-reliable public map tiles (Never block Android WebViews, zero rate limits, crystal-clear satellite imagery)
   if (style === 'satellite') {
     return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
   }
@@ -446,11 +426,19 @@ export async function initStudentPinpointMap() {
       attributionControl: false
     });
 
-    studentTileLayer = L.tileLayer(getTileUrl(currentStudentMapStyle, token), {
-      maxZoom: 22,
+    studentTileLayer = L.tileLayer(getTileUrl(currentStudentMapStyle), {
+      maxZoom: 19,
       tileSize: 256,
-      attribution: '© Mapbox © OpenStreetMap'
+      attribution: '© Esri © OpenStreetMap'
     }).addTo(studentPinpointMap);
+
+    studentTileLayer.on('tileerror', function() {
+      studentTileLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    });
+
+    setTimeout(() => { if (studentPinpointMap) studentPinpointMap.invalidateSize(); }, 150);
+    setTimeout(() => { if (studentPinpointMap) studentPinpointMap.invalidateSize(); }, 500);
+    setTimeout(() => { if (studentPinpointMap) studentPinpointMap.invalidateSize(); }, 1200);
 
     // Custom Draggable Pin Icon
     const pinIcon = L.divIcon({
