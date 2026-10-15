@@ -9,6 +9,7 @@
     "dev": "node --watch server.js",
     "seed": "node scripts/seed.js",
     "seed:clean": "node scripts/seedClean.js",
+    "clear:incidents": "node scripts/clearIncidents.js",
     "test": "node --test tests/campusshield.test.js tests/falseAlarm.test.js tests/loginRouting.test.js"
   },
   "dependencies": {
