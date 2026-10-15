@@ -196,6 +196,223 @@ export async function toggleStudentMapTileLayer() {
   showToast('Map Layer', `Map Layer: ${currentStudentMapStyle.toUpperCase()}`, 'info');
 }
 
+// =========================================================
+// KONGU CAMPUS GEOFENCE & AUTOMATED LOCKDOWN SYSTEM
+// =========================================================
+export const KEC_GEOFENCE = {
+  centerLat: 11.2742,
+  centerLng: 77.6070,
+  radiusMeters: 1800, // 1.8km boundary covers entire 167-acre KEC campus, hostels & grounds
+  name: 'Kongu Engineering College'
+};
+
+let isGeofenceLocked = false;
+let isDemoSimulationActive = false;
+let studentGeofenceCircle = null;
+
+export function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return Infinity;
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.round(R * c);
+}
+
+export function evaluateCampusGeofence(lat, lng) {
+  if (isDemoSimulationActive) {
+    dismissGeofenceLock();
+    updateGeofenceUIBadge(true, 120, true);
+    return { inside: true, distanceMeters: 120, simulated: true };
+  }
+
+  if (!lat || !lng) {
+    return { inside: true, distanceMeters: 0, simulated: false };
+  }
+
+  const distanceMeters = calculateDistanceMeters(lat, lng, KEC_GEOFENCE.centerLat, KEC_GEOFENCE.centerLng);
+  const inside = distanceMeters <= KEC_GEOFENCE.radiusMeters;
+  userGps.geofenceDistance = distanceMeters;
+
+  if (!inside) {
+    isGeofenceLocked = true;
+    showGeofenceLock(distanceMeters, lat, lng);
+  } else {
+    isGeofenceLocked = false;
+    dismissGeofenceLock();
+  }
+
+  updateGeofenceUIBadge(inside, distanceMeters, false);
+  return { inside, distanceMeters, simulated: false };
+}
+
+export function updateGeofenceUIBadge(inside, distanceMeters, isSimulated) {
+  const badge = document.getElementById('campus-geofence-status-badge');
+  const simBtn = document.getElementById('demo-simulation-indicator-btn');
+
+  if (badge) {
+    if (isSimulated) {
+      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700 flex items-center gap-1';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span> DEMO IN-CAMPUS SIMULATED';
+    } else if (inside) {
+      const distLabel = distanceMeters > 0 ? ` (${distanceMeters}m)` : '';
+      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> IN CAMPUS ZONE${distLabel}`;
+    } else {
+      const km = (distanceMeters / 1000).toFixed(1);
+      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse flex items-center gap-1';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> OUT OF CAMPUS (+${km}km)`;
+    }
+  }
+
+  if (simBtn) {
+    simBtn.classList.toggle('hidden', !isSimulated && inside);
+  }
+}
+
+export function showGeofenceLock(distanceMeters = 5000, lat = 11.0, lng = 76.9) {
+  let lockModal = document.getElementById('campus-geofence-lock-screen');
+  const kmOutside = (distanceMeters / 1000).toFixed(1);
+
+  if (!lockModal) {
+    lockModal = document.createElement('div');
+    lockModal.id = 'campus-geofence-lock-screen';
+    lockModal.className = 'fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 overflow-y-auto';
+    document.body.appendChild(lockModal);
+  }
+
+  lockModal.innerHTML = `
+    <div class="max-w-lg w-full bg-slate-900 border-2 border-rose-600 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6">
+      
+      <!-- Pulsing Lock Shield Icon -->
+      <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full bg-rose-600/30 radar-ping pointer-events-none"></div>
+        <div class="w-18 h-18 rounded-full bg-rose-950 border-2 border-rose-500 flex items-center justify-center text-3xl shadow-2xl">
+          🔒
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950 border border-rose-800 text-rose-300 font-mono text-xs font-bold uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Campus Boundary Enforced
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">OUT OF CAMPUS — APP LOCKED</h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+          CampusShield emergency dispatch, SafeWalk, and in-app reporting are strictly restricted to 
+          <strong class="text-white">Kongu Engineering College (KEC)</strong> campus grounds.
+        </p>
+      </div>
+
+      <!-- Distance and Coordinates Inspection Card -->
+      <div class="bg-black/70 rounded-2xl p-4 border border-slate-800 text-left space-y-2 text-xs font-mono">
+        <div class="flex justify-between items-center py-1 border-b border-slate-800">
+          <span class="text-slate-400">Current GPS Fix:</span>
+          <span class="text-slate-200 font-bold">${typeof lat === 'number' ? lat.toFixed(5) : lat}° N, ${typeof lng === 'number' ? lng.toFixed(5) : lng}° E</span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-800">
+          <span class="text-slate-400">Distance to KEC Campus:</span>
+          <span class="text-rose-400 font-bold">~${kmOutside} km outside boundary</span>
+        </div>
+        <div class="flex justify-between items-center py-1">
+          <span class="text-slate-400">Authorized Campus Radius:</span>
+          <span class="text-cyan-400 font-bold">1.8 km (167-Acre Campus)</span>
+        </div>
+      </div>
+
+      <!-- Emergency Helplines (Available Off-Campus) -->
+      <div class="space-y-2 text-left">
+        <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider font-bold">
+          🚨 Off-Campus Emergency Helplines:
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <a href="tel:112" class="p-3 bg-rose-950/70 hover:bg-rose-900 border border-rose-800 rounded-xl flex items-center justify-between text-xs transition">
+            <div>
+              <div class="font-bold text-white">National Emergency</div>
+              <div class="text-[10px] text-rose-300">Police / Fire / Medical</div>
+            </div>
+            <span class="font-mono text-lg font-black text-white">112</span>
+          </a>
+          <a href="tel:1091" class="p-3 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 rounded-xl flex items-center justify-between text-xs transition">
+            <div>
+              <div class="font-bold text-white">Women Safety</div>
+              <div class="text-[10px] text-amber-300">24/7 Helpline</div>
+            </div>
+            <span class="font-mono text-lg font-black text-white">1091</span>
+          </a>
+          <a href="tel:04294220233" class="p-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-between text-xs transition col-span-1 sm:col-span-2">
+            <div>
+              <div class="font-bold text-white">Perundurai Police Station</div>
+              <div class="text-[10px] text-slate-400">Local Jurisdictional Police</div>
+            </div>
+            <span class="font-mono text-xs font-bold text-cyan-300">04294-220233</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 flex flex-col gap-2.5">
+        <button onclick="window.csStudent?.requestRealGps(true)" 
+                class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg">
+          <span>🔄</span> Re-Check Live Satellite GPS
+        </button>
+
+        <button onclick="window.csStudent?.simulateCampusLocation()" 
+                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>🧪</span> Demo Override: Simulate Inside KEC Campus
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+export function dismissGeofenceLock() {
+  const lockModal = document.getElementById('campus-geofence-lock-screen');
+  if (lockModal) {
+    lockModal.remove();
+  }
+}
+
+export function simulateCampusLocation() {
+  isDemoSimulationActive = true;
+  isGeofenceLocked = false;
+  dismissGeofenceLock();
+
+  // Pin student inside KEC IT Park / CSE Block
+  userGps.latitude = 11.2751;
+  userGps.longitude = 77.6083;
+  userGps.accuracy = 5;
+  userGps.status = 'pinpointed';
+  userGps.address = 'IT Park / CSE Block';
+  userGps.fullAddress = 'IT Park / Computer Science Block, Kongu Engineering College';
+
+  updateGpsUI();
+
+  if (studentPinpointMap && studentPinMarker) {
+    studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
+    studentPinpointMap.flyTo([userGps.latitude, userGps.longitude], 17);
+  }
+
+  showToast('🧪 Demo Mode Active', 'Location simulated inside KEC Campus. App unlocked for demonstration!', 'success');
+}
+
+export function toggleDemoSimulation() {
+  if (isDemoSimulationActive) {
+    isDemoSimulationActive = false;
+    showToast('Demo Mode Off', 'Re-evaluating real satellite GPS...', 'info');
+    requestRealGps(true);
+  } else {
+    simulateCampusLocation();
+  }
+}
+
 // Kongu Engineering College Landmarks Reference
 export const CAMPUS_LANDMARKS = {
   'Admin Block': { lat: 11.2738, lng: 77.6062, name: 'Admin Block, Kongu Engineering College' },
@@ -252,6 +469,23 @@ export async function initStudentPinpointMap() {
       icon: pinIcon,
       draggable: true
     }).addTo(studentPinpointMap);
+
+    // Draw KEC Campus Boundary Circle (1.8km operational zone)
+    if (!studentGeofenceCircle) {
+      studentGeofenceCircle = L.circle([KEC_GEOFENCE.centerLat, KEC_GEOFENCE.centerLng], {
+        radius: KEC_GEOFENCE.radiusMeters,
+        color: '#06b6d4',
+        weight: 1.5,
+        dashArray: '6, 8',
+        fillColor: '#06b6d4',
+        fillOpacity: 0.05
+      }).addTo(studentPinpointMap);
+
+      studentGeofenceCircle.bindTooltip('🛡️ Kongu Campus Boundary (Operational Zone)', {
+        permanent: false,
+        direction: 'top'
+      });
+    }
 
     // Draggable Pin Event
     studentPinMarker.on('dragend', () => {
@@ -469,6 +703,10 @@ export function updateGpsUI() {
     }
   }
 
+  if (userGps.latitude && userGps.longitude) {
+    evaluateCampusGeofence(userGps.latitude, userGps.longitude);
+  }
+
   updateModalGpsDisplay();
 }
 
@@ -573,6 +811,13 @@ export function openSosModal(initialCategory = null) {
       reason: mySafetyStatus.restrictionReason,
       restrictedAt: mySafetyStatus.restrictedAt
     });
+    return;
+  }
+
+  // Enforce Geofence Limitation Check
+  if (isGeofenceLocked && !isDemoSimulationActive) {
+    showToast('Boundary Locked', 'You are outside Kongu campus boundary. App is locked.', 'critical');
+    showGeofenceLock(userGps.geofenceDistance || 5000, userGps.latitude, userGps.longitude);
     return;
   }
 
@@ -774,7 +1019,8 @@ export async function executeSosSubmission(
       severity: 'critical',
       latitude: userGps.latitude,
       longitude: userGps.longitude,
-      accuracy: userGps.accuracy
+      accuracy: userGps.accuracy,
+      isDemoSimulated: Boolean(isDemoSimulationActive)
     });
 
     if (res.success && res.incident) {
@@ -1009,6 +1255,12 @@ export async function loadSafeWalkSession() {
 }
 
 export async function startSafeWalkSession() {
+  if (isGeofenceLocked && !isDemoSimulationActive) {
+    showToast('Boundary Locked', 'SafeWalk companion service is only available inside Kongu campus.', 'critical');
+    showGeofenceLock(userGps.geofenceDistance || 5000, userGps.latitude, userGps.longitude);
+    return;
+  }
+
   const origin = document.getElementById('safewalk-origin')?.value.trim();
   const dest = document.getElementById('safewalk-destination')?.value.trim();
 
@@ -1601,5 +1853,8 @@ window.csStudent = {
   showRestrictedSosModal,
   submitStudentAppeal,
   toggleStudentMapTileLayer,
+  simulateCampusLocation,
+  toggleDemoSimulation,
+  dismissGeofenceLock,
   logout
 };

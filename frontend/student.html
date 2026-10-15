@@ -109,21 +109,32 @@
   <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-8">
     
     <!-- Geolocation & Operational Status Bar -->
+    <!-- Geolocation & Operational Status Bar -->
     <div class="tactical-glass p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs border border-slate-800">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <div id="gps-status-indicator" class="flex items-center gap-2 font-mono">
           <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
           <span class="text-slate-400">Acquiring GPS positioning...</span>
         </div>
+        <!-- Live Geofence Campus Badge -->
+        <span id="campus-geofence-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900 text-slate-400 border border-slate-700">
+          Checking Boundary...
+        </span>
         <button type="button" 
                 onclick="window.csStudent?.requestRealGps(true)" 
                 class="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 hover:text-white rounded-lg flex items-center gap-1.5 transition text-[11px] font-mono cursor-pointer shadow-sm">
           <span>📍</span> Refresh GPS
         </button>
+        <button type="button"
+                id="demo-simulation-indicator-btn"
+                onclick="window.csStudent?.simulateCampusLocation()"
+                class="hidden px-2 py-1 bg-amber-950/80 hover:bg-amber-900 border border-amber-700/80 text-amber-300 rounded-lg text-[10px] font-mono font-bold transition flex items-center gap-1 cursor-pointer">
+          <span>🧪</span> Demo Inside KEC
+        </button>
       </div>
-      <div class="flex items-center gap-4 text-slate-400 text-[11px]">
-        <span>🚨 KEC Control Room: <strong class="text-emerald-400 font-mono">Active (24x7)</strong></span>
-        <span>⚡ Average Response: <strong class="text-cyan-400 font-mono">&lt; 3 Mins</strong></span>
+      <div class="flex items-center gap-3 text-slate-400 text-[11px]">
+        <span>🛡️ Geofence: <strong class="text-cyan-400 font-mono">KEC 1.8km</strong></span>
+        <span>🚨 KEC Control: <strong class="text-emerald-400 font-mono">24x7 Active</strong></span>
       </div>
     </div>
 

@@ -6,6 +6,7 @@ import { StudentSafetyStatus } from '../models/StudentSafetyStatus.js';
 import { EmergencyContact } from '../models/EmergencyContact.js';
 import { FalseAlarmRecord } from '../models/FalseAlarmRecord.js';
 import { getIO } from '../sockets/socketHandler.js';
+import { checkCampusGeofence } from '../utils/geofence.js';
 
 export const createIncident = async (req, res, next) => {
   try {
@@ -93,6 +94,26 @@ export const createIncident = async (req, res, next) => {
 
     if (accuracy !== undefined && accuracy !== null && accuracy !== '') {
       parsedAcc = parseFloat(accuracy);
+    }
+
+    // Geofence Validation: Ensure incident is within KEC Campus Boundary
+    if (parsedLat !== null && parsedLng !== null && req.body.isDemoSimulated !== true) {
+      const geoCheck = checkCampusGeofence(parsedLat, parsedLng);
+      if (!geoCheck.inside) {
+        const kmOutside = (geoCheck.distanceMeters / 1000).toFixed(1);
+        return res.status(403).json({
+          success: false,
+          code: 'OUT_OF_CAMPUS_BOUNDARY',
+          message: `SOS Alert Rejected: Your device is located ~${kmOutside} km outside the authorized Kongu Engineering College boundary. CampusShield emergency response is strictly limited to campus grounds.`,
+          distanceMeters: geoCheck.distanceMeters,
+          allowedRadiusMeters: geoCheck.allowedRadius,
+          offCampusHelplines: [
+            { name: 'National Emergency Helpline', phone: '112', role: 'Police / Fire / Medical' },
+            { name: "National Women's Safety Helpline", phone: '1091', role: '24/7 Safety Cell' },
+            { name: 'Perundurai Local Police Station', phone: '04294-220233', role: 'Local Jurisdiction Dispatch' }
+          ]
+        });
+      }
     }
 
     const incidentId = await Incident.generateIncidentId();

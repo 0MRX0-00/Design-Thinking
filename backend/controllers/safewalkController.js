@@ -3,16 +3,29 @@ import { Incident } from '../models/Incident.js';
 import { Notification } from '../models/Notification.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { getIO } from '../sockets/socketHandler.js';
+import { checkCampusGeofence } from '../utils/geofence.js';
 
 export const startSafeWalk = async (req, res, next) => {
   try {
-    const { startLocation, destination, notes = '' } = req.body;
+    const { startLocation, destination, notes = '', latitude, longitude, isDemoSimulated } = req.body;
 
     if (!startLocation || !destination) {
       return res.status(400).json({
         success: false,
         message: 'Start location and destination are required for Safe Walk.'
       });
+    }
+
+    // Geofence check if coordinates provided
+    if (latitude && longitude && isDemoSimulated !== true) {
+      const geoCheck = checkCampusGeofence(parseFloat(latitude), parseFloat(longitude));
+      if (!geoCheck.inside) {
+        return res.status(403).json({
+          success: false,
+          code: 'OUT_OF_CAMPUS_BOUNDARY',
+          message: 'Safe Walk is restricted to Kongu Engineering College campus boundary.'
+        });
+      }
     }
 
     // Cancel any existing active session for this user
