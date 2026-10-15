@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CampusShield — Student Safety Portal</title>
+  <title>CampusShield — Student Safety</title>
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#1E3A5F" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,8 +17,7 @@
             brand: {
               navy: '#1E3A5F',
               blue: '#2563EB',
-              emergency: '#DC2626',
-              surface: '#F8FAFC'
+              emergency: '#DC2626'
             }
           }
         }
@@ -33,66 +30,42 @@
   <script src="./js/leaflet.js"></script>
   <script src="./js/socket.io.min.js"></script>
 </head>
-<body class="bg-[#F8FAFC] text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900 pb-20 sm:pb-10">
+<body class="bg-white text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900 pb-20 sm:pb-8">
 
   <!-- TOP APP BAR -->
-  <header class="border-b border-slate-200 bg-white sticky top-0 z-40 px-4 py-3 shadow-xs">
-    <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-40 px-4 py-2.5">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
       
       <!-- Brand & Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl shadow-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-lg text-[#1E3A5F]">
           🛡️
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base font-extrabold tracking-tight text-[#1E3A5F]">CampusShield</h1>
-            <span class="text-[10px] font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md">
-              Student Safety
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 hidden sm:block">
-            Kongu Engineering College
-          </p>
+          <h1 class="text-sm font-bold text-[#1E3A5F] leading-tight">CampusShield</h1>
+          <p class="text-[11px] text-slate-500">Student Portal</p>
         </div>
       </div>
 
       <!-- Right Controls: Profile & Sign Out -->
-      <div class="flex items-center gap-2.5">
-        <!-- Push Notification Toggle -->
-        <div id="push-notification-badge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs cursor-pointer transition font-medium" title="Notification Status">
-          <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-          <span class="hidden sm:inline text-xs">Notifications</span>
-          <span class="sm:hidden">🔔</span>
-        </div>
-
+      <div class="flex items-center gap-2">
         <!-- User Profile Chip -->
-        <div id="auth-profile-badge" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-          <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]" id="user-avatar-initials">
-            CS
+        <div id="auth-profile-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+          <div class="w-5 h-5 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center font-bold text-[9px]" id="user-avatar-initials">
+            ST
           </div>
-          <span id="user-display-name" class="font-semibold text-slate-800 text-xs max-w-[120px] truncate">Student</span>
-        </div>
-
-        <!-- Navigation Portals Dropdown (Desktop) -->
-        <div class="hidden md:flex items-center gap-1 text-xs">
-          <a href="security.html" class="px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition">
-            Security Console
-          </a>
-          <a href="admin.html" class="px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition">
-            Admin
-          </a>
+          <span id="user-display-name" class="font-medium text-slate-800 text-xs max-w-[100px] truncate">Student</span>
         </div>
 
         <!-- Sign Out Button -->
         <button id="auth-logout-btn" 
                 onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
-                class="px-2.5 py-1.5 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-slate-200 font-semibold flex items-center gap-1 transition cursor-pointer"
-                title="Sign Out">
-          <span>🚪</span> <span class="hidden sm:inline">Sign Out</span>
+                class="px-2.5 py-1 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-slate-200 font-medium transition cursor-pointer">
+          Sign Out
         </button>
 
-        <!-- Hidden telemetry badges for socket / API checks -->
+        <!-- Hidden badges for socket & notifications -->
+        <div id="push-notification-badge" class="hidden"></div>
         <div id="backend-status-badge" class="hidden"></div>
         <div class="hidden">
           <span id="socket-status-dot"></span>
@@ -102,463 +75,281 @@
     </div>
   </header>
 
-  <!-- LIVE STATUS BAR -->
-  <div class="border-b border-slate-200 bg-white/70 backdrop-blur-xs px-4 py-2 text-xs">
-    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 flex-wrap text-slate-600">
-        <span class="flex items-center gap-1.5 font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Security Control Room: <strong class="text-slate-800">Active (24/7)</strong></span>
-        </span>
-        <span class="text-slate-300 hidden sm:inline">•</span>
-        <!-- GPS Status Indicator -->
-        <div id="gps-status-indicator" class="flex items-center gap-1 font-mono text-[11px] text-slate-500">
-          <span>📍</span>
-          <span>Acquiring GPS...</span>
-        </div>
-        <!-- Campus Geofence Badge -->
-        <span id="campus-geofence-status-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-          Kongu Campus
+  <!-- LIVE STATUS STRIP -->
+  <div class="border-b border-slate-100 bg-slate-50 px-4 py-1.5 text-xs">
+    <div class="max-w-3xl mx-auto flex items-center justify-between text-slate-600">
+      <div class="flex items-center gap-2 text-[11px]">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Security: <strong class="text-slate-800 font-semibold">Active 24/7</strong></span>
+        <span class="text-slate-300">•</span>
+        <span id="student-current-address-display" class="truncate max-w-[180px] sm:max-w-xs font-medium text-slate-700">
+          Campus Location
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button type="button" 
-                onclick="window.csStudent?.requestRealGps(true)" 
-                class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-blue-600 rounded-md text-[11px] font-medium transition flex items-center gap-1 cursor-pointer shadow-xs">
-          <span>🔄</span> Re-check GPS
-        </button>
-        <button type="button"
-                id="demo-simulation-indicator-btn"
-                onclick="window.csStudent?.simulateCampusLocation()"
-                class="hidden px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-md text-[11px] font-semibold transition cursor-pointer">
-          <span>🧪</span> Demo Inside KEC
-        </button>
+      <div class="flex items-center gap-1 text-[11px]">
+        <span id="gps-status-indicator" class="text-slate-500">📍 GPS Active</span>
+        <span id="student-accuracy-badge" class="hidden"></span>
+        <span id="campus-geofence-status-badge" class="hidden"></span>
+        <button type="button" id="demo-simulation-indicator-btn" onclick="window.csStudent?.simulateCampusLocation()" class="hidden"></button>
       </div>
     </div>
   </div>
 
-  <!-- MAIN NAVIGATION TABS (Desktop / Tablet) -->
-  <div class="hidden sm:block max-w-4xl w-full mx-auto px-4 pt-4">
-    <nav class="flex items-center justify-between p-1 rounded-xl bg-slate-200/80 text-xs font-semibold">
+  <!-- NAVIGATION TABS (Desktop / Tablet) -->
+  <div class="hidden sm:block max-w-3xl w-full mx-auto px-4 pt-4">
+    <nav class="flex items-center justify-between p-1 rounded-lg bg-slate-100 text-xs font-semibold">
       <button type="button" id="tab-btn-sos" onclick="window.csStudent.switchTab('sos')" 
-              class="student-tab-btn flex-1 py-2 rounded-lg bg-white text-[#1E3A5F] font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+              class="student-tab-btn flex-1 py-2 rounded-md bg-[#1E3A5F] text-white shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
         <span>🚨</span> <span>Emergency (SOS)</span>
       </button>
       <button type="button" id="tab-btn-safewalk" onclick="window.csStudent.switchTab('safewalk')" 
-              class="student-tab-btn flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+              class="student-tab-btn flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 cursor-pointer">
         <span>🚶</span> <span>Safe Walk</span>
       </button>
       <button type="button" id="tab-btn-hotlines" onclick="window.csStudent.switchTab('hotlines')" 
-              class="student-tab-btn flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
-        <span>📞</span> <span>Campus Hotlines</span>
+              class="student-tab-btn flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 cursor-pointer">
+        <span>📞</span> <span>Hotlines</span>
       </button>
       <button type="button" id="tab-btn-status" onclick="window.csStudent.switchTab('status')" 
-              class="student-tab-btn flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
-        <span>📋</span> <span>My Safety & Activity</span>
+              class="student-tab-btn flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 cursor-pointer">
+        <span>📋</span> <span>My Reports</span>
       </button>
     </nav>
   </div>
 
   <!-- MAIN WORKSPACE -->
-  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-5">
+  <main class="flex-1 max-w-3xl w-full mx-auto p-4 space-y-4">
 
     <!-- TAB 1: EMERGENCY SOS (DEFAULT) -->
     <div id="tab-panel-sos" class="student-tab-panel space-y-4">
       
-      <!-- Warning / Restricted SOS Banner (If any) -->
+      <!-- Warning / Restricted SOS Banner -->
       <div id="student-safety-banner-container"></div>
 
-      <!-- Current Live Incident Tracker (Prominently displayed when emergency active) -->
+      <!-- Current Active Incident Tracker -->
       <div id="active-tracker-container"></div>
 
-      <!-- Verified Location Chip & Expandable Campus Map -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 text-lg shrink-0">
-            📍
-          </div>
-          <div class="min-w-0">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Verified Campus Location</span>
-              <span id="student-accuracy-badge" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-green-50 text-green-700 border border-green-200">
-                GPS Active
-              </span>
-            </div>
-            <p id="student-current-address-display" class="font-bold text-slate-800 text-sm truncate max-w-xs sm:max-w-md">
-              Kongu Engineering College, Perundurai
-            </p>
-          </div>
-        </div>
-
-        <button type="button" 
-                onclick="window.csStudent?.toggleMapVisibility()" 
-                class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer">
-          <span>🗺️ Select Building / Map</span>
-          <span id="student-map-toggle-arrow">▼</span>
-        </button>
-      </div>
-
-      <!-- Collapsible Map & Landmark Picker -->
-      <div id="student-map-collapsible" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
-        <div class="flex items-center justify-between text-xs text-slate-600">
-          <span>Tap a building or drag the marker to pinpoint your exact location:</span>
-          <div class="flex items-center gap-2">
-            <button type="button" id="student-tile-toggle-btn" onclick="window.csStudent?.toggleStudentMapTileLayer()" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded text-[11px] font-medium text-slate-700">
-              🛰️ Satellite
-            </button>
-            <button type="button" onclick="window.csStudent?.requestRealGps(true)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded text-[11px] font-medium text-slate-700">
-              📡 Refresh Fix
-            </button>
-          </div>
-        </div>
-
-        <div class="relative w-full h-44 rounded-lg border border-slate-200 overflow-hidden bg-slate-100">
-          <div id="student-pinpoint-map" class="w-full h-full z-0"></div>
-        </div>
-
-        <div>
-          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Quick Campus Landmarks:
-          </div>
-          <div class="flex flex-wrap gap-1.5 text-xs">
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Admin Block')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">🏛️ Admin Block</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('IT Park / CSE')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">💻 IT Park / CSE</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Mechanical Science')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">⚙️ Mech Block</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Central Library')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">📚 Library</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Food Court & Amenities')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">🍽️ Food Court</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Hostel Blocks (A/B/C)')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">🏢 Hostels</button>
-            <button type="button" onclick="window.csStudent?.pinpointCampusLandmark('Main Gate & Circle')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 transition">🚪 Main Gate</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PRIMARY EMERGENCY DISPATCH HERO CARD -->
-      <section class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm text-center flex flex-col items-center">
+      <!-- PRIMARY EMERGENCY DISPATCH CARD -->
+      <section class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col items-center">
         
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold mb-2">
-          <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-          <span>Emergency Response Dispatch</span>
-        </div>
-        
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-[#1E3A5F] tracking-tight">
+        <h2 class="text-xl sm:text-2xl font-bold text-[#1E3A5F] tracking-tight">
           Report an Emergency
         </h2>
         
-        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md">
-          Pressing the emergency button alerts Campus Security immediately and shares your verified GPS coordinates with emergency responders.
+        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm">
+          Pressing the red button alerts Campus Security immediately with your verified location.
         </p>
 
-        <!-- The Prominent Red SOS Button -->
+        <!-- Prominent Red SOS Button -->
         <div class="my-6 w-full flex justify-center">
           <button id="sos-primary-btn" 
                   onclick="window.csStudent.openSosModal()" 
-                  class="w-full max-w-md py-4 px-6 rounded-2xl bg-[#DC2626] hover:bg-red-700 text-white font-extrabold text-lg flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all duration-150 cursor-pointer active:scale-[0.98]">
+                  class="w-full max-w-sm py-4 px-6 rounded-xl bg-[#DC2626] hover:bg-red-700 text-white font-extrabold text-lg flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition cursor-pointer active:scale-[0.98]">
             <span class="text-3xl">🚨</span>
             <div class="text-left">
-              <div class="text-lg font-black tracking-tight leading-tight">Report an Emergency</div>
-              <div class="text-xs text-red-100 font-normal">Tap to send immediate alert & location</div>
+              <div class="text-lg font-bold leading-tight">EMERGENCY SOS</div>
+              <div class="text-xs text-red-100 font-normal">Tap to send immediate alert</div>
             </div>
           </button>
         </div>
 
-        <!-- 4 DIRECT EMERGENCY CATEGORY CARDS -->
-        <div class="w-full max-w-md">
-          <div class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2.5 text-center">
-            Or select specific incident type:
+        <!-- 4 Quick Emergency Types -->
+        <div class="w-full max-w-sm">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 text-center">
+            Or select emergency type:
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
+          <div class="grid grid-cols-2 gap-2">
             <button type="button" 
                     onclick="window.csStudent.instantSos('Medical emergency')" 
-                    class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/50 text-left transition flex items-center gap-3 cursor-pointer shadow-xs group">
-              <span class="text-2xl group-hover:scale-105 transition">🚑</span>
+                    class="p-2.5 rounded-lg border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50 text-left transition flex items-center gap-2 cursor-pointer">
+              <span class="text-xl">🚑</span>
               <div class="min-w-0">
-                <div class="text-xs font-bold text-slate-800">Medical</div>
-                <div class="text-[11px] text-slate-500 truncate">Injury, collapse</div>
+                <div class="text-xs font-semibold text-slate-800">Medical</div>
+                <div class="text-[10px] text-slate-500">Injury, illness</div>
               </div>
             </button>
 
             <button type="button" 
                     onclick="window.csStudent.instantSos('Harassment or personal safety concern')" 
-                    class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/50 text-left transition flex items-center gap-3 cursor-pointer shadow-xs group">
-              <span class="text-2xl group-hover:scale-105 transition">🛡️</span>
+                    class="p-2.5 rounded-lg border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50 text-left transition flex items-center gap-2 cursor-pointer">
+              <span class="text-xl">🛡️</span>
               <div class="min-w-0">
-                <div class="text-xs font-bold text-slate-800">Harassment</div>
-                <div class="text-[11px] text-slate-500 truncate">Safety concern</div>
+                <div class="text-xs font-semibold text-slate-800">Safety</div>
+                <div class="text-[10px] text-slate-500">Harassment</div>
               </div>
             </button>
 
             <button type="button" 
                     onclick="window.csStudent.instantSos('Fire')" 
-                    class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/50 text-left transition flex items-center gap-3 cursor-pointer shadow-xs group">
-              <span class="text-2xl group-hover:scale-105 transition">🔥</span>
+                    class="p-2.5 rounded-lg border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50 text-left transition flex items-center gap-2 cursor-pointer">
+              <span class="text-xl">🔥</span>
               <div class="min-w-0">
-                <div class="text-xs font-bold text-slate-800">Fire Hazard</div>
-                <div class="text-[11px] text-slate-500 truncate">Smoke, flames</div>
+                <div class="text-xs font-semibold text-slate-800">Fire</div>
+                <div class="text-[10px] text-slate-500">Smoke, fire</div>
               </div>
             </button>
 
             <button type="button" 
                     onclick="window.csStudent.instantSos('Accident')" 
-                    class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/50 text-left transition flex items-center gap-3 cursor-pointer shadow-xs group">
-              <span class="text-2xl group-hover:scale-105 transition">⚠️</span>
+                    class="p-2.5 rounded-lg border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50 text-left transition flex items-center gap-2 cursor-pointer">
+              <span class="text-xl">⚠️</span>
               <div class="min-w-0">
-                <div class="text-xs font-bold text-slate-800">Accident</div>
-                <div class="text-[11px] text-slate-500 truncate">Crash, fall</div>
+                <div class="text-xs font-semibold text-slate-800">Accident</div>
+                <div class="text-[10px] text-slate-500">Collision, fall</div>
               </div>
             </button>
           </div>
-
-          <button type="button" 
-                  onclick="window.csStudent.openSosModal()" 
-                  class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer">
-            + View all emergency categories (Theft, Infrastructure, Other)
-          </button>
         </div>
 
-        <div class="w-full flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 border-t border-slate-100 pt-3 mt-6">
-          <span class="flex items-center gap-1.5"><span class="text-blue-600">⚡</span> 1-Tap Confirmation</span>
-          <span class="flex items-center gap-1.5"><span class="text-emerald-600">📍</span> Live GPS Attached</span>
-          <span class="flex items-center gap-1.5"><span class="text-slate-700">👮</span> 24/7 Security Alerted</span>
-        </div>
       </section>
 
-      <!-- SECONDARY SHORTCUTS TO SAFE WALK & HOTLINES -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button type="button" onclick="window.csStudent.switchTab('safewalk')" 
-                class="p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 text-left transition flex items-center gap-3.5 cursor-pointer shadow-xs group">
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl shrink-0">
-            🚶
-          </div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 group-hover:text-emerald-700">Campus Safe Walk</div>
-            <div class="text-[11px] text-slate-500">Night escort & monitored campus route</div>
-          </div>
-        </button>
-
-        <button type="button" onclick="window.csStudent.switchTab('hotlines')" 
-                class="p-4 bg-white rounded-xl border border-slate-200 hover:border-blue-300 text-left transition flex items-center gap-3.5 cursor-pointer shadow-xs group">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl shrink-0">
-            📞
-          </div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 group-hover:text-blue-700">Emergency Hotlines</div>
-            <div class="text-[11px] text-slate-500">Direct 1-tap call to campus security & health</div>
-          </div>
-        </button>
+      <!-- Optional Collapsible Map Container (kept for map pin-pointing if needed) -->
+      <div id="student-map-collapsible" class="hidden">
+        <div id="student-pinpoint-map"></div>
       </div>
 
     </div>
 
-    <!-- TAB 2: SAFE WALK COMPANION -->
+    <!-- TAB 2: SAFE WALK -->
     <div id="tab-panel-safewalk" class="student-tab-panel hidden space-y-4">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl text-emerald-600">
-              🚶
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-slate-900">Campus Safe Walk Companion</h3>
-              <p class="text-xs text-slate-500">Walking across campus after dark? Security will monitor your route.</p>
-            </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+          <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-lg text-emerald-600">
+            🚶
           </div>
-          <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Monitored Escort
-          </span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Safe Walk Companion</h3>
+            <p class="text-xs text-slate-500">Campus security monitors your walk until you arrive safely.</p>
+          </div>
         </div>
 
         <div id="safewalk-card-container"></div>
       </div>
     </div>
 
-    <!-- TAB 3: EMERGENCY DIRECTORY -->
+    <!-- TAB 3: EMERGENCY HOTLINES -->
     <div id="tab-panel-hotlines" class="student-tab-panel hidden space-y-4">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl text-blue-600">
-              📞
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-slate-900">Emergency Helplines</h3>
-              <p class="text-xs text-slate-500">Verified institutional helplines with direct 1-tap dial</p>
-            </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+          <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-lg text-blue-600">
+            📞
           </div>
-          <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-            24/7 Available
-          </span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Emergency Hotlines</h3>
+            <p class="text-xs text-slate-500">Direct 1-tap call to campus responders</p>
+          </div>
         </div>
 
-        <!-- Fast 1-Tap Helplines -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <a href="tel:+919443311223" class="p-3.5 rounded-xl bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition flex items-center justify-between group">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🚨</span>
-              <div>
-                <div class="text-xs font-bold text-slate-900">KEC Security Control Room</div>
-                <div class="text-[11px] font-mono text-red-600 font-semibold">+91 94433 11223</div>
-              </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <a href="tel:+919443311223" class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Campus Security</div>
+              <div class="text-[11px] text-slate-500">+91 94433 11223</div>
             </div>
-            <span class="px-3 py-1 rounded-lg bg-red-600 text-white font-bold text-xs shadow-xs">Call</span>
+            <span class="px-2.5 py-1 rounded bg-[#1E3A5F] text-white font-semibold text-[11px]">Call</span>
           </a>
 
-          <a href="tel:+919842266778" class="p-3.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 transition flex items-center justify-between group">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🚑</span>
-              <div>
-                <div class="text-xs font-bold text-slate-900">Campus Health & Ambulance</div>
-                <div class="text-[11px] font-mono text-emerald-600 font-semibold">+91 98422 66778</div>
-              </div>
+          <a href="tel:+919842266778" class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Health Center & Ambulance</div>
+              <div class="text-[11px] text-slate-500">+91 98422 66778</div>
             </div>
-            <span class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-xs">Call</span>
+            <span class="px-2.5 py-1 rounded bg-emerald-700 text-white font-semibold text-[11px]">Call</span>
           </a>
 
-          <a href="tel:+919489000100" class="p-3.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-200 transition flex items-center justify-between group">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">👩</span>
-              <div>
-                <div class="text-xs font-bold text-slate-900">Women Safety Helpline</div>
-                <div class="text-[11px] font-mono text-purple-600 font-semibold">+91 94890 00100</div>
-              </div>
+          <a href="tel:+919489000100" class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Women's Safety Helpline</div>
+              <div class="text-[11px] text-slate-500">+91 94890 00100</div>
             </div>
-            <span class="px-3 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs shadow-xs">Call</span>
+            <span class="px-2.5 py-1 rounded bg-purple-700 text-white font-semibold text-[11px]">Call</span>
           </a>
 
-          <a href="tel:112" class="p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition flex items-center justify-between group">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">👮</span>
-              <div>
-                <div class="text-xs font-bold text-slate-900">National Emergency Number</div>
-                <div class="text-[11px] font-mono text-blue-600 font-semibold">112</div>
-              </div>
+          <a href="tel:112" class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate-900">National Emergency</div>
+              <div class="text-[11px] text-slate-500">112</div>
             </div>
-            <span class="px-3 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-xs">Call</span>
+            <span class="px-2.5 py-1 rounded bg-blue-700 text-white font-semibold text-[11px]">Call</span>
           </a>
         </div>
 
-        <div id="emergency-contacts-list" class="space-y-2 pt-2 border-t border-slate-100"></div>
+        <div id="emergency-contacts-list" class="space-y-1.5 pt-2 border-t border-slate-100"></div>
       </div>
     </div>
 
     <!-- TAB 4: MY STATUS & INCIDENT HISTORY -->
     <div id="tab-panel-status" class="student-tab-panel hidden space-y-4">
       
-      <!-- Account Safety Status Overview -->
-      <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl text-blue-600">
-              👤
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-slate-900">My Safety Standing & Privileges</h3>
-              <p class="text-xs text-slate-500">Institutional record of verified alerts and account standing</p>
-            </div>
-          </div>
+      <!-- Account Standing -->
+      <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <h3 class="text-sm font-bold text-slate-900">Account Safety Status</h3>
           <div id="student-status-badge-container"></div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <span class="text-[10px] font-semibold text-slate-500 uppercase block">FALSE ALARMS</span>
-            <div id="student-confirmed-false-alarms" class="text-xl font-bold text-red-600 font-mono mt-0.5">0</div>
-            <span class="text-[10px] text-slate-400">Max limit: 3</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-500 block uppercase font-medium">False Alarms</span>
+            <div id="student-confirmed-false-alarms" class="text-lg font-bold text-slate-800 mt-0.5">0</div>
           </div>
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <span class="text-[10px] font-semibold text-slate-500 uppercase block">POLICY TIER</span>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-500 block uppercase font-medium">Standing</span>
             <div id="student-warning-level-text" class="text-xs font-bold text-emerald-700 mt-1">Normal</div>
-            <span class="text-[10px] text-slate-400">Good standing</span>
           </div>
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <span class="text-[10px] font-semibold text-slate-500 uppercase block">SOS STATUS</span>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-500 block uppercase font-medium">SOS Access</span>
             <div id="student-sos-privilege-text" class="text-xs font-bold text-emerald-700 mt-1">Active</div>
-            <span class="text-[10px] text-slate-400">Emergency triggers</span>
           </div>
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <span class="text-[10px] font-semibold text-slate-500 uppercase block">INQUIRIES</span>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-500 block uppercase font-medium">Inquiries</span>
             <div id="student-disciplinary-status-text" class="text-xs font-bold text-slate-600 mt-1">None</div>
-            <span class="text-[10px] text-slate-400">Disciplinary review</span>
           </div>
         </div>
       </section>
 
       <!-- Personal Incident History List -->
-      <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <span>📜</span> Recent Incident Reports
-        </h3>
-        <div id="my-incident-history-list" class="space-y-2">
-          <div class="p-4 text-center text-slate-500 text-xs">Loading incident records...</div>
+      <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
+        <h3 class="text-sm font-bold text-slate-900">Recent Reports</h3>
+        <div id="my-incident-history-list" class="space-y-2 text-xs">
+          <div class="p-3 text-center text-slate-500">Loading incident records...</div>
         </div>
       </section>
 
-      <!-- False Alarm History Table -->
-      <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <span>⚖️</span> Incident Verification History
-        </h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="border-b border-slate-200 text-[10px] font-semibold uppercase text-slate-500">
-                <th class="p-2.5">Incident</th>
-                <th class="p-2.5">Classification</th>
-                <th class="p-2.5">Investigation Notes</th>
-                <th class="p-2.5 text-right">Date</th>
-              </tr>
-            </thead>
-            <tbody id="student-false-alarm-table-body">
-              <tr>
-                <td colspan="4" class="p-4 text-center text-slate-500 text-xs">Loading history...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Disciplinary Committee Cases -->
-      <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="disciplinary-cases-section">
-        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <span>🏛️</span> Official Inquiries & Appeals
-        </h3>
-        <div id="student-disciplinary-cases-container" class="space-y-3">
-          <div class="p-4 text-center text-slate-500 text-xs">Loading inquiry records...</div>
-        </div>
-      </section>
+      <!-- Hidden tables for false alarm and inquiries data binding -->
+      <div class="hidden">
+        <table><tbody id="student-false-alarm-table-body"></tbody></table>
+        <div id="student-disciplinary-cases-container"></div>
+      </div>
 
     </div>
 
   </main>
 
-  <!-- MOBILE BOTTOM NAVIGATION (Fixed, accessible, intuitive) -->
-  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 flex items-center justify-around py-2 px-1 shadow-md">
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 flex items-center justify-around py-1.5 px-1 shadow-sm">
     <button type="button" id="mobile-tab-btn-sos" onclick="window.csStudent.switchTab('sos')" 
-            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-red-600 transition font-bold text-[10px]">
-      <span class="text-xl">🚨</span>
+            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-red-600 font-bold text-[10px]">
+      <span class="text-lg">🚨</span>
       <span class="mt-0.5">SOS</span>
     </button>
     <button type="button" id="mobile-tab-btn-safewalk" onclick="window.csStudent.switchTab('safewalk')" 
-            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 transition font-medium text-[10px]">
-      <span class="text-xl">🚶</span>
+            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 font-medium text-[10px]">
+      <span class="text-lg">🚶</span>
       <span class="mt-0.5">Safe Walk</span>
     </button>
     <button type="button" id="mobile-tab-btn-hotlines" onclick="window.csStudent.switchTab('hotlines')" 
-            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 transition font-medium text-[10px]">
-      <span class="text-xl">📞</span>
+            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 font-medium text-[10px]">
+      <span class="text-lg">📞</span>
       <span class="mt-0.5">Hotlines</span>
     </button>
     <button type="button" id="mobile-tab-btn-status" onclick="window.csStudent.switchTab('status')" 
-            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 transition font-medium text-[10px]">
-      <span class="text-xl">📋</span>
-      <span class="mt-0.5">My Status</span>
+            class="mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 font-medium text-[10px]">
+      <span class="text-lg">📋</span>
+      <span class="mt-0.5">Activity</span>
     </button>
   </nav>
-
-  <!-- FOOTER -->
-  <footer class="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500">
-    <p>CampusShield • Kongu Engineering College Campus Safety & Emergency Response</p>
-  </footer>
 
   <!-- Scripts -->
   <script type="module" src="./js/api.js"></script>

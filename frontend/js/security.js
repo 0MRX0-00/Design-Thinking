@@ -1648,7 +1648,7 @@ export async function toggleMapTileLayer() {
 export function setQueueFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.queue-filter-btn').forEach((btn) => {
-    btn.classList.toggle('bg-blue-600', btn.dataset.filter === filter);
+    btn.classList.toggle('bg-[#1E3A5F]', btn.dataset.filter === filter);
     btn.classList.toggle('text-white', btn.dataset.filter === filter);
     btn.classList.toggle('shadow-xs', btn.dataset.filter === filter);
     btn.classList.toggle('bg-slate-100', btn.dataset.filter !== filter);

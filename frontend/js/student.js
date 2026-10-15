@@ -2171,16 +2171,16 @@ export function switchTab(tabName) {
     }
     if (deskBtn) {
       if (t === tabName) {
-        deskBtn.className = 'student-tab-btn px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer';
+        deskBtn.className = 'student-tab-btn flex-1 py-2 rounded-md bg-[#1E3A5F] text-white shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer font-bold text-xs';
       } else {
-        deskBtn.className = 'student-tab-btn px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-semibold text-xs transition flex items-center gap-2 cursor-pointer';
+        deskBtn.className = 'student-tab-btn flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 cursor-pointer font-semibold text-xs';
       }
     }
     if (mobBtn) {
       if (t === tabName) {
-        mobBtn.className = 'mobile-tab-btn flex-1 py-2 flex flex-col items-center justify-center text-rose-400 transition font-bold text-[10px] cursor-pointer';
+        mobBtn.className = 'mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center ' + (t === 'sos' ? 'text-red-600' : 'text-[#1E3A5F]') + ' font-bold text-[10px] cursor-pointer';
       } else {
-        mobBtn.className = 'mobile-tab-btn flex-1 py-2 flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 transition font-medium text-[10px] cursor-pointer';
+        mobBtn.className = 'mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 transition font-medium text-[10px] cursor-pointer';
       }
     }
   });

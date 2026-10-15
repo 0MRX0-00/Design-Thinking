@@ -6,8 +6,6 @@
   <title>CampusShield — Sign In</title>
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#1E3A5F" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,8 +17,7 @@
             brand: {
               navy: '#1E3A5F',
               blue: '#2563EB',
-              emergency: '#DC2626',
-              surface: '#F8FAFC'
+              emergency: '#DC2626'
             }
           }
         }
@@ -29,106 +26,81 @@
   </script>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
-<body class="bg-[#F8FAFC] text-slate-900 min-h-screen flex flex-col justify-between antialiased selection:bg-blue-100 selection:text-blue-900">
-
-  <!-- TOP MINIMAL INSTITUTIONAL BAR -->
-  <header class="border-b border-slate-200 bg-white px-4 py-2.5">
-    <div class="max-w-5xl mx-auto flex items-center justify-between text-xs">
-      <div class="flex items-center gap-2 text-slate-600 font-medium">
-        <span class="text-blue-600 font-bold">🏫 Kongu Engineering College</span>
-        <span class="text-slate-300">|</span>
-        <span class="hidden sm:inline text-slate-500">Autonomous Safety & Emergency Grid</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <!-- Backend Status Indicator -->
-        <div id="backend-status-badge" onclick="window.csApi?.showBackendSettingsModal()" class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition text-[11px] font-medium" title="Connection Settings">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span class="font-mono text-[10px]" id="login-server-name">Online</span>
-        </div>
-        <a href="tel:+919443311223" class="hidden sm:flex items-center gap-1 font-semibold text-red-600 hover:text-red-700">
-          <span>📞 Control Room:</span>
-          <span class="font-mono">+91 94433 11223</span>
-        </a>
-      </div>
-    </div>
-  </header>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col justify-between antialiased selection:bg-blue-100 selection:text-blue-900">
 
   <!-- MAIN CENTERED AUTHENTICATION CARD -->
   <main class="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-sm">
 
       <!-- Brand Header -->
       <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-3xl shadow-sm mb-3">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-2xl shadow-xs mb-3 text-[#1E3A5F]">
           🛡️
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1E3A5F] tracking-tight">
+        <h1 class="text-2xl font-bold text-[#1E3A5F] tracking-tight">
           CampusShield
         </h1>
-        <p class="text-sm font-medium text-slate-500 mt-1">
+        <p class="text-xs text-slate-500 mt-1">
           Campus Safety & Emergency Response
         </p>
       </div>
 
       <!-- Authentication Box -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-5">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-4">
         
         <!-- Portal Role Selector Tabs -->
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-            Select Portal
-          </label>
-          <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
+          <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg text-xs font-semibold">
             <button type="button" id="tab-student" onclick="selectRole('student')" 
-                    class="role-tab-btn py-2 px-1 rounded-lg text-center transition text-white bg-[#2563EB] shadow-sm">
-              🎓 Student
+                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-white bg-[#1E3A5F] shadow-xs">
+              Student
             </button>
             <button type="button" id="tab-security" onclick="selectRole('security')" 
-                    class="role-tab-btn py-2 px-1 rounded-lg text-center transition text-slate-600 hover:text-slate-900 hover:bg-slate-200/60">
-              👮 Security
+                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900">
+              Security
             </button>
             <button type="button" id="tab-admin" onclick="selectRole('admin')" 
-                    class="role-tab-btn py-2 px-1 rounded-lg text-center transition text-slate-600 hover:text-slate-900 hover:bg-slate-200/60">
-              ⚙️ Admin
+                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900">
+              Admin
             </button>
           </div>
         </div>
 
         <!-- Alert / Feedback Banner -->
-        <div id="auth-alert-banner" class="hidden p-3 rounded-xl text-xs font-medium border flex items-start gap-2">
+        <div id="auth-alert-banner" class="hidden p-3 rounded-lg text-xs font-medium border flex items-start gap-2">
           <span id="auth-alert-icon" class="text-base shrink-0">⚠️</span>
           <div id="auth-alert-msg" class="flex-1"></div>
         </div>
 
         <!-- Login Form -->
-        <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-3.5">
           
           <!-- Email / Identifier -->
           <div>
-            <label id="credential-label" for="login-credential" class="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label id="credential-label" for="login-credential" class="block text-xs font-semibold text-slate-700 mb-1">
               Email or Roll Number
             </label>
             <input type="text" id="login-credential" required autocomplete="username"
-                   placeholder="e.g. sumanth@kongu.edu or 25ITR146"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                   placeholder="e.g. student@college.edu or 22CS001"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F] transition" />
           </div>
 
           <!-- Password -->
           <div>
-            <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center justify-between mb-1">
               <label for="login-password" class="block text-xs font-semibold text-slate-700">
                 Password
               </label>
-              <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">
-                Forgot password?
+              <button type="button" onclick="openForgotPasswordModal()" class="text-xs text-[#2563EB] hover:underline">
+                Forgot?
               </button>
             </div>
             <div class="relative">
               <input type="password" id="login-password" required autocomplete="current-password"
-                     placeholder="Enter your password"
-                     class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition pr-10" />
+                     placeholder="Enter password"
+                     class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F] transition pr-9" />
               <button type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password"
-                      class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm">
+                      class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-sm">
                 <span id="password-toggle-icon">👁️</span>
               </button>
             </div>
@@ -136,44 +108,42 @@
 
           <!-- Submit Button -->
           <button type="submit" id="login-submit-btn"
-                  class="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-sm hover:shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                  class="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#152843] text-white font-semibold text-sm rounded-lg shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
             <span id="login-btn-text">Sign In</span>
             <div id="login-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </button>
         </form>
 
-        <!-- Quick 1-Click Demo Profiles (For Professor Evaluation) -->
-        <div class="pt-4 border-t border-slate-100 space-y-2">
-          <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-            <span>Quick Demo Credentials</span>
-            <span class="text-blue-600 font-semibold">1-Click Auto Fill</span>
+        <!-- Quick 1-Click Demo Profiles for Professors -->
+        <div class="pt-3 border-t border-slate-100">
+          <div class="text-[11px] text-slate-500 font-medium mb-1.5 text-center">
+            Demo Login Accounts:
           </div>
-          <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <div class="grid grid-cols-3 gap-1 text-xs">
             <button type="button" onclick="quickFillPersona('student')" 
-                    class="py-2 px-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 text-center font-semibold transition">
-              🎓 Student
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+              Student
             </button>
             <button type="button" onclick="quickFillPersona('security')" 
-                    class="py-2 px-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 text-center font-semibold transition">
-              👮 Security
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+              Security
             </button>
             <button type="button" onclick="quickFillPersona('admin')" 
-                    class="py-2 px-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 text-center font-semibold transition">
-              ⚙️ Admin
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+              Admin
             </button>
           </div>
         </div>
 
       </div>
 
-      <!-- Discreet Security & Policy Footer -->
-      <div class="text-center mt-6 text-xs text-slate-500 space-y-1">
-        <p class="flex items-center justify-center gap-1.5 font-medium">
-          <span>🔒</span> Protected by Kongu Engineering College Safety Protocols
-        </p>
-        <p class="text-[11px] text-slate-400">
-          Authorized institutional access only. All actions are logged and audited.
-        </p>
+      <!-- Discreet Footer -->
+      <div class="text-center mt-5 text-xs text-slate-400 flex items-center justify-center gap-2">
+        <span>🔒 Secure Campus Safety System</span>
+        <!-- Hidden backend status badge for API discovery -->
+        <div id="backend-status-badge" onclick="window.csApi?.showBackendSettingsModal()" class="cursor-pointer">
+          <span id="login-server-name" class="hidden">Online</span>
+        </div>
       </div>
 
     </div>
@@ -181,30 +151,29 @@
 
   <!-- PASSWORD RECOVERY MODAL -->
   <div id="forgot-password-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-    <div class="bg-white max-w-md w-full p-6 rounded-2xl border border-slate-200 shadow-xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-          <span>🔑</span> Password Recovery
+    <div class="bg-white max-w-sm w-full p-5 rounded-xl border border-slate-200 shadow-md space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="text-sm font-bold text-slate-900">
+          Reset Password
         </h3>
-        <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-slate-600 text-base font-bold">✕</button>
+        <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
       </div>
       <p class="text-xs text-slate-600">
-        Enter your registered institutional email or ID to generate a secure password reset token.
+        Enter your institutional email or ID to generate a reset token.
       </p>
       <form onsubmit="handleForgotPassword(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Institutional Email or ID</label>
           <input type="text" id="forgot-credential" required
-                 placeholder="e.g. sumanth@kongu.edu"
-                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500" />
+                 placeholder="e.g. student@college.edu"
+                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#1E3A5F]" />
         </div>
-        <div id="forgot-alert-box" class="hidden p-3 rounded-xl text-xs border"></div>
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button type="button" onclick="closeForgotPasswordModal()" class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">
+        <div id="forgot-alert-box" class="hidden p-2.5 rounded-lg text-xs border"></div>
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="closeForgotPasswordModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">
             Cancel
           </button>
-          <button type="submit" id="forgot-submit-btn" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm">
-            Generate Reset Token
+          <button type="submit" id="forgot-submit-btn" class="px-3 py-1.5 text-xs font-semibold text-white bg-[#1E3A5F] hover:bg-[#152843] rounded-lg">
+            Submit
           </button>
         </div>
       </form>
@@ -224,9 +193,9 @@
         const btn = document.getElementById(`tab-${r}`);
         if (!btn) return;
         if (r === role) {
-          btn.className = 'role-tab-btn py-2 px-1 rounded-lg text-center transition text-white bg-[#2563EB] shadow-sm font-semibold';
+          btn.className = 'role-tab-btn py-2 px-1 rounded-md text-center transition text-white bg-[#1E3A5F] shadow-xs font-semibold';
         } else {
-          btn.className = 'role-tab-btn py-2 px-1 rounded-lg text-center transition text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 font-semibold';
+          btn.className = 'role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900 font-semibold';
         }
       });
 
@@ -235,115 +204,120 @@
       if (label && input) {
         if (role === 'student') {
           label.innerText = 'Email or Student Roll Number';
-          input.placeholder = 'e.g. sumanth@kongu.edu or 25ITR146';
+          input.placeholder = 'e.g. student@college.edu or 22CS001';
         } else if (role === 'security') {
           label.innerText = 'Officer Email or Badge ID';
-          input.placeholder = 'e.g. security.raman@campusshield.kec.edu or SEC-KEC-001';
-        } else {
-          label.innerText = 'Administrator Email or ID';
-          input.placeholder = 'e.g. admin@campusshield.kec.edu or ADMIN-KEC-01';
+          input.placeholder = 'e.g. security@college.edu or SEC-001';
+        } else if (role === 'admin') {
+          label.innerText = 'Admin Email or Administrator ID';
+          input.placeholder = 'e.g. admin@college.edu or ADM-001';
         }
+      }
+    };
+
+    window.quickFillPersona = function(role) {
+      selectRole(role);
+      const credInput = document.getElementById('login-credential');
+      const passInput = document.getElementById('login-password');
+      if (!credInput || !passInput) return;
+
+      if (role === 'student') {
+        credInput.value = 'student@campusshield.edu';
+        passInput.value = 'student123';
+      } else if (role === 'security') {
+        credInput.value = 'security@campusshield.edu';
+        passInput.value = 'security123';
+      } else if (role === 'admin') {
+        credInput.value = 'admin@campusshield.edu';
+        passInput.value = 'admin123';
       }
     };
 
     window.togglePasswordVisibility = function() {
-      const pass = document.getElementById('login-password');
+      const input = document.getElementById('login-password');
       const icon = document.getElementById('password-toggle-icon');
-      if (!pass) return;
-      if (pass.type === 'password') {
-        pass.type = 'text';
-        if (icon) icon.innerText = '🙈';
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerText = '🔒';
       } else {
-        pass.type = 'password';
-        if (icon) icon.innerText = '👁️';
-      }
-    };
-
-    window.quickFillPersona = function(personaKey) {
-      const p = window.csAuth?.DEMO_PERSONAS?.[personaKey];
-      if (!p) return;
-      if (p.role === 'admin' || p.role === 'faculty') selectRole('admin');
-      else if (p.role === 'security') selectRole('security');
-      else selectRole('student');
-
-      document.getElementById('login-credential').value = p.identifier || p.email;
-      document.getElementById('login-password').value = p.password;
-    };
-
-    window.handleFormSubmit = async function(e) {
-      e.preventDefault();
-      const credential = document.getElementById('login-credential').value.trim();
-      const password = document.getElementById('login-password').value;
-      const btn = document.getElementById('login-submit-btn');
-      const btnText = document.getElementById('login-btn-text');
-      const spinner = document.getElementById('login-spinner');
-      const alertBox = document.getElementById('auth-alert-banner');
-      const alertMsg = document.getElementById('auth-alert-msg');
-
-      if (!credential || !password) return;
-
-      btn.disabled = true;
-      btnText.innerText = 'Verifying...';
-      spinner.classList.remove('hidden');
-      alertBox.classList.add('hidden');
-
-      try {
-        const res = await window.csAuth.login(credential, password, currentRole);
-        if (res && res.redirectUrl) {
-          btnText.innerText = 'Redirecting...';
-          window.location.replace(res.redirectUrl);
-        }
-      } catch (err) {
-        btn.disabled = false;
-        btnText.innerText = 'Sign In';
-        spinner.classList.add('hidden');
-
-        alertBox.className = 'p-3 rounded-xl text-xs font-medium border flex items-start gap-2 bg-red-50 border-red-200 text-red-800';
-        alertMsg.innerText = err.message || 'Authentication failed. Please verify credentials.';
-        alertBox.classList.remove('hidden');
+        input.type = 'password';
+        icon.innerText = '👁️';
       }
     };
 
     window.openForgotPasswordModal = function() {
-      document.getElementById('forgot-password-modal').classList.remove('hidden');
+      document.getElementById('forgot-password-modal')?.classList.remove('hidden');
     };
+
     window.closeForgotPasswordModal = function() {
-      document.getElementById('forgot-password-modal').classList.add('hidden');
+      document.getElementById('forgot-password-modal')?.classList.add('hidden');
     };
 
     window.handleForgotPassword = async function(e) {
       e.preventDefault();
-      const credential = document.getElementById('forgot-credential').value.trim();
-      const alertEl = document.getElementById('forgot-alert-box');
+      const cred = document.getElementById('forgot-credential')?.value?.trim();
+      const alertBox = document.getElementById('forgot-alert-box');
       const btn = document.getElementById('forgot-submit-btn');
-
-      if (!credential) return;
-      btn.disabled = true;
-      btn.innerText = 'Requesting...';
+      if (!cred || !alertBox || !btn) return;
 
       try {
-        const res = await window.csAuth.forgotPassword(credential);
-        alertEl.className = 'p-3 rounded-xl text-xs border bg-green-50 border-green-200 text-green-800';
-        alertEl.innerHTML = `<strong>Recovery Token Generated:</strong><br><code class="font-mono bg-white px-2 py-1 rounded border border-green-300 block my-1">${res.resetToken || 'TOKEN-SENT'}</code>Use this token to reset your password.`;
-        alertEl.classList.remove('hidden');
+        btn.disabled = true;
+        btn.innerText = 'Generating...';
+        const res = await window.csAuth.forgotPassword(cred);
+        alertBox.className = 'p-2.5 rounded-lg text-xs border border-emerald-300 bg-emerald-50 text-emerald-800';
+        alertBox.innerHTML = `<strong>Token generated:</strong> <code class="font-mono bg-white px-1 py-0.5 rounded border">${res.resetToken || 'TOKEN-SENT'}</code><br><span class="text-[11px] text-slate-500">Use this token to reset your password.</span>`;
+        alertBox.classList.remove('hidden');
       } catch (err) {
-        alertEl.className = 'p-3 rounded-xl text-xs border bg-red-50 border-red-200 text-red-800';
-        alertEl.innerText = err.message || 'Unable to request password token.';
-        alertEl.classList.remove('hidden');
+        alertBox.className = 'p-2.5 rounded-lg text-xs border border-red-300 bg-red-50 text-red-800';
+        alertBox.innerText = err.message || 'Could not initiate reset.';
+        alertBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.innerText = 'Generate Reset Token';
+        btn.innerText = 'Submit';
       }
     };
 
-    // Auto-check session on load
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        if (window.csAuth?.initAuth) {
-          await window.csAuth.initAuth();
+    window.handleFormSubmit = async function(e) {
+      e.preventDefault();
+      const banner = document.getElementById('auth-alert-banner');
+      const bannerMsg = document.getElementById('auth-alert-msg');
+      const spinner = document.getElementById('login-spinner');
+      const btnText = document.getElementById('login-btn-text');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      if (banner) banner.classList.add('hidden');
+
+      const credential = document.getElementById('login-credential')?.value?.trim();
+      const password = document.getElementById('login-password')?.value;
+
+      if (!credential || !password) {
+        if (banner && bannerMsg) {
+          bannerMsg.innerText = 'Please enter both your identifier and password.';
+          banner.className = 'p-3 rounded-lg text-xs font-medium border border-amber-300 bg-amber-50 text-amber-900 flex items-start gap-2';
+          banner.classList.remove('hidden');
         }
-      } catch {}
-    });
+        return;
+      }
+
+      try {
+        if (spinner) spinner.classList.remove('hidden');
+        if (btnText) btnText.innerText = 'Signing in...';
+        if (submitBtn) submitBtn.disabled = true;
+
+        await window.csAuth.login(credential, password, currentRole);
+      } catch (err) {
+        if (banner && bannerMsg) {
+          bannerMsg.innerText = err.message || 'Authentication failed. Please verify credentials.';
+          banner.className = 'p-3 rounded-lg text-xs font-medium border border-red-300 bg-red-50 text-red-900 flex items-start gap-2';
+          banner.classList.remove('hidden');
+        }
+      } finally {
+        if (spinner) spinner.classList.add('hidden');
+        if (btnText) btnText.innerText = 'Sign In';
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    };
   </script>
 </body>
 </html>
