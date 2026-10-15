@@ -1,6 +1,6 @@
 // CampusShield Socket.IO Real-Time Client Integration
 import { api, showToast } from './api.js';
-import { triggerEmergencyPushNotification } from './pushNotification.js';
+import { triggerEmergencyPushNotification, isCommandCentreContext } from './pushNotification.js';
 
 let socket = null;
 const listeners = new Map();
@@ -72,12 +72,13 @@ export async function initSocket() {
         incident.severity === 'critical' ? 'critical' : 'warning'
       );
 
-      // Trigger native System Push Notification + Sound Siren + Vibration
+      // Trigger native System Push Notification (Audible for Command Centre, Silent for Student)
+      const isCmd = isCommandCentreContext();
       triggerEmergencyPushNotification({
         title: `🚨 ${incident.severity === 'critical' ? 'CRITICAL EMERGENCY' : 'CAMPUS ALERT'} - ${incident.category}`,
         body: `Location: ${incident.location?.campusLocation || 'Kongu Campus'}. Immediate response mobilized.`,
         incident,
-        sound: true,
+        sound: isCmd,
         vibrate: true
       });
 
@@ -98,10 +99,11 @@ export async function initSocket() {
 
       // If notification indicates emergency / dispatch / responder update, trigger push
       if (notif.priority === 'urgent' || notif.title?.includes('Emergency') || notif.title?.includes('Dispatched') || notif.title?.includes('SOS')) {
+        const isCmd = isCommandCentreContext();
         triggerEmergencyPushNotification({
           title: notif.title || '🚨 CampusShield Emergency Update',
           body: notif.message,
-          sound: true,
+          sound: isCmd,
           vibrate: true
         });
       }

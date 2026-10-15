@@ -6,6 +6,45 @@ let audioCtx = null;
 let isChannelCreated = false;
 
 /**
+ * Determines whether the current view / session is Security Command Centre / Admin.
+ * Returns true strictly for Command Centre (security.html, admin.html, or role 'security'/'admin').
+ * Returns false for the Student Section (student.html, index.html, or role 'student').
+ */
+export function isCommandCentreContext() {
+  if (typeof window === 'undefined') return false;
+
+  const pathname = (window.location.pathname || '').toLowerCase();
+  // Student section URL patterns MUST NOT be treated as Command Centre
+  if (pathname.includes('student.html') || pathname.endsWith('/student')) {
+    return false;
+  }
+
+  // Explicit Command Centre / Admin URL patterns
+  if (
+    pathname.includes('security.html') ||
+    pathname.includes('admin.html') ||
+    pathname.endsWith('/security') ||
+    pathname.endsWith('/admin')
+  ) {
+    return true;
+  }
+
+  // Check authenticated user role stored in localStorage
+  try {
+    const raw = localStorage.getItem('cs_user');
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user.role === 'student') return false;
+      if (user.role === 'security' || user.role === 'admin' || user.role === 'dispatcher') {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
+/**
  * Returns the native Capacitor LocalNotifications plugin if available.
  */
 function getCapacitorLocalNotifications() {
@@ -29,11 +68,11 @@ export async function initPushNotifications() {
       const perm = await localNotif.requestPermissions();
       console.log('[CampusShield Push] Native permission status:', perm.display);
 
-      // Create High-Priority Heads-Up Notification Channel for Android
+      // Create High-Priority Audible Notification Channel for Security Command Centre
       await localNotif.createChannel({
         id: 'campusshield_emergency',
-        name: 'CampusShield Emergency Alerts',
-        description: 'Critical distress alerts, security broadcasts, and responder arrival notifications',
+        name: 'CampusShield Command Centre Siren',
+        description: 'Critical distress alerts & audible dispatch siren for Security Command Centre',
         importance: 5, // IMPORTANCE_HIGH (Shows heads-up banner and plays sound)
         visibility: 1, // VISIBILITY_PUBLIC (Shows on lockscreen)
         sound: 'beep.wav',
@@ -41,8 +80,22 @@ export async function initPushNotifications() {
         lights: true,
         lightColor: '#e11d48'
       });
+
+      // Create Silent Notification Channel for Student Section (Visual banner & buzz only, NO SOUND)
+      await localNotif.createChannel({
+        id: 'campusshield_student_silent',
+        name: 'CampusShield Student Alerts (Silent)',
+        description: 'Safety alerts, responder arrival updates, and advisories for students (no loud siren)',
+        importance: 4, // IMPORTANCE_HIGH (Shows heads-up banner, silent)
+        visibility: 1,
+        sound: undefined,
+        vibration: true,
+        lights: true,
+        lightColor: '#0ea5e9'
+      });
+
       isChannelCreated = true;
-      console.log('[CampusShield Push] Android emergency heads-up channel registered.');
+      console.log('[CampusShield Push] Android notification channels registered (Audible for Command Centre, Silent for Student).');
     } catch (err) {
       console.warn('[CampusShield Push] Android native channel setup error:', err.message);
     }
@@ -67,6 +120,7 @@ export async function initPushNotifications() {
  */
 export async function requestNotificationPermission() {
   const localNotif = getCapacitorLocalNotifications();
+  const isCommandCentre = isCommandCentreContext();
 
   // 1. Android Native Flow
   if (localNotif) {
@@ -77,9 +131,11 @@ export async function requestNotificationPermission() {
       if (res.display === 'granted') {
         showToast('Notifications Active ✅', 'Native Android push alerts enabled!', 'success');
         triggerEmergencyPushNotification({
-          title: '🛡️ CampusShield Notifications Active',
-          body: 'Emergency alerts and quick responder updates will pop up on your mobile.',
-          sound: false,
+          title: isCommandCentre ? '🛡️ Command Centre Push Active' : '🛡️ Student Safety Alerts Active',
+          body: isCommandCentre
+            ? 'Emergency distress dispatch and sirens will sound on this terminal.'
+            : 'Safety updates and responder status will pop up on your mobile.',
+          sound: false, // Initial confirmation is gentle
           vibrate: true
         });
         return true;
@@ -103,10 +159,12 @@ export async function requestNotificationPermission() {
     updateNotificationUiBadge();
 
     if (permission === 'granted') {
-      showToast('Notifications Active ✅', 'You will receive instant system push alerts for emergencies!', 'success');
+      showToast('Notifications Active ✅', 'System push alerts enabled!', 'success');
       triggerEmergencyPushNotification({
-        title: '🛡️ CampusShield Notifications Enabled',
-        body: 'Emergency alerts and dispatch updates will now push directly to this device.',
+        title: isCommandCentre ? '🛡️ Command Centre Push Active' : '🛡️ Student Safety Alerts Active',
+        body: isCommandCentre
+          ? 'Emergency alerts and sirens will sound on this device.'
+          : 'Safety advisories and responder updates will push to this device.',
         sound: false,
         vibrate: false
       });
@@ -123,7 +181,7 @@ export async function requestNotificationPermission() {
 
 /**
  * Dispatches a native System Push Notification to the user's phone / desktop.
- * Pops up as an Android heads-up notification banner with sound and vibration!
+ * Audible siren plays strictly for Command Centre. Student Section receives silent heads-up alerts.
  */
 export async function triggerEmergencyPushNotification({
   title = '🚨 CRITICAL CAMPUS EMERGENCY',
@@ -132,17 +190,25 @@ export async function triggerEmergencyPushNotification({
   sound = true,
   vibrate = true
 }) {
-  console.log('[CampusShield Push] Triggering notification popup:', title);
+  const isCommandCentre = isCommandCentreContext();
+  // Notification sound is strictly enabled ONLY for Command Centre, never for Student Section
+  const shouldPlaySound = isCommandCentre && sound !== false;
 
-  // 1. Play Emergency Acoustic Siren
-  if (sound) {
-    playEmergencyAlarm();
+  console.log(`[CampusShield Push] Triggering notification popup [Context: ${isCommandCentre ? 'COMMAND_CENTRE (Sound: ON)' : 'STUDENT_SECTION (Sound: OFF)'}]:`, title);
+
+  // 1. Play Emergency Acoustic Siren (Command Centre only)
+  if (shouldPlaySound) {
+    playEmergencyAlarm(true);
   }
 
-  // 2. Hardware Vibration for mobile devices
+  // 2. Mobile vibration (gentle pulse for student, siren pulse for command centre)
   if (vibrate && 'vibrate' in navigator) {
     try {
-      navigator.vibrate([500, 150, 500, 150, 800]);
+      if (isCommandCentre) {
+        navigator.vibrate([500, 150, 500, 150, 800]);
+      } else {
+        navigator.vibrate([250, 100, 250]);
+      }
     } catch {}
   }
 
@@ -151,23 +217,28 @@ export async function triggerEmergencyPushNotification({
   if (localNotif) {
     try {
       const notifId = Math.floor(Math.random() * 900000) + 100000;
+      const channelId = shouldPlaySound ? 'campusshield_emergency' : 'campusshield_student_silent';
+      const notificationConfig = {
+        title: title || (isCommandCentre ? '🚨 CampusShield Emergency Alert' : '🛡️ CampusShield Safety Update'),
+        body: body || 'Immediate campus safety alert requires your attention.',
+        id: notifId,
+        channelId: channelId,
+        schedule: { at: new Date(Date.now() + 50) }, // Instant (50ms)
+        actionTypeId: '',
+        extra: {
+          incidentId: incident?.incidentId || null,
+          isCommandCentre
+        }
+      };
+
+      if (shouldPlaySound) {
+        notificationConfig.sound = 'beep.wav';
+      }
+
       await localNotif.schedule({
-        notifications: [
-          {
-            title: title || '🚨 CampusShield Emergency Alert',
-            body: body || 'Immediate campus safety alert requires your attention.',
-            id: notifId,
-            channelId: 'campusshield_emergency',
-            schedule: { at: new Date(Date.now() + 50) }, // Instant (50ms)
-            sound: 'beep.wav',
-            actionTypeId: '',
-            extra: {
-              incidentId: incident?.incidentId || null
-            }
-          }
-        ]
+        notifications: [notificationConfig]
       });
-      console.log('[CampusShield Push] Native Android popup scheduled successfully!');
+      console.log(`[CampusShield Push] Native Android popup scheduled (${channelId}):`, title);
       return;
     } catch (capErr) {
       console.warn('[CampusShield Push] Native Android local-notification error:', capErr.message);
@@ -181,11 +252,12 @@ export async function triggerEmergencyPushNotification({
       icon: './icons/icon.svg',
       badge: './icons/icon.svg',
       tag: incident?.incidentId || 'campusshield-emergency',
-      requireInteraction: true,
+      requireInteraction: isCommandCentre,
       renotify: true,
-      vibrate: [500, 150, 500, 150, 800],
+      silent: !shouldPlaySound,
+      vibrate: isCommandCentre ? [500, 150, 500, 150, 800] : [250, 100, 250],
       data: {
-        url: incident?.role === 'security' ? '/security.html' : '/student.html',
+        url: isCommandCentre ? '/security.html' : '/student.html',
         incidentId: incident?.incidentId
       }
     };
@@ -209,8 +281,15 @@ export async function triggerEmergencyPushNotification({
 /**
  * Web Audio API Acoustic Siren
  * Generates an unmistakable emergency dispatch tone without relying on external MP3 files.
+ * GUARANTEED: Will NEVER play sound in the Student Section unless force=true is explicitly passed.
  */
-export function playEmergencyAlarm() {
+export function playEmergencyAlarm(force = false) {
+  // CRITICAL REQUIREMENT: Sound siren must NOT sound from the student section!
+  if (!force && !isCommandCentreContext()) {
+    console.log('[CampusShield Audio] Siren sound suppressed: Active section is Student Portal.');
+    return;
+  }
+
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
@@ -260,24 +339,35 @@ export async function updateNotificationUiBadge() {
   if (!badge) return;
 
   const localNotif = getCapacitorLocalNotifications();
+  const isCommandCentre = isCommandCentreContext();
 
-  // If inside Android App
+  // 1. Check Native Android Permission first
   if (localNotif) {
     try {
-      const perm = await localNotif.checkPermissions();
-      if (perm.display === 'granted') {
+      const status = await localNotif.checkPermissions();
+      if (status.display === 'granted') {
         badge.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span class="text-emerald-300 font-mono text-[11px] font-bold">PUSH ACTIVE 🔔</span>
         `;
         badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs cursor-pointer';
-        badge.title = 'Native push notifications are active on your mobile';
+        badge.title = isCommandCentre
+          ? 'Command Centre push & siren active'
+          : 'Student safety notifications active (silent alerts)';
         badge.onclick = () => {
-          showToast('Notifications Active', 'Mobile push alerts are active. Sending test notification...', 'success');
+          showToast(
+            'Notifications Active',
+            isCommandCentre
+              ? 'Command Centre emergency siren and dispatch alerts are active.'
+              : 'Student safety notifications are active (silent alerts).',
+            'success'
+          );
           triggerEmergencyPushNotification({
-            title: '🔔 CampusShield Alert Test',
-            body: 'Native mobile notifications are working perfectly on this device!',
-            sound: true,
+            title: isCommandCentre ? '🚨 Command Centre Alert Test' : '🛡️ Student Safety Notification',
+            body: isCommandCentre
+              ? 'Command Centre audible siren and alert notifications are working!'
+              : 'Student silent alert banners are working perfectly on this device!',
+            sound: isCommandCentre,
             vibrate: true
           });
         };
@@ -295,7 +385,7 @@ export async function updateNotificationUiBadge() {
     } catch {}
   }
 
-  // Web Browser fallback
+  // 2. Web Browser Fallback
   if (!('Notification' in window)) {
     badge.classList.add('hidden');
     return;
@@ -307,10 +397,20 @@ export async function updateNotificationUiBadge() {
       <span class="text-emerald-300 font-mono text-[11px] font-bold">PUSH ACTIVE</span>
     `;
     badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs cursor-pointer';
-    badge.title = 'Push notifications are enabled on this device';
+    badge.title = isCommandCentre
+      ? 'Push notifications and siren enabled on this device'
+      : 'Push notifications enabled on this device (silent alerts)';
     badge.onclick = () => {
-      showToast('Notifications Active', 'This device receives immediate push notifications for emergencies.', 'success');
-      playEmergencyAlarm();
+      showToast(
+        'Notifications Active',
+        isCommandCentre
+          ? 'Command Centre receives audible emergency push alerts.'
+          : 'Student section receives silent safety push notifications.',
+        'success'
+      );
+      if (isCommandCentre) {
+        playEmergencyAlarm(true);
+      }
     };
   } else if (Notification.permission === 'denied') {
     badge.innerHTML = `
@@ -339,5 +439,6 @@ window.csPush = {
   requestNotificationPermission,
   triggerEmergencyPushNotification,
   playEmergencyAlarm,
+  isCommandCentreContext,
   updateNotificationUiBadge
 };
