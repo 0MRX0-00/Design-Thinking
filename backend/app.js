@@ -74,8 +74,21 @@ app.use('/api/safewalk', safewalkRoutes);
 app.use('/api/false-alarms', falseAlarmRoutes);
 app.use('/api/disciplinary-cases', disciplinaryRoutes);
 
-// Serve frontend static files
+// PWA Manifest and Service Worker routes
 const frontendPath = path.join(__dirname, '../frontend');
+
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(frontendPath, 'sw.js'));
+});
+
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(frontendPath, 'manifest.json'));
+});
+
+// Serve frontend static files
 app.use(express.static(frontendPath));
 
 // Fallback for HTML routing

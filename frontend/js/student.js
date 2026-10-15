@@ -2,6 +2,7 @@
 import { api, showToast } from './api.js';
 import { initSocket, subscribe } from './socket.js';
 import { getCurrentUser, initAuth, logout } from './auth.js';
+import { initPushNotifications } from './pushNotification.js';
 
 let userGps = { latitude: null, longitude: null, accuracy: null, status: 'prompt' };
 let activeIncident = null;
@@ -14,6 +15,7 @@ let myDisciplinaryCases = [];
 document.addEventListener('DOMContentLoaded', async () => {
   await initAuth('student');
   await initSocket();
+  await initPushNotifications();
 
   // If user is not logged in, prompt or offer student demo
   const user = getCurrentUser();

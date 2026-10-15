@@ -2,6 +2,7 @@
 import { api, showToast } from './api.js';
 import { initSocket, subscribe } from './socket.js';
 import { getCurrentUser, initAuth, logout } from './auth.js';
+import { initPushNotifications } from './pushNotification.js';
 
 let incidents = [];
 let selectedIncident = null;
@@ -12,6 +13,7 @@ let currentFilter = 'ALL';
 document.addEventListener('DOMContentLoaded', async () => {
   await initAuth('security');
   await initSocket();
+  await initPushNotifications();
 
   const logoutBtn = document.getElementById('auth-logout-btn');
   if (logoutBtn) {

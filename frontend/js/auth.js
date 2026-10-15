@@ -81,6 +81,15 @@ export async function initAuth(requiredRole = null) {
   const isLoginPage = currentPath === '/' || currentPath === '/login' || currentPath.endsWith('index.html') || currentPath.endsWith('login.html');
 
   const token = api.getToken();
+  const cachedUserStr = localStorage.getItem('cs_user');
+
+  // Pre-load cached session immediately to prevent screen blink or premature redirects
+  if (token && cachedUserStr) {
+    try {
+      currentUser = JSON.parse(cachedUserStr);
+      updateAuthUI(currentUser);
+    } catch {}
+  }
 
   if (token) {
     try {
@@ -111,10 +120,23 @@ export async function initAuth(requiredRole = null) {
         return currentUser;
       }
     } catch (err) {
-      console.warn('[CampusShield Auth] Token validation failed:', err.message);
-      api.setToken(null);
-      localStorage.removeItem('cs_user');
-      currentUser = null;
+      console.warn('[CampusShield Auth] Network/Token check deferred:', err.message);
+
+      // Only terminate session if backend explicitly rejected with 401 Unauthorized (invalid/deleted account)
+      if (err.status === 401 && (err.data?.message?.includes('expired') || err.data?.message?.includes('Invalid') || err.data?.message?.includes('no longer exists'))) {
+        api.setToken(null);
+        localStorage.removeItem('cs_user');
+        currentUser = null;
+      } else if (currentUser) {
+        // Retain session indefinitely across device restarts, network switches, or offline app usage
+        console.log('[CampusShield Auth] Retaining persistent local session for:', currentUser.name);
+        if (isLoginPage) {
+          const redirectUrl = getQueryParam('redirect') || getDashboardUrl(currentUser.role);
+          window.location.replace(redirectUrl);
+          return currentUser;
+        }
+        return currentUser;
+      }
     }
   }
 

@@ -1,0 +1,37 @@
+{
+  "name": "CampusShield - Kongu Safety & Emergency App",
+  "short_name": "CampusShield",
+  "description": "Smart Campus Safety, Emergency SOS, and Instant Dispatch System for Kongu Engineering College",
+  "start_url": "/student",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "lang": "en-US",
+  "categories": ["education", "security", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Trigger SOS Distress Alert",
+      "short_name": "SOS",
+      "description": "Immediately trigger critical emergency alert to campus security",
+      "url": "/student?action=sos",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Start SafeWalk Companion",
+      "short_name": "SafeWalk",
+      "description": "Start live monitored virtual escort walk across campus",
+      "url": "/student?action=safewalk",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    }
+  ]
+}

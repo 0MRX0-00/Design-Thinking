@@ -2,6 +2,7 @@
 import { api, showToast } from './api.js';
 import { initSocket, subscribe } from './socket.js';
 import { getCurrentUser, initAuth, logout } from './auth.js';
+import { initPushNotifications } from './pushNotification.js';
 
 let allUsers = [];
 let auditLogs = [];
@@ -10,6 +11,7 @@ let adminStats = null;
 document.addEventListener('DOMContentLoaded', async () => {
   await initAuth('admin');
   await initSocket();
+  await initPushNotifications();
 
   const user = getCurrentUser();
   if (!user || user.role !== 'admin') {

@@ -1,5 +1,6 @@
 // CampusShield Socket.IO Real-Time Client Integration
 import { api, showToast } from './api.js';
+import { triggerEmergencyPushNotification } from './pushNotification.js';
 
 let socket = null;
 const listeners = new Map();
@@ -67,9 +68,19 @@ export async function initSocket() {
       console.log('[CampusShield RealTime] New incident received:', incident);
       showToast(
         '🚨 EMERGENCY ALERT SUBMITTED',
-        `[${incident.incidentId}] ${incident.category} at ${incident.location?.campusLocation}`,
+        `[${incident.incidentId}] ${incident.category} at ${incident.location?.campusLocation || 'Campus Zone'}`,
         incident.severity === 'critical' ? 'critical' : 'warning'
       );
+
+      // Trigger native System Push Notification + Sound Siren + Vibration
+      triggerEmergencyPushNotification({
+        title: `🚨 ${incident.severity === 'critical' ? 'CRITICAL EMERGENCY' : 'CAMPUS ALERT'} - ${incident.category}`,
+        body: `Location: ${incident.location?.campusLocation || 'Kongu Campus'}. Immediate response mobilized.`,
+        incident,
+        sound: true,
+        vibrate: true
+      });
+
       notifySubscribers('incident:created', incident);
     });
 
@@ -84,6 +95,17 @@ export async function initSocket() {
 
     socket.on('notification:new', (notif) => {
       showToast(notif.title || 'Notification', notif.message, 'info');
+
+      // If notification indicates emergency / dispatch / responder update, trigger push
+      if (notif.priority === 'urgent' || notif.title?.includes('Emergency') || notif.title?.includes('Dispatched') || notif.title?.includes('SOS')) {
+        triggerEmergencyPushNotification({
+          title: notif.title || '🚨 CampusShield Emergency Update',
+          body: notif.message,
+          sound: true,
+          vibrate: true
+        });
+      }
+
       notifySubscribers('notification:new', notif);
     });
 
