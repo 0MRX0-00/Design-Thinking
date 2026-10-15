@@ -143,12 +143,12 @@ function renderCategoryDistribution(categories) {
     const pct = Math.round((cat.count / max) * 100);
     return `
       <div class="space-y-1 text-xs">
-        <div class="flex justify-between text-slate-300">
-          <span class="font-semibold">${cat.category}</span>
-          <span class="font-mono text-cyan-400">${cat.count}</span>
+        <div class="flex justify-between text-slate-700 font-medium">
+          <span>${cat.category}</span>
+          <span class="font-mono text-blue-700 font-bold">${cat.count}</span>
         </div>
-        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-          <div class="h-full bg-cyan-500 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <div class="h-full bg-blue-600 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
         </div>
       </div>
     `;
@@ -160,9 +160,9 @@ function renderSeverityDistribution(severities) {
   if (!container) return;
 
   container.innerHTML = severities.map((s) => `
-    <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-center">
-      <div class="text-xs uppercase font-bold text-slate-400 mb-1">${s.severity}</div>
-      <div class="text-lg font-black text-white font-mono">${s.count}</div>
+    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+      <div class="text-xs uppercase font-semibold text-slate-500 mb-1">${s.severity}</div>
+      <div class="text-lg font-bold text-slate-900 font-mono">${s.count}</div>
     </div>
   `).join('');
 }
@@ -211,15 +211,15 @@ export function renderUsersTable() {
   }
 
   container.innerHTML = filtered.map((u) => `
-    <tr class="border-b border-slate-800/80 hover:bg-slate-800/30 text-xs">
+    <tr class="border-b border-slate-200 hover:bg-slate-50 text-xs transition">
       <td class="p-3.5">
-        <div class="font-bold text-white">${u.name}</div>
-        <div class="text-[11px] text-slate-400 font-mono">${u.email}</div>
+        <div class="font-bold text-slate-900">${u.name}</div>
+        <div class="text-[11px] text-slate-500 font-mono">${u.email}</div>
       </td>
-      <td class="p-3.5 font-mono text-cyan-300">${u.identifier || '—'}</td>
+      <td class="p-3.5 font-mono text-slate-700">${u.identifier || '—'}</td>
       <td class="p-3.5">
         <select onchange="window.csAdmin.updateRole('${u._id}', this.value)" 
-                class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white font-mono">
+                class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-medium">
           <option value="student" ${u.role === 'student' ? 'selected' : ''}>Student</option>
           <option value="faculty" ${u.role === 'faculty' ? 'selected' : ''}>Faculty</option>
           <option value="security" ${u.role === 'security' ? 'selected' : ''}>Security</option>
@@ -227,13 +227,13 @@ export function renderUsersTable() {
         </select>
       </td>
       <td class="p-3.5">
-        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-          u.accountStatus === 'active' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-rose-950 text-rose-300 border border-rose-700'
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+          u.accountStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'
         }">${u.accountStatus}</span>
       </td>
       <td class="p-3.5 text-right">
         <button onclick="window.csAdmin.toggleUserStatus('${u._id}', '${u.accountStatus}')" 
-                class="px-2.5 py-1 text-xs border border-slate-700 rounded-lg hover:bg-slate-800 text-slate-300">
+                class="px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium cursor-pointer transition">
           ${u.accountStatus === 'active' ? 'Suspend' : 'Activate'}
         </button>
       </td>
@@ -282,17 +282,17 @@ export async function loadAuditLogs() {
       }
 
       container.innerHTML = auditLogs.map((log) => `
-        <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs space-y-1">
-          <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span class="font-mono font-bold text-cyan-400">${log.action}</span>
-            <span class="font-mono text-slate-500">${new Date(log.timestamp).toLocaleString()}</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span class="font-mono font-bold text-blue-700">${log.action}</span>
+            <span class="font-mono text-slate-400">${new Date(log.timestamp).toLocaleString()}</span>
           </div>
-          <div class="text-slate-300">
-            Actor: <strong class="text-white">${log.actorName || 'System'}</strong> (${log.actorRole}) • Target: <span class="text-amber-300 font-mono">${log.entityType} ${log.entityId}</span>
+          <div class="text-slate-700">
+            Actor: <strong class="text-slate-900">${log.actorName || 'System'}</strong> (${log.actorRole}) • Target: <span class="text-amber-800 font-mono">${log.entityType} ${log.entityId}</span>
           </div>
           ${
             log.metadata && Object.keys(log.metadata).length > 0
-              ? `<pre class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono overflow-x-auto">${JSON.stringify(log.metadata, null, 2)}</pre>`
+              ? `<pre class="bg-white p-2 rounded border border-slate-200 text-[10px] text-slate-600 font-mono overflow-x-auto">${JSON.stringify(log.metadata, null, 2)}</pre>`
               : ''
           }
         </div>
@@ -312,13 +312,13 @@ export async function loadEmergencyContactsAdmin() {
     const res = await api.get('/api/admin/contacts');
     if (res.success && res.contacts) {
       container.innerHTML = res.contacts.map((c) => `
-        <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+        <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition">
           <div>
-            <div class="font-bold text-white">${c.name}</div>
-            <div class="text-[11px] text-cyan-400">${c.role} • 📞 ${c.phone}</div>
+            <div class="font-bold text-slate-900">${c.name}</div>
+            <div class="text-[11px] text-blue-600">${c.role} • <span class="font-mono text-emerald-700 font-semibold">📞 ${c.phone}</span></div>
             <div class="text-[10px] text-slate-500">📍 ${c.location}</div>
           </div>
-          <button onclick="window.csAdmin.deleteContact('${c._id}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold px-2 py-1">
+          <button onclick="window.csAdmin.deleteContact('${c._id}')" class="text-red-600 hover:text-red-700 text-xs font-semibold px-2 py-1 cursor-pointer">
             ✕ Delete
           </button>
         </div>
@@ -476,34 +476,34 @@ function renderStudentSafetyTable(records) {
   tableBody.innerHTML = records.map((s) => {
     const countBadge =
       s.confirmedFalseAlarms >= 4
-        ? 'bg-rose-950 text-rose-300 border-rose-600 animate-pulse font-black'
+        ? 'bg-red-50 text-red-700 border-red-300 font-bold'
         : s.confirmedFalseAlarms === 3
-        ? 'bg-amber-950 text-amber-300 border-amber-600 font-bold'
+        ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold'
         : s.confirmedFalseAlarms === 2
-        ? 'bg-yellow-950 text-yellow-300 border-yellow-600 font-bold'
-        : 'bg-slate-900 text-slate-300 border-slate-700';
+        ? 'bg-amber-50 text-amber-700 border-amber-200 font-semibold'
+        : 'bg-slate-50 text-slate-700 border-slate-200';
 
     const sosBadge =
       s.sosAccessStatus === 'active'
-        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-700">Active</span>'
-        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-950 text-rose-300 border border-rose-600 animate-pulse">Suspended</span>';
+        ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>'
+        : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">Suspended</span>';
 
     const discBadge =
       s.disciplinaryStatus === 'None'
-        ? '<span class="text-slate-500 text-[11px]">—</span>'
+        ? '<span class="text-slate-400 text-[11px]">—</span>'
         : s.disciplinaryStatus === 'Resolved'
-        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">${s.disciplinaryStatus}</span>`
-        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-700">${s.disciplinaryStatus}</span>`;
+        ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">${s.disciplinaryStatus}</span>`
+        : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">${s.disciplinaryStatus}</span>`;
 
     const lastDate = s.lastIncidentDate ? new Date(s.lastIncidentDate).toLocaleDateString() : 'None';
 
     return `
-      <tr class="border-b border-slate-800/80 hover:bg-slate-800/30 text-xs">
+      <tr class="border-b border-slate-200 hover:bg-slate-50 text-xs transition">
         <td class="p-3.5">
-          <div class="font-bold text-white">${s.name}</div>
-          <div class="text-[11px] text-slate-400 font-mono">${s.identifier} • ${s.email}</div>
+          <div class="font-bold text-slate-900">${s.name}</div>
+          <div class="text-[11px] text-slate-500 font-mono">${s.identifier} • ${s.email}</div>
         </td>
-        <td class="p-3.5 text-slate-300">${s.department}</td>
+        <td class="p-3.5 text-slate-700">${s.department}</td>
         <td class="p-3.5">
           <span class="px-2.5 py-1 rounded-lg text-xs font-mono border ${countBadge}">
             ${s.confirmedFalseAlarms} Confirmed
@@ -512,25 +512,25 @@ function renderStudentSafetyTable(records) {
         <td class="p-3.5">${sosBadge}</td>
         <td class="p-3.5">
           ${discBadge}
-          ${s.disciplinaryCaseId ? `<div class="text-[10px] text-cyan-400 font-mono mt-0.5">${s.disciplinaryCaseId}</div>` : ''}
+          ${s.disciplinaryCaseId ? `<div class="text-[10px] text-blue-600 font-mono mt-0.5">${s.disciplinaryCaseId}</div>` : ''}
         </td>
-        <td class="p-3.5 text-slate-400 font-mono text-[11px]">${lastDate}</td>
+        <td class="p-3.5 text-slate-500 font-mono text-[11px]">${lastDate}</td>
         <td class="p-3.5 text-right space-x-1">
           <button onclick="window.csAdmin.openStudentDossierModal('${s._id}')" 
                   title="View full incident & evidence history"
-                  class="px-2 py-1 text-xs border border-slate-700 rounded-lg hover:bg-slate-800 text-cyan-300">
+                  class="px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-100 text-blue-700 font-medium cursor-pointer transition">
             Dossier
           </button>
           <button onclick="window.csAdmin.openAddAdminNoteModal('${s._id}', '${s.name.replace(/'/g, "\\'")}')" 
                   title="Record administrative proctorial note"
-                  class="px-2 py-1 text-xs border border-slate-700 rounded-lg hover:bg-slate-800 text-slate-300">
+                  class="px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium cursor-pointer transition">
             + Note
           </button>
           ${
             s.sosAccessStatus === 'restricted'
               ? `<button onclick="window.csAdmin.openRestoreSosModal('${s._id}', '${s.name.replace(/'/g, "\\'")}')" 
                          title="Restore SOS alert privileges"
-                         class="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow">
+                         class="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs cursor-pointer transition">
                    Restore SOS
                  </button>`
               : ''
@@ -568,7 +568,7 @@ function renderDisciplinaryCasesTable(cases) {
   if (cases.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="7" class="p-6 text-center text-slate-500 text-xs italic">
+        <td colspan="7" class="p-6 text-center text-slate-500 text-xs">
           No disciplinary committee cases recorded under current filter.
         </td>
       </tr>
@@ -583,43 +583,43 @@ function renderDisciplinaryCasesTable(cases) {
     const meetingStr = c.meetingDate ? new Date(c.meetingDate).toLocaleString() : 'Not Scheduled';
 
     const statusBadgeColor = isResolved
-      ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
-      : 'bg-purple-950 text-purple-300 border-purple-700';
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : 'bg-purple-50 text-purple-700 border-purple-200';
 
     return `
-      <tr class="border-b border-slate-800/80 hover:bg-slate-800/30 text-xs">
-        <td class="p-3.5 font-mono font-bold text-rose-400">${c.caseId}</td>
+      <tr class="border-b border-slate-200 hover:bg-slate-50 text-xs transition">
+        <td class="p-3.5 font-mono font-bold text-slate-900">${c.caseId}</td>
         <td class="p-3.5">
-          <div class="font-bold text-white">${studentName}</div>
-          <div class="text-[11px] text-slate-400 font-mono">${studentIdStr}</div>
+          <div class="font-bold text-slate-900">${studentName}</div>
+          <div class="text-[11px] text-slate-500 font-mono">${studentIdStr}</div>
         </td>
         <td class="p-3.5">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${statusBadgeColor}">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${statusBadgeColor}">
             ${c.caseStatus}
           </span>
         </td>
-        <td class="p-3.5 text-slate-300 font-mono text-[11px]">
-          <div>${meetingStr}</div>
+        <td class="p-3.5 text-slate-700 text-[11px]">
+          <div class="font-semibold">${meetingStr}</div>
           <div class="text-[10px] text-slate-500 truncate max-w-[150px]">${c.meetingLocation || 'Committee Chamber'}</div>
         </td>
-        <td class="p-3.5 max-w-xs text-slate-300">
-          ${c.studentResponse ? `<span class="italic text-slate-200">"${c.studentResponse}"</span>` : '<span class="text-slate-500 italic">No representation submitted</span>'}
+        <td class="p-3.5 max-w-xs text-slate-700">
+          ${c.studentResponse ? `<span class="italic text-slate-800">"${c.studentResponse}"</span>` : '<span class="text-slate-400 italic">No representation submitted</span>'}
         </td>
         <td class="p-3.5 max-w-xs">
           ${
             c.finalDecision
-              ? `<div class="font-bold text-emerald-300">${c.finalDecision}</div>
+              ? `<div class="font-bold text-emerald-800">${c.finalDecision}</div>
                  <div class="text-[10px] text-slate-500">By ${c.deciderName || 'Committee'}</div>`
-              : '<span class="text-amber-400/90 italic font-mono text-[11px]">Hearing Pending</span>'
+              : '<span class="text-amber-700 italic font-mono text-[11px]">Hearing Pending</span>'
           }
         </td>
         <td class="p-3.5 text-right space-x-1">
           <button onclick="window.csAdmin.openUpdateCaseModal('${c.caseId}')" 
-                  class="px-2 py-1 text-xs border border-slate-700 rounded-lg hover:bg-slate-800 text-purple-300">
+                  class="px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-blue-50 text-blue-700 font-medium cursor-pointer transition">
             Schedule / Status
           </button>
           <button onclick="window.csAdmin.openRecordDecisionModal('${c.caseId}')" 
-                  class="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg shadow">
+                  class="px-2.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-xs cursor-pointer transition">
             Record Decision
           </button>
         </td>
@@ -636,43 +636,43 @@ export function openRestoreSosModal(studentId, studentName) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'admin-action-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl w-full max-w-md p-6 shadow-2xl relative my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl relative my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">🔓</span>
           <div>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Restore SOS Alert Access</h3>
-            <p class="text-xs text-slate-400 font-mono">${studentName}</p>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Restore SOS Alert Access</h3>
+            <p class="text-xs text-slate-500 font-mono">${studentName}</p>
           </div>
         </div>
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
       </div>
 
       <div class="space-y-3 text-xs mb-4">
-        <p class="text-slate-300 leading-relaxed">
-          Restoring SOS privileges will re-enable the student's ability to trigger campus emergency alerts. In compliance with security governance, a mandatory administrative override justification must be recorded in the permanent audit trail.
+        <p class="text-slate-600 leading-relaxed">
+          Restoring SOS privileges will re-enable the student's ability to trigger campus emergency alerts. A mandatory administrative justification must be recorded in the audit trail.
         </p>
 
         <div>
-          <label class="block font-bold text-slate-200 mb-1">
-            Mandatory Administrative Override Reason <span class="text-rose-400">*</span>
+          <label class="block font-bold text-slate-700 mb-1">
+            Administrative Override Justification <span class="text-red-600">*</span>
           </label>
           <textarea id="restore-reason-input" rows="3" 
-                    placeholder="e.g. Student completed mandatory awareness counseling; proctor recommendation approved; false alarm review upheld..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"></textarea>
+                    placeholder="e.g. Student completed mandatory awareness counseling; proctor recommendation approved..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500"></textarea>
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csAdmin.submitRestoreSos('${studentId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+        <button onclick="window.csAdmin.submitRestoreSos('${studentId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Confirm & Restore Access
         </button>
       </div>
@@ -710,36 +710,36 @@ export function openAddAdminNoteModal(studentId, studentName) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'admin-action-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl relative my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">📝</span>
           <div>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Record Administrative Note</h3>
-            <p class="text-xs text-slate-400 font-mono">${studentName}</p>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Record Administrative Note</h3>
+            <p class="text-xs text-slate-500 font-mono">${studentName}</p>
           </div>
         </div>
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
       </div>
 
       <div class="space-y-3 text-xs mb-4">
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Administrative / Proctor Note</label>
-          <textarea id="admin-note-input" rows="3" placeholder="Enter notes from student interview, advisor consultation, or behavioral assessment..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">Administrative / Proctorial Note</label>
+          <textarea id="admin-note-input" rows="3" placeholder="Enter notes from student consultation or counseling..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500"></textarea>
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csAdmin.submitAdminNote('${studentId}')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow transition">
+        <button onclick="window.csAdmin.submitAdminNote('${studentId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Save Note
         </button>
       </div>
@@ -774,13 +774,13 @@ export async function openStudentDossierModal(studentId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'admin-action-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative my-auto">
-      <div class="text-center py-8 text-xs text-slate-400">Loading student dossier...</div>
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-xl relative my-auto">
+      <div class="text-center py-8 text-xs text-slate-500">Loading student dossier...</div>
     </div>
   `;
 
@@ -790,57 +790,57 @@ export async function openStudentDossierModal(studentId) {
       const { student, records, safetyStatus, disciplinaryCases } = res;
 
       modal.innerHTML = `
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-xl relative my-auto max-h-[90vh] overflow-y-auto space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500 flex items-center justify-center text-xl">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl text-blue-700">
                 👤
               </div>
               <div>
-                <h3 class="text-base font-bold text-white">${student.name}</h3>
-                <p class="text-xs text-slate-400 font-mono">${student.identifier} • ${student.department} • ${student.email}</p>
+                <h3 class="text-base font-bold text-slate-900">${student.name}</h3>
+                <p class="text-xs text-slate-500 font-mono">${student.identifier} • ${student.department} • ${student.email}</p>
               </div>
             </div>
-            <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-white text-lg">✕</button>
+            <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
           </div>
 
           <!-- Status Overview -->
-          <div class="grid grid-cols-3 gap-3 text-xs bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+          <div class="grid grid-cols-3 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div>
               <span class="text-slate-500 block">Confirmed Alarms:</span>
-              <strong class="text-rose-400 text-sm font-mono">${safetyStatus.confirmedIntentionalFalseAlarmCount}</strong>
+              <strong class="text-red-700 text-sm font-mono">${safetyStatus.confirmedIntentionalFalseAlarmCount}</strong>
             </div>
             <div>
               <span class="text-slate-500 block">Warning Tier:</span>
-              <strong class="text-amber-400 text-sm font-mono">${safetyStatus.warningLevel}</strong>
+              <strong class="text-amber-700 text-sm font-mono">${safetyStatus.warningLevel}</strong>
             </div>
             <div>
               <span class="text-slate-500 block">SOS Privilege:</span>
-              <strong class="${safetyStatus.sosAccessStatus === 'active' ? 'text-emerald-400' : 'text-rose-400 font-bold'} text-sm font-mono">${safetyStatus.sosAccessStatus.toUpperCase()}</strong>
+              <strong class="${safetyStatus.sosAccessStatus === 'active' ? 'text-emerald-700' : 'text-red-700 font-bold'} text-sm font-mono">${safetyStatus.sosAccessStatus.toUpperCase()}</strong>
             </div>
           </div>
 
           <!-- Verified Incident History -->
           <div class="space-y-2">
-            <div class="text-xs font-bold text-white uppercase tracking-wider">
+            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
               Verified False Alarm Records (${records.length})
             </div>
             ${
               records.length === 0
-                ? '<div class="text-xs text-slate-500 italic p-3 bg-slate-950 rounded-lg">No false alarm records.</div>'
+                ? '<div class="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">No false alarm records.</div>'
                 : records
                     .map(
                       (r) => `
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
                   <div class="flex justify-between items-center text-[11px]">
-                    <span class="font-mono font-bold text-cyan-300">${r.incidentId}</span>
+                    <span class="font-mono font-bold text-slate-900">${r.incidentId}</span>
                     <span class="font-bold px-2 py-0.5 rounded ${
-                      r.classification === 'False Alarm — Intentional' ? 'bg-rose-950 text-rose-300 border border-rose-700' : 'bg-slate-900 text-slate-300'
+                      r.classification === 'False Alarm — Intentional' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white text-slate-700 border border-slate-200'
                     }">${r.classification}</span>
                   </div>
-                  <p class="text-slate-300">${r.investigationNotes || 'No notes.'}</p>
-                  ${r.evidenceReferences ? `<div class="text-[10px] text-slate-400">Evidence: ${r.evidenceReferences}</div>` : ''}
-                  <div class="text-[10px] text-slate-500">Verified by: ${r.verifierName || 'Security'} • ${new Date(r.verifiedAt).toLocaleString()}</div>
+                  <p class="text-slate-700">${r.investigationNotes || 'No notes logged.'}</p>
+                  ${r.evidenceReferences ? `<div class="text-[10px] text-slate-500">Evidence: ${r.evidenceReferences}</div>` : ''}
+                  <div class="text-[10px] text-slate-400">Verified by: ${r.verifierName || 'Security'} • ${new Date(r.verifiedAt).toLocaleDateString()}</div>
                 </div>
               `
                     )
@@ -849,23 +849,23 @@ export async function openStudentDossierModal(studentId) {
           </div>
 
           <!-- Disciplinary Cases -->
-          <div class="space-y-2 pt-2 border-t border-slate-800">
-            <div class="text-xs font-bold text-white uppercase tracking-wider">
+          <div class="space-y-2 pt-2 border-t border-slate-200">
+            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
               Disciplinary Committee Proceedings (${disciplinaryCases.length})
             </div>
             ${
               disciplinaryCases.length === 0
-                ? '<div class="text-xs text-slate-500 italic p-3 bg-slate-950 rounded-lg">No disciplinary cases filed.</div>'
+                ? '<div class="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">No disciplinary cases filed.</div>'
                 : disciplinaryCases
                     .map(
                       (c) => `
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1.5">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
                   <div class="flex justify-between">
-                    <span class="font-mono font-bold text-rose-400">${c.caseId}</span>
-                    <span class="text-purple-300 font-bold">${c.caseStatus}</span>
+                    <span class="font-mono font-bold text-slate-900">${c.caseId}</span>
+                    <span class="text-blue-700 font-semibold">${c.caseStatus}</span>
                   </div>
-                  ${c.studentResponse ? `<div class="bg-slate-900 p-2 rounded text-[11px] text-slate-300"><strong>Student Appeal:</strong> "${c.studentResponse}"</div>` : ''}
-                  ${c.finalDecision ? `<div class="bg-emerald-950/60 p-2 rounded border border-emerald-700 text-emerald-200"><strong>Outcome:</strong> ${c.finalDecision}</div>` : ''}
+                  ${c.studentResponse ? `<div class="bg-white p-2 rounded border border-slate-200 text-[11px] text-slate-700"><strong>Student Appeal:</strong> "${c.studentResponse}"</div>` : ''}
+                  ${c.finalDecision ? `<div class="bg-emerald-50 p-2 rounded border border-emerald-200 text-emerald-800"><strong>Outcome:</strong> ${c.finalDecision}</div>` : ''}
                 </div>
               `
                     )
@@ -873,8 +873,8 @@ export async function openStudentDossierModal(studentId) {
             }
           </div>
 
-          <div class="flex justify-end pt-3 border-t border-slate-800">
-            <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs">
+          <div class="flex justify-end pt-3 border-t border-slate-200">
+            <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs cursor-pointer transition">
               Close Dossier
             </button>
           </div>
@@ -897,29 +897,29 @@ export function openUpdateCaseModal(caseId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'admin-action-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   const dateVal = c.meetingDate ? new Date(c.meetingDate).toISOString().slice(0, 16) : '';
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-purple-500/60 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl relative my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">🏛️</span>
           <div>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Update Disciplinary Case</h3>
-            <p class="text-xs text-slate-400 font-mono">${caseId}</p>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Update Disciplinary Case</h3>
+            <p class="text-xs text-slate-500 font-mono">${caseId}</p>
           </div>
         </div>
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
       </div>
 
       <div class="space-y-3 text-xs mb-4">
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Advance Status Lifecycle</label>
-          <select id="update-case-status-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+          <label class="block font-bold text-slate-700 mb-1">Advance Status Lifecycle</label>
+          <select id="update-case-status-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
             <option value="Case Created" ${c.caseStatus === 'Case Created' ? 'selected' : ''}>1. Case Created</option>
             <option value="Awaiting Committee Review" ${c.caseStatus === 'Awaiting Committee Review' ? 'selected' : ''}>2. Awaiting Committee Review</option>
             <option value="Meeting Scheduled" ${c.caseStatus === 'Meeting Scheduled' ? 'selected' : ''}>3. Meeting Scheduled</option>
@@ -931,29 +931,29 @@ export function openUpdateCaseModal(caseId) {
         </div>
 
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Scheduled Hearing Date & Time</label>
+          <label class="block font-bold text-slate-700 mb-1">Scheduled Hearing Date & Time</label>
           <input type="datetime-local" id="update-case-date-input" value="${dateVal}"
-                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800" />
         </div>
 
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Hearing Location</label>
+          <label class="block font-bold text-slate-700 mb-1">Hearing Location</label>
           <input type="text" id="update-case-loc-input" value="${c.meetingLocation || 'Campus Disciplinary Committee Chamber (Admin Block 204)'}"
-                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800" />
         </div>
 
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Committee Notes</label>
+          <label class="block font-bold text-slate-700 mb-1">Committee Notes</label>
           <textarea id="update-case-notes-input" rows="2.5" placeholder="Hearing findings, committee members present..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white">${c.committeeNotes || ''}</textarea>
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800">${c.committeeNotes || ''}</textarea>
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csAdmin.submitUpdateCase('${caseId}')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow transition">
+        <button onclick="window.csAdmin.submitUpdateCase('${caseId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Update Case
         </button>
       </div>
@@ -996,27 +996,27 @@ export function openRecordDecisionModal(caseId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'admin-action-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl relative my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">📋</span>
           <div>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Record Final Committee Decision</h3>
-            <p class="text-xs text-slate-400 font-mono">${caseId}</p>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Record Final Committee Decision</h3>
+            <p class="text-xs text-slate-500 font-mono">${caseId}</p>
           </div>
         </div>
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</button>
       </div>
 
       <div class="space-y-3 text-xs mb-4">
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Standard Outcome Category</label>
-          <select id="decision-outcome-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+          <label class="block font-bold text-slate-700 mb-1">Standard Outcome Category</label>
+          <select id="decision-outcome-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
             <option value="Formal warning">Formal warning</option>
             <option value="Mandatory awareness session">Mandatory awareness session</option>
             <option value="Probation or institution-approved disciplinary action">Probation or institution-approved disciplinary action</option>
@@ -1027,17 +1027,17 @@ export function openRecordDecisionModal(caseId) {
         </div>
 
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Official Decision Notes & Directives</label>
+          <label class="block font-bold text-slate-700 mb-1">Official Decision Notes & Directives</label>
           <textarea id="decision-notes-input" rows="3" placeholder="Explain the committee's deliberation, hearing findings, and any conditions for privilege reinstatement..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"></textarea>
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500"></textarea>
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('admin-action-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csAdmin.submitRecordDecision('${caseId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition">
+        <button onclick="window.csAdmin.submitRecordDecision('${caseId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Finalize & Execute Decision
         </button>
       </div>

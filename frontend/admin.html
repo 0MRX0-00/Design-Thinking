@@ -1,107 +1,92 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CampusShield — Administration & System Governance</title>
+  <title>CampusShield — Administration & Safety Governance</title>
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#1E3A5F" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            tactical: {
-              950: '#070a13',
-              900: '#0d1322',
-              850: '#121a2e',
-              800: '#18233e',
-              700: '#1e2c4a',
-              600: '#2c4270'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <link rel="stylesheet" href="./css/styles.css" />
   <script src="./js/socket.io.min.js"></script>
 </head>
-<body class="bg-[#070a13] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-purple-500 selection:text-white">
+<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900">
 
-  <!-- TOP ADMIN BAR -->
-  <header class="border-b border-slate-800 bg-[#0d1322]/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+  <!-- TOP APP BAR -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-40 px-4 py-3 shadow-xs">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       
       <!-- Brand & Institution -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/50 flex items-center justify-center text-2xl shadow-lg shadow-purple-950/50">
-          👑
+        <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl shadow-xs">
+          🏛️
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-base font-black tracking-wider text-white">CAMPUSSHIELD</h1>
-            <span class="text-[10px] font-mono uppercase bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded font-bold">
-              ADMINISTRATION
+            <h1 class="text-base font-bold tracking-tight text-[#1E3A5F]">CampusShield</h1>
+            <span class="text-[10px] font-mono uppercase bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
+              Administration
             </span>
           </div>
-          <p class="text-[11px] text-slate-400">
-            Kongu Engineering College • Campus Safety Governance & Analytics
+          <p class="text-xs text-slate-500">
+            Campus Safety Governance, Disciplinary & Audit Control
           </p>
         </div>
       </div>
 
       <!-- Navigation Portals -->
-      <nav class="flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-        <a href="security.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
+      <nav class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+        <a href="security.html" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5">
           <span>🚨</span> Command Center
         </a>
-        <a href="student.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5">
-          <span>📱</span> Student Safety
+        <a href="student.html" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5">
+          <span>📱</span> Student Portal
         </a>
-        <a href="admin.html" class="px-3 py-1.5 rounded-lg bg-purple-600 text-white shadow-sm flex items-center gap-1.5">
+        <a href="admin.html" class="px-3.5 py-1.5 rounded-lg bg-white text-blue-700 shadow-xs border border-slate-200/80 flex items-center gap-1.5 font-bold">
           <span>⚙️</span> Administration
         </a>
       </nav>
 
-      <!-- System Status & Demo Persona Switcher -->
-      <div class="flex items-center gap-3">
+      <!-- System Status & Admin Profile -->
+      <div class="flex items-center gap-2.5">
         <!-- Backend Status -->
-        <div id="backend-status-badge" class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-emerald-300 font-mono font-bold text-[11px]">BACKEND CONNECTED</span>
+        <div id="backend-status-badge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="text-emerald-700 font-semibold text-[11px]">System Online</span>
         </div>
 
         <!-- Socket Status -->
-        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
-          <span id="socket-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="socket-status-text" class="text-slate-300 font-mono font-bold text-[11px]">ONLINE</span>
+        <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs">
+          <span id="socket-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="socket-status-text" class="text-slate-600 font-medium text-[11px]">Online</span>
         </div>
 
-        <!-- Native Push Notification Status -->
-        <div id="push-notification-badge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/80 text-xs cursor-pointer">
-          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-          <span class="text-cyan-300 font-mono font-bold text-[11px]">🔔 ENABLE APP PUSH</span>
+        <!-- Native Push Notification Toggle -->
+        <div id="push-notification-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span class="text-blue-700 font-semibold text-[11px]">🔔 Push Alerts</span>
         </div>
 
         <!-- Profile Badge -->
-        <div id="auth-profile-badge" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-          <div class="w-6 h-6 rounded-full bg-purple-600/30 border border-purple-500 flex items-center justify-center font-bold text-[10px] text-purple-300" id="user-avatar-initials">
+        <div id="auth-profile-badge" class="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+          <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]" id="user-avatar-initials">
             AD
           </div>
-          <span id="user-display-name" class="font-bold text-white max-w-[120px] truncate">Admin</span>
+          <span id="user-display-name" class="font-bold text-slate-800 max-w-[120px] truncate">Admin</span>
         </div>
 
         <!-- Sign Out Button -->
         <button id="auth-logout-btn" 
                 onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
-                class="px-3 py-1.5 text-xs text-rose-400 hover:text-white hover:bg-rose-950/70 rounded-lg border border-rose-900/60 font-semibold flex items-center gap-1 transition cursor-pointer">
+                class="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-red-200 font-semibold flex items-center gap-1 transition cursor-pointer">
           <span>🚪</span> Sign Out
         </button>
       </div>
@@ -109,62 +94,62 @@
   </header>
 
   <!-- MAIN ADMIN DASHBOARD -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
     
     <!-- System Health Banner -->
-    <div class="tactical-glass p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 border border-slate-800 text-xs">
-      <div class="flex items-center gap-4">
+    <div class="bg-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 border border-slate-200 shadow-xs text-xs">
+      <div class="flex flex-wrap items-center gap-4">
         <div>
-          <span class="text-slate-500 block text-[10px] uppercase font-mono">DATABASE ENGINE</span>
-          <span id="admin-db-status" class="text-emerald-400 font-bold">ONLINE (MongoDB Connected)</span>
+          <span class="text-slate-500 block text-[10px] uppercase font-semibold">DATABASE STATUS</span>
+          <span id="admin-db-status" class="text-emerald-700 font-bold">ONLINE (MongoDB Connected)</span>
         </div>
-        <div class="h-6 w-px bg-slate-800"></div>
+        <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
         <div>
-          <span class="text-slate-500 block text-[10px] uppercase font-mono">SERVER UPTIME</span>
-          <span id="admin-uptime-status" class="text-slate-200 font-mono font-bold">Active</span>
+          <span class="text-slate-500 block text-[10px] uppercase font-semibold">SERVER UPTIME</span>
+          <span id="admin-uptime-status" class="text-slate-800 font-mono font-bold">Active</span>
         </div>
-        <div class="h-6 w-px bg-slate-800"></div>
+        <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
         <div>
-          <span class="text-slate-500 block text-[10px] uppercase font-mono">SECURITY PROTOCOL</span>
-          <span class="text-cyan-400 font-mono font-bold">RBAC Strict + Rate Limiter</span>
+          <span class="text-slate-500 block text-[10px] uppercase font-semibold">SECURITY PROTOCOL</span>
+          <span class="text-blue-700 font-semibold">RBAC Strict + Rate Limiter</span>
         </div>
       </div>
 
-      <button onclick="window.csAdmin.loadAdminDashboard()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition">
+      <button onclick="window.csAdmin.loadAdminDashboard()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
         <span>🔄</span> Refresh Telemetry
       </button>
     </div>
 
-    <!-- METRIC CARDS -->
-    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <div class="p-4 tactical-glass rounded-2xl border border-slate-800">
-        <span class="text-slate-500 text-[10px] uppercase font-mono block">TOTAL INCIDENTS</span>
-        <div id="admin-stat-total" class="text-2xl font-black text-white font-mono mt-1">0</div>
+    <!-- METRIC SUMMARY CARDS -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <span class="text-slate-500 text-[10px] uppercase font-semibold block">TOTAL INCIDENTS</span>
+        <div id="admin-stat-total" class="text-2xl font-bold text-slate-900 font-mono mt-1">0</div>
         <span class="text-[10px] text-slate-400">All-time logged</span>
       </div>
-      <div class="p-4 tactical-glass rounded-2xl border border-rose-900/40">
-        <span class="text-rose-400 text-[10px] uppercase font-mono block">ACTIVE ALERTS</span>
-        <div id="admin-stat-active" class="text-2xl font-black text-rose-400 font-mono mt-1">0</div>
+      <div class="p-4 bg-white rounded-2xl border border-red-200 shadow-xs">
+        <span class="text-red-700 text-[10px] uppercase font-semibold block">ACTIVE ALERTS</span>
+        <div id="admin-stat-active" class="text-2xl font-bold text-red-600 font-mono mt-1">0</div>
         <span class="text-[10px] text-slate-400">Under response</span>
       </div>
-      <div class="p-4 tactical-glass rounded-2xl border border-amber-900/40">
-        <span class="text-amber-400 text-[10px] uppercase font-mono block">CRITICAL SEVERITY</span>
-        <div id="admin-stat-critical" class="text-2xl font-black text-amber-400 font-mono mt-1">0</div>
+      <div class="p-4 bg-white rounded-2xl border border-amber-200 shadow-xs">
+        <span class="text-amber-700 text-[10px] uppercase font-semibold block">CRITICAL SEVERITY</span>
+        <div id="admin-stat-critical" class="text-2xl font-bold text-amber-600 font-mono mt-1">0</div>
         <span class="text-[10px] text-slate-400">Urgent tier</span>
       </div>
-      <div class="p-4 tactical-glass rounded-2xl border border-emerald-900/40">
-        <span class="text-emerald-400 text-[10px] uppercase font-mono block">RESOLVED</span>
-        <div id="admin-stat-resolved" class="text-2xl font-black text-emerald-400 font-mono mt-1">0</div>
-        <span class="text-[10px] text-slate-400">Case closed</span>
+      <div class="p-4 bg-white rounded-2xl border border-emerald-200 shadow-xs">
+        <span class="text-emerald-700 text-[10px] uppercase font-semibold block">RESOLVED</span>
+        <div id="admin-stat-resolved" class="text-2xl font-bold text-emerald-600 font-mono mt-1">0</div>
+        <span class="text-[10px] text-slate-400">Cases closed</span>
       </div>
-      <div class="p-4 tactical-glass rounded-2xl border border-cyan-900/40">
-        <span class="text-cyan-400 text-[10px] uppercase font-mono block">AVG RESPONSE TIME</span>
-        <div id="admin-stat-avg-resp" class="text-2xl font-black text-cyan-400 font-mono mt-1">0 min</div>
+      <div class="p-4 bg-white rounded-2xl border border-blue-200 shadow-xs">
+        <span class="text-blue-700 text-[10px] uppercase font-semibold block">AVG RESPONSE TIME</span>
+        <div id="admin-stat-avg-resp" class="text-2xl font-bold text-blue-600 font-mono mt-1">0 min</div>
         <span class="text-[10px] text-slate-400">Calculated from log</span>
       </div>
-      <div class="p-4 tactical-glass rounded-2xl border border-purple-900/40">
-        <span class="text-purple-400 text-[10px] uppercase font-mono block">REGISTERED USERS</span>
-        <div id="admin-stat-users" class="text-2xl font-black text-purple-400 font-mono mt-1">0</div>
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <span class="text-slate-600 text-[10px] uppercase font-semibold block">REGISTERED USERS</span>
+        <div id="admin-stat-users" class="text-2xl font-bold text-slate-800 font-mono mt-1">0</div>
         <span class="text-[10px] text-slate-400">Students & staff</span>
       </div>
     </section>
@@ -173,12 +158,12 @@
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       <!-- Category Distribution -->
-      <div class="lg:col-span-8 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+      <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span>📊</span> Incident Categories Distribution
           </h3>
-          <span class="text-[10px] text-slate-500 font-mono">REAL MONGODB AGGREGATION</span>
+          <span class="text-[10px] text-slate-400 font-medium">Aggregated Data</span>
         </div>
         <div id="admin-category-chart-container" class="space-y-3 pt-2">
           <div class="text-xs text-slate-500 italic">Loading analytics...</div>
@@ -186,8 +171,8 @@
       </div>
 
       <!-- Severity Distribution -->
-      <div class="lg:col-span-4 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+      <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
           <span>⚡</span> Severity Breakdown
         </h3>
         <div id="admin-severity-chart-container" class="grid grid-cols-2 gap-3 pt-2">
@@ -197,32 +182,32 @@
     </section>
 
     <!-- FALSE ALARM MANAGEMENT & DISCIPLINARY GOVERNANCE MODULE -->
-    <section class="tactical-glass p-6 rounded-3xl border border-slate-800 space-y-6" id="false-alarm-management-module">
+    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6" id="false-alarm-management-module">
       
       <!-- Module Header & Threshold Configuration Control -->
-      <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-amber-600/20 border border-amber-500/60 flex items-center justify-center text-xl shadow-lg shadow-amber-950/50">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-xl text-amber-700">
             ⚖️
           </div>
           <div>
-            <h2 class="text-base font-black text-white tracking-wide">
-              FALSE ALARM MANAGEMENT & DISCIPLINARY GOVERNANCE
+            <h2 class="text-base font-bold text-slate-900 tracking-tight">
+              False Alarm Management & Disciplinary Governance
             </h2>
-            <p class="text-xs text-slate-400">
-              Automated threshold enforcement, incident classifications, account suspensions & committee hearings
+            <p class="text-xs text-slate-500">
+              Automated threshold enforcement, incident classifications, account privileges & committee hearings
             </p>
           </div>
         </div>
 
         <!-- Threshold Configuration Setting -->
-        <div class="flex items-center gap-2.5 bg-slate-950 p-2 rounded-2xl border border-slate-800 text-xs">
-          <span class="text-slate-400 font-mono text-[11px] font-semibold pl-1">Threshold Limit:</span>
+        <div class="flex items-center gap-2.5 bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs">
+          <span class="text-slate-600 font-medium text-[11px] pl-1">Suspension Threshold:</span>
           <div class="flex items-center gap-1.5">
             <input type="number" id="admin-threshold-input" min="1" max="10" value="3" 
-                   class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-center font-mono font-bold text-white text-xs focus:outline-none focus:border-amber-400" />
+                   class="w-14 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-mono font-bold text-slate-900 text-xs focus:outline-none focus:border-blue-500" />
             <button onclick="window.csAdmin.updateThresholdSetting()" 
-                    class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black rounded-lg text-xs transition">
+                    class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition cursor-pointer">
               Save Limit
             </button>
           </div>
@@ -231,40 +216,40 @@
 
       <!-- 7 False Alarm Statistics Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-slate-800">
-          <span class="text-slate-500 text-[10px] uppercase font-mono block">TOTAL FALSE ALARMS</span>
-          <div id="fa-stat-total" class="text-xl font-black text-white font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">All categories</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <span class="text-slate-500 text-[10px] uppercase font-semibold block">TOTAL FALSE ALARMS</span>
+          <div id="fa-stat-total" class="text-xl font-bold text-slate-900 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">All categories</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-blue-900/40">
-          <span class="text-blue-400 text-[10px] uppercase font-mono block">UNDER INVESTIGATION</span>
-          <div id="fa-stat-pending" class="text-xl font-black text-blue-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Pending review</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-blue-200">
+          <span class="text-blue-700 text-[10px] uppercase font-semibold block">UNDER INVESTIGATION</span>
+          <div id="fa-stat-pending" class="text-xl font-bold text-blue-700 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Pending review</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-rose-900/40">
-          <span class="text-rose-400 text-[10px] uppercase font-mono block">CONFIRMED INTENTIONAL</span>
-          <div id="fa-stat-confirmed" class="text-xl font-black text-rose-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Verified deliberate</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-red-200">
+          <span class="text-red-700 text-[10px] uppercase font-semibold block">CONFIRMED INTENTIONAL</span>
+          <div id="fa-stat-confirmed" class="text-xl font-bold text-red-600 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Verified deliberate</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-900/40">
-          <span class="text-amber-400 text-[10px] uppercase font-mono block">STUDENTS WITH ≥ 2</span>
-          <div id="fa-stat-students-2plus" class="text-xl font-black text-amber-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Warning tier</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-amber-200">
+          <span class="text-amber-700 text-[10px] uppercase font-semibold block">STUDENTS ≥ 2</span>
+          <div id="fa-stat-students-2plus" class="text-xl font-bold text-amber-600 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Warning tier</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-red-900/50">
-          <span class="text-red-400 text-[10px] uppercase font-mono block">SUSPENDED SOS</span>
-          <div id="fa-stat-suspended" class="text-xl font-black text-red-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Blocked triggers</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-red-300">
+          <span class="text-red-800 text-[10px] uppercase font-semibold block">SUSPENDED SOS</span>
+          <div id="fa-stat-suspended" class="text-xl font-bold text-red-700 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Blocked triggers</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-purple-900/40">
-          <span class="text-purple-400 text-[10px] uppercase font-mono block">PENDING HEARINGS</span>
-          <div id="fa-stat-cases-pending" class="text-xl font-black text-purple-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Active committee</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-purple-200">
+          <span class="text-purple-700 text-[10px] uppercase font-semibold block">PENDING HEARINGS</span>
+          <div id="fa-stat-cases-pending" class="text-xl font-bold text-purple-700 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Active committee</span>
         </div>
-        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-emerald-900/40">
-          <span class="text-emerald-400 text-[10px] uppercase font-mono block">RESOLVED CASES</span>
-          <div id="fa-stat-cases-resolved" class="text-xl font-black text-emerald-400 font-mono mt-0.5">0</div>
-          <span class="text-[10px] text-slate-500">Decision executed</span>
+        <div class="p-3 bg-slate-50 rounded-xl border border-emerald-200">
+          <span class="text-emerald-700 text-[10px] uppercase font-semibold block">RESOLVED CASES</span>
+          <div id="fa-stat-cases-resolved" class="text-xl font-bold text-emerald-600 font-mono mt-0.5">0</div>
+          <span class="text-[10px] text-slate-400">Decision executed</span>
         </div>
       </div>
 
@@ -272,21 +257,21 @@
       <div class="space-y-3 pt-2">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span>📋</span> Student Safety & False Alarm Records
             </h3>
-            <p class="text-xs text-slate-400">Filter students by confirmed intentional false alarms, access privileges, and disciplinary standing.</p>
+            <p class="text-xs text-slate-500">Filter students by confirmed intentional false alarms, access privileges, and disciplinary standing.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
             <!-- Search -->
             <input type="text" id="fa-student-search" oninput="window.csAdmin.loadStudentSafetyRecords()" 
-                   placeholder="Search student, roll no, email..." 
-                   class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 w-44" />
+                   placeholder="Search student, roll no..." 
+                   class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 w-44" />
 
             <!-- Min Count Filter -->
             <select id="fa-filter-min-count" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                    class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none">
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
               <option value="">All Counts</option>
               <option value="1">≥ 1 Confirmed</option>
               <option value="2">≥ 2 Confirmed (Warned)</option>
@@ -296,7 +281,7 @@
 
             <!-- Department Filter -->
             <select id="fa-filter-dept" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                    class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none">
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
               <option value="">All Departments</option>
               <option value="Information Technology">Information Technology</option>
               <option value="Computer Science">Computer Science</option>
@@ -305,7 +290,7 @@
 
             <!-- SOS Access Status -->
             <select id="fa-filter-sos-status" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                    class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none">
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
               <option value="">All Access Status</option>
               <option value="active">Active Privileges</option>
               <option value="restricted">Suspended / Restricted</option>
@@ -313,7 +298,7 @@
 
             <!-- Disciplinary Status -->
             <select id="fa-filter-disc-status" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                    class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none">
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
               <option value="">All Disciplinary</option>
               <option value="Pending">Pending Review</option>
               <option value="Resolved">Resolved Cases</option>
@@ -322,16 +307,16 @@
 
             <!-- Export Button -->
             <button onclick="window.csAdmin.exportFalseAlarmCsv()" 
-                    class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-blue-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
               <span>📥</span> Export CSV
             </button>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase text-slate-600">
                 <th class="p-3">Student & Roll No</th>
                 <th class="p-3">Department</th>
                 <th class="p-3">Confirmed False Alarms</th>
@@ -341,7 +326,7 @@
                 <th class="p-3 text-right">Administrative Actions</th>
               </tr>
             </thead>
-            <tbody id="fa-students-table-body">
+            <tbody id="fa-students-table-body" class="divide-y divide-slate-200 bg-white">
               <tr>
                 <td colspan="7" class="p-6 text-center text-slate-500 text-xs">Loading student safety records...</td>
               </tr>
@@ -351,20 +336,20 @@
       </div>
 
       <!-- Disciplinary Committee Cases Section -->
-      <div class="pt-6 border-t border-slate-800 space-y-4">
+      <div class="pt-6 border-t border-slate-200 space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span>🏛️</span> Institution Disciplinary Committee Cases
             </h3>
-            <p class="text-xs text-slate-400">
-              Mandatory review hearings for students reaching false alarm thresholds. Full 7-stage lifecycle governance.
+            <p class="text-xs text-slate-500">
+              Mandatory review hearings for students reaching false alarm thresholds. Full lifecycle governance.
             </p>
           </div>
 
           <div class="flex items-center gap-2">
             <select id="disc-case-status-filter" onchange="window.csAdmin.loadDisciplinaryCases()" 
-                    class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
               <option value="">All Case Statuses</option>
               <option value="Case Created">1. Case Created</option>
               <option value="Awaiting Committee Review">2. Awaiting Committee Review</option>
@@ -377,10 +362,10 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase text-slate-600">
                 <th class="p-3">Case ID</th>
                 <th class="p-3">Student</th>
                 <th class="p-3">Status Lifecycle</th>
@@ -390,7 +375,7 @@
                 <th class="p-3 text-right">Committee Actions</th>
               </tr>
             </thead>
-            <tbody id="disc-cases-table-body">
+            <tbody id="disc-cases-table-body" class="divide-y divide-slate-200 bg-white">
               <tr>
                 <td colspan="7" class="p-6 text-center text-slate-500 text-xs">Loading disciplinary cases...</td>
               </tr>
@@ -402,18 +387,18 @@
     </section>
 
     <!-- USER & ROLE MANAGEMENT -->
-    <section class="tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span>👥</span> User & Role Management
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">Control role-based privileges and access statuses.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Control role-based privileges and access statuses.</p>
         </div>
 
         <div class="flex items-center gap-2">
-          <input type="text" id="admin-user-search" oninput="window.csAdmin.renderUsersTable()" placeholder="Search name, email, roll no..." class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500" />
-          <select id="admin-user-role-filter" onchange="window.csAdmin.renderUsersTable()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none">
+          <input type="text" id="admin-user-search" oninput="window.csAdmin.renderUsersTable()" placeholder="Search name, email, roll no..." class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500" />
+          <select id="admin-user-role-filter" onchange="window.csAdmin.renderUsersTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none">
             <option value="">All Roles</option>
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
@@ -423,10 +408,10 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase text-slate-600">
               <th class="p-3">User & Email</th>
               <th class="p-3">Identifier</th>
               <th class="p-3">Role</th>
@@ -434,7 +419,7 @@
               <th class="p-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="admin-users-table-body">
+          <tbody id="admin-users-table-body" class="divide-y divide-slate-200 bg-white">
             <tr>
               <td colspan="5" class="p-6 text-center text-slate-500 text-xs">Loading campus users...</td>
             </tr>
@@ -443,27 +428,27 @@
       </div>
     </section>
 
-    <!-- EMERGENCY DIRECTORY MANAGEMENT & LIVE AUDIT LOG -->
+    <!-- EMERGENCY DIRECTORY MANAGEMENT & AUDIT LOG -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       <!-- Emergency Directory CRUD -->
-      <div class="lg:col-span-5 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+      <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
           <span>📞</span> Emergency Contacts Directory
         </h3>
 
         <!-- Add Contact Form -->
-        <div class="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
-          <div class="font-bold text-slate-300 text-[11px]">Add Verified Directory Contact</div>
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 text-xs">
+          <div class="font-bold text-slate-800 text-[11px]">Add Directory Contact</div>
           <div class="grid grid-cols-2 gap-2">
-            <input type="text" id="new-contact-name" placeholder="Contact Name" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            <input type="text" id="new-contact-role" placeholder="Role (e.g. Chief Warden)" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white" />
+            <input type="text" id="new-contact-name" placeholder="Contact Name" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900" />
+            <input type="text" id="new-contact-role" placeholder="Role (e.g. Chief Warden)" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900" />
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <input type="text" id="new-contact-phone" placeholder="Phone Number" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            <input type="text" id="new-contact-loc" placeholder="Office Location" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white" />
+            <input type="text" id="new-contact-phone" placeholder="Phone Number" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900" />
+            <input type="text" id="new-contact-loc" placeholder="Office Location" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900" />
           </div>
-          <button onclick="window.csAdmin.addEmergencyContact()" class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg transition">
+          <button onclick="window.csAdmin.addEmergencyContact()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-xs transition cursor-pointer">
             + Save Contact
           </button>
         </div>
@@ -472,13 +457,13 @@
         <div id="admin-contacts-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
       </div>
 
-      <!-- Live Audit Log Inspector -->
-      <div class="lg:col-span-7 tactical-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+      <!-- Security Audit Log -->
+      <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span>🛡️</span> Security Audit Log
           </h3>
-          <span class="text-[10px] text-slate-500 font-mono">TAMPER-EVIDENT RECORDS</span>
+          <span class="text-[10px] text-slate-400 font-medium">Tamper-Evident Records</span>
         </div>
 
         <div id="admin-audit-logs-container" class="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -490,8 +475,8 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="border-t border-slate-800/80 bg-[#070a13] py-4 text-center text-xs text-slate-500">
-    <p>CampusShield — Administration Portal • Kongu Engineering College</p>
+  <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 mt-auto">
+    <p>CampusShield — Administration Portal • Campus Safety Governance</p>
   </footer>
 
   <!-- Scripts -->

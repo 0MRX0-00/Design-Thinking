@@ -492,22 +492,22 @@ export function showToast(title, message, type = 'info') {
 
   const toast = document.createElement('div');
   const typeStyles = {
-    critical: 'border-rose-500 bg-rose-950/90 text-rose-100',
-    success: 'border-emerald-500 bg-emerald-950/90 text-emerald-100',
-    warning: 'border-amber-500 bg-amber-950/90 text-amber-100',
-    info: 'border-cyan-500 bg-slate-900/95 text-cyan-100'
-  }[type] || 'border-cyan-500 bg-slate-900/95 text-cyan-100';
+    critical: 'border-red-300 bg-red-50 text-red-900',
+    success: 'border-green-300 bg-green-50 text-green-900',
+    warning: 'border-amber-300 bg-amber-50 text-amber-900',
+    info: 'border-blue-300 bg-blue-50 text-blue-900'
+  }[type] || 'border-slate-300 bg-white text-slate-900';
 
-  toast.className = `toast-msg p-4 rounded-xl border ${typeStyles} shadow-2xl flex items-start gap-3 w-80 max-w-full backdrop-blur-md`;
+  toast.className = `toast-msg p-3.5 rounded-xl border ${typeStyles} shadow-lg flex items-start gap-3 w-80 max-w-full`;
   toast.innerHTML = `
-    <div class="mt-0.5 text-lg">
-      ${type === 'critical' ? '🚨' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '🔔'}
+    <div class="mt-0.5 text-base">
+      ${type === 'critical' ? '🚨' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️'}
     </div>
     <div class="flex-1 text-sm">
-      <div class="font-bold text-white tracking-wide">${title}</div>
-      <div class="text-xs opacity-90 mt-0.5">${message}</div>
+      <div class="font-bold text-slate-900 tracking-tight">${title}</div>
+      <div class="text-xs text-slate-600 mt-0.5">${message}</div>
     </div>
-    <button class="text-white/60 hover:text-white text-xs font-bold px-1" onclick="this.parentElement.remove()">✕</button>
+    <button class="text-slate-400 hover:text-slate-700 text-xs font-bold px-1" onclick="this.parentElement.remove()">✕</button>
   `;
 
   container.appendChild(toast);

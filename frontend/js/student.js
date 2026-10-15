@@ -1124,98 +1124,93 @@ export function openSosModal(initialCategory = null) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'sos-report-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
-
-  const currentLat = userGps.latitude ? userGps.latitude.toFixed(5) : '11.27420';
-  const currentLng = userGps.longitude ? userGps.longitude.toFixed(5) : '77.60700';
-  const currentAcc = userGps.accuracy ? `±${userGps.accuracy}m` : '±10m';
-
+  modal.className = 'fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 overflow-y-auto';
   modal.innerHTML = `
-    <div class="bg-slate-900 border-2 border-rose-600 rounded-3xl w-full max-w-md p-6 shadow-2xl relative my-auto space-y-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl relative my-auto space-y-4">
       
       <!-- Close Button -->
       <button onclick="document.getElementById('sos-report-modal').remove()" 
-              class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition text-sm cursor-pointer z-10">
+              class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition text-sm cursor-pointer z-10">
         ✕
       </button>
 
       <!-- Modal Header -->
       <div class="text-center space-y-1">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-600/20 border border-rose-500 flex items-center justify-center text-3xl animate-bounce">
+        <div class="w-12 h-12 mx-auto rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-2xl">
           🚨
         </div>
-        <h3 class="text-xl font-black text-white tracking-wide">
-          WHAT IS YOUR EMERGENCY?
+        <h3 class="text-lg font-bold text-slate-900 tracking-tight">
+          Report an Emergency
         </h3>
-        <p class="text-xs text-rose-300">
-          Tap one to dispatch campus security immediately
+        <p class="text-xs text-slate-500">
+          Select incident type to dispatch campus emergency responders immediately
         </p>
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400 mt-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>📍 Live GPS: ${currentLat}, ${currentLng} (${currentAcc})</span>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] font-mono text-emerald-700 mt-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>📍 GPS: ${currentLat}, ${currentLng} (${currentAcc})</span>
         </div>
-        <div id="modal-gps-address" class="text-[11px] text-cyan-300 font-mono ${userGps.address ? '' : 'hidden'}">
+        <div id="modal-gps-address" class="text-xs text-slate-600 font-medium ${userGps.address ? '' : 'hidden'}">
           📍 ${userGps.address || ''}
         </div>
       </div>
 
-      <!-- 1-Tap Emergency Trigger Buttons -->
-      <div class="grid grid-cols-2 gap-3 pt-2">
+      <!-- Emergency Buttons -->
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
         <button type="button" 
                 onclick="window.csStudent.instantSos('Medical emergency')"
-                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">🚑</span>
-          <span class="text-sm font-extrabold text-white mt-1">Medical</span>
-          <span class="text-[10px] text-slate-400 leading-tight">First aid, fainting, injury</span>
+                class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/60 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">🚑</span>
+          <span class="text-xs font-bold text-slate-900 mt-1">Medical</span>
+          <span class="text-[10px] text-slate-500 leading-tight">First aid, fainting, injury</span>
         </button>
 
         <button type="button" 
                 onclick="window.csStudent.instantSos('Harassment or personal safety concern')"
-                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">✋</span>
-          <span class="text-sm font-extrabold text-white mt-1">Harassment</span>
-          <span class="text-[10px] text-slate-400 leading-tight">Threat, stalking, safety</span>
+                class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/60 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">🛡️</span>
+          <span class="text-xs font-bold text-slate-900 mt-1">Harassment</span>
+          <span class="text-[10px] text-slate-500 leading-tight">Threat, stalking, safety</span>
         </button>
 
         <button type="button" 
                 onclick="window.csStudent.instantSos('Accident')"
-                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">⚠️</span>
-          <span class="text-sm font-extrabold text-white mt-1">Accident</span>
-          <span class="text-[10px] text-slate-400 leading-tight">Crash, fall, physical injury</span>
+                class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/60 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">⚠️</span>
+          <span class="text-xs font-bold text-slate-900 mt-1">Accident</span>
+          <span class="text-[10px] text-slate-500 leading-tight">Crash, fall, injury</span>
         </button>
 
         <button type="button" 
                 onclick="window.csStudent.instantSos('Fire')"
-                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">🔥</span>
-          <span class="text-sm font-extrabold text-white mt-1">Fire Hazard</span>
-          <span class="text-[10px] text-slate-400 leading-tight">Flames, smoke, short circuit</span>
+                class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/60 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">🔥</span>
+          <span class="text-xs font-bold text-slate-900 mt-1">Fire Hazard</span>
+          <span class="text-[10px] text-slate-500 leading-tight">Flames, smoke, gas</span>
         </button>
 
         <button type="button" 
                 onclick="window.csStudent.instantSos('Theft')"
-                class="p-4 rounded-2xl border-2 border-slate-800 hover:border-rose-500 bg-slate-950/80 hover:bg-rose-950/70 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">🔒</span>
-          <span class="text-sm font-extrabold text-white mt-1">Theft</span>
-          <span class="text-[10px] text-slate-400 leading-tight">Break-in, stolen gear, crime</span>
+                class="p-3.5 rounded-xl border border-slate-200 hover:border-red-300 bg-slate-50 hover:bg-red-50/60 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">🔒</span>
+          <span class="text-xs font-bold text-slate-900 mt-1">Theft</span>
+          <span class="text-[10px] text-slate-500 leading-tight">Break-in, stolen gear</span>
         </button>
 
         <button type="button" 
                 onclick="window.csStudent.instantSos('Other')"
-                class="p-4 rounded-2xl border-2 border-rose-600 bg-gradient-to-tr from-rose-950/90 to-red-950/80 hover:bg-rose-900/90 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-lg active:scale-95">
-          <span class="text-3xl group-hover:scale-110 transition">🚨</span>
-          <span class="text-sm font-extrabold text-white mt-1">General SOS</span>
-          <span class="text-[10px] text-rose-300 leading-tight">Immediate general alert</span>
+                class="p-3.5 rounded-xl border border-red-300 bg-red-50/80 hover:bg-red-100/80 text-left transition flex flex-col items-start gap-1 group cursor-pointer shadow-xs">
+          <span class="text-2xl group-hover:scale-105 transition">🚨</span>
+          <span class="text-xs font-bold text-red-900 mt-1">General SOS</span>
+          <span class="text-[10px] text-red-700 leading-tight">Immediate general alert</span>
         </button>
       </div>
 
       <!-- Cancel Footer -->
       <div class="pt-2 text-center">
         <button onclick="document.getElementById('sos-report-modal').remove()" 
-                class="text-xs text-slate-400 hover:text-white transition cursor-pointer">
+                class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition cursor-pointer">
           Cancel (Accidental Press)
         </button>
       </div>
@@ -1379,32 +1374,32 @@ export function renderActiveIncidentTracker() {
   }[inc.status] || 1;
 
   container.innerHTML = `
-    <div class="p-5 tactical-glass border-2 border-rose-600 rounded-3xl shadow-2xl relative overflow-hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+    <div class="p-5 bg-white border-2 border-red-500 rounded-2xl shadow-sm relative overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-rose-600/20 border border-rose-500 flex items-center justify-center text-xl animate-pulse">
+          <div class="w-10 h-10 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-xl animate-pulse">
             🚨
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs font-mono font-bold text-white px-2 py-0.5 rounded bg-slate-900 border border-slate-700">
+              <span class="text-xs font-mono font-bold text-slate-800 px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
                 ${inc.incidentId}
               </span>
-              <span class="text-xs font-bold text-rose-400 uppercase tracking-wide">
+              <span class="text-xs font-bold text-red-600 uppercase tracking-wide">
                 Live Emergency Active
               </span>
             </div>
-            <h3 class="text-base font-bold text-white mt-1">${inc.category}</h3>
+            <h3 class="text-base font-bold text-slate-900 mt-0.5">${inc.category}</h3>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-950 text-cyan-300 border border-cyan-700">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
             Current Status: ${inc.status}
           </span>
           ${
             inc.status === 'Submitted'
-              ? `<button onclick="window.csStudent.cancelMyIncident('${inc.incidentId}')" class="px-2.5 py-1 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-lg">
+              ? `<button onclick="window.csStudent.cancelMyIncident('${inc.incidentId}')" class="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50">
                   Cancel
                 </button>`
               : ''
@@ -1413,62 +1408,60 @@ export function renderActiveIncidentTracker() {
       </div>
 
       <!-- Live Stepper -->
-      <div class="my-5">
+      <div class="my-4">
         <div class="grid grid-cols-4 gap-2 text-center text-xs">
           <div class="flex flex-col items-center">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 border ${
-              statusStep >= 1 ? 'bg-rose-600 text-white border-rose-500' : 'bg-slate-900 text-slate-600 border-slate-800'
+            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold mb-1 border ${
+              statusStep >= 1 ? 'bg-red-600 text-white border-red-600' : 'bg-slate-100 text-slate-400 border-slate-200'
             }">1</div>
-            <span class="text-[11px] ${statusStep >= 1 ? 'text-white font-bold' : 'text-slate-600'}">Alert Sent</span>
+            <span class="text-[11px] ${statusStep >= 1 ? 'text-slate-900 font-bold' : 'text-slate-400'}">Alert Sent</span>
           </div>
           <div class="flex flex-col items-center">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 border ${
-              statusStep >= 2 ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-600 border-slate-800'
+            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold mb-1 border ${
+              statusStep >= 2 ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-100 text-slate-400 border-slate-200'
             }">2</div>
-            <span class="text-[11px] ${statusStep >= 2 ? 'text-white font-bold' : 'text-slate-600'}">Acknowledged</span>
+            <span class="text-[11px] ${statusStep >= 2 ? 'text-slate-900 font-bold' : 'text-slate-400'}">Acknowledged</span>
           </div>
           <div class="flex flex-col items-center">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 border ${
-              statusStep >= 3 ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-900 text-slate-600 border-slate-800'
+            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold mb-1 border ${
+              statusStep >= 3 ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-400 border-slate-200'
             }">3</div>
-            <span class="text-[11px] ${statusStep >= 3 ? 'text-white font-bold' : 'text-slate-600'}">Patrol Dispatched</span>
+            <span class="text-[11px] ${statusStep >= 3 ? 'text-slate-900 font-bold' : 'text-slate-400'}">Patrol Dispatched</span>
           </div>
           <div class="flex flex-col items-center">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 border ${
-              statusStep >= 4 ? 'bg-purple-600 text-white border-purple-500' : 'bg-slate-900 text-slate-600 border-slate-800'
+            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold mb-1 border ${
+              statusStep >= 4 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-100 text-slate-400 border-slate-200'
             }">4</div>
-            <span class="text-[11px] ${statusStep >= 4 ? 'text-white font-bold' : 'text-slate-600'}">On Scene</span>
+            <span class="text-[11px] ${statusStep >= 4 ? 'text-slate-900 font-bold' : 'text-slate-400'}">On Scene</span>
           </div>
         </div>
       </div>
 
-      <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs space-y-2.5">
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
         <div class="flex justify-between items-center">
           <div>
-            <span class="text-slate-400">Assigned Unit: </span>
-            <span class="font-bold text-white">${inc.assignedResponder?.callSign || 'Dispatching patrol...'}</span>
+            <span class="text-slate-500">Assigned Patrol Unit: </span>
+            <span class="font-bold text-slate-800">${inc.assignedResponder?.callSign || 'Dispatching patrol unit...'}</span>
           </div>
           <div class="text-right">
-            <span class="text-slate-400">Location: </span>
-            <span class="text-cyan-300 font-bold">${inc.location?.campusLocation || 'Main Campus'}</span>
+            <span class="text-slate-500">Location: </span>
+            <span class="text-slate-800 font-bold">${inc.location?.campusLocation || 'Main Campus'}</span>
           </div>
         </div>
 
         ${inc.locationDetails || inc.peopleInvolved || inc.silentAlert ? `
-          <div class="flex flex-wrap items-center gap-3 text-[11px] pt-2 border-t border-slate-800/80 text-slate-300">
-            ${inc.locationDetails ? `<span>📍 Specific: <strong class="text-white">${inc.locationDetails}</strong></span>` : ''}
-            ${inc.peopleInvolved ? `<span>👥 Involved: <strong class="text-white">${inc.peopleInvolved}</strong></span>` : ''}
-            ${inc.silentAlert ? `<span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 font-bold">🤫 Silent Dispatch</span>` : ''}
+          <div class="flex flex-wrap items-center gap-3 text-[11px] pt-2 border-t border-slate-200 text-slate-600">
+            ${inc.locationDetails ? `<span>📍 Specific: <strong class="text-slate-800">${inc.locationDetails}</strong></span>` : ''}
+            ${inc.peopleInvolved ? `<span>👥 Involved: <strong class="text-slate-800">${inc.peopleInvolved}</strong></span>` : ''}
+            ${inc.silentAlert ? `<span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold">🤫 Silent Alert</span>` : ''}
           </div>
         ` : ''}
 
         ${inc.requirements && inc.requirements.length > 0 ? `
-          <div class="pt-2 border-t border-slate-800/80">
-            <div class="text-[10px] uppercase font-mono text-rose-400 font-bold mb-1 flex items-center gap-1">
-              <span>⚠️</span> Assistance Requirements Dispatched:
-            </div>
+          <div class="pt-2 border-t border-slate-200">
+            <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Assistance Requirements:</div>
             <div class="flex flex-wrap gap-1.5">
-              ${inc.requirements.map(req => `<span class="px-2 py-0.5 rounded-lg bg-rose-950/80 text-rose-200 border border-rose-800 text-[10px] font-bold">🚨 ${req}</span>`).join('')}
+              ${inc.requirements.map(req => `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold">${req}</span>`).join('')}
             </div>
           </div>
         ` : ''}
@@ -1541,18 +1534,18 @@ function renderIncidentsList(container, incidents) {
   }
 
   container.innerHTML = incidents.map((i) => `
-    <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 text-xs flex items-center justify-between">
+    <div class="p-3.5 bg-white rounded-xl border border-slate-200 text-xs flex items-center justify-between shadow-xs hover:border-slate-300 transition">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="font-mono font-bold text-white">${i.incidentId}</span>
+          <span class="font-mono font-bold text-slate-800">${i.incidentId}</span>
           <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-            i.status === 'Resolved' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-cyan-950 text-cyan-300 border border-cyan-700'
+            i.status === 'Resolved' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
           }">${i.status}</span>
         </div>
-        <div class="text-slate-300 font-semibold">${i.category}</div>
-        <div class="text-[11px] text-slate-500">📍 ${i.location?.campusLocation} • ${new Date(i.reportedAt).toLocaleDateString()}</div>
+        <div class="text-slate-900 font-semibold">${i.category}</div>
+        <div class="text-[11px] text-slate-500">📍 ${i.location?.campusLocation || 'Kongu Campus'} • ${new Date(i.reportedAt).toLocaleDateString()}</div>
       </div>
-      <button onclick="window.csStudent.viewIncidentDetails('${i._id}')" class="px-2.5 py-1 text-xs text-cyan-400 hover:text-white border border-slate-700 rounded-lg">
+      <button onclick="window.csStudent.viewIncidentDetails('${i._id}')" class="px-3 py-1.5 text-xs text-blue-600 hover:text-blue-800 font-semibold border border-slate-200 rounded-lg hover:bg-slate-50 transition cursor-pointer">
         Details
       </button>
     </div>
@@ -1648,30 +1641,30 @@ export async function triggerSafeWalkEmergency() {
   }
 }
 
-function renderSafeWalkUI() {
-  const container = document.getElementById('safewalk-card-container');
+export function renderSafeWalkUI() {
+  const container = document.getElementById('safewalk-card-body');
   if (!container) return;
 
   if (activeSafeWalk) {
     container.innerHTML = `
-      <div class="p-4 bg-emerald-950/40 rounded-2xl border border-emerald-600">
+      <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
         <div class="flex items-center justify-between mb-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500 animate-pulse">
-            WALK SESSION ACTIVE
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
+            SAFE WALK ACTIVE
           </span>
-          <span class="text-xs text-slate-400">Started: ${new Date(activeSafeWalk.startedAt).toLocaleTimeString()}</span>
+          <span class="text-xs text-slate-600">Started: ${new Date(activeSafeWalk.startedAt).toLocaleTimeString()}</span>
         </div>
 
-        <div class="text-xs space-y-1 mb-4 text-slate-200">
-          <div>From: <strong class="text-white">${activeSafeWalk.startLocation}</strong></div>
-          <div>To: <strong class="text-cyan-300">${activeSafeWalk.destination}</strong></div>
+        <div class="text-xs space-y-1 mb-4 text-slate-700">
+          <div>From: <strong class="text-slate-900">${activeSafeWalk.startLocation}</strong></div>
+          <div>To: <strong class="text-emerald-800">${activeSafeWalk.destination}</strong></div>
         </div>
 
         <div class="flex gap-2">
-          <button onclick="window.csStudent.triggerSafeWalkEmergency()" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg animate-pulse">
+          <button onclick="window.csStudent.triggerSafeWalkEmergency()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer">
             🚨 Panic SOS
           </button>
-          <button onclick="window.csStudent.endSafeWalkSession()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg">
+          <button onclick="window.csStudent.endSafeWalkSession()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer">
             ✓ Arrived Safely
           </button>
         </div>
@@ -1681,15 +1674,15 @@ function renderSafeWalkUI() {
     container.innerHTML = `
       <div class="space-y-3">
         <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Starting Point</label>
-          <input type="text" id="safewalk-origin" placeholder="e.g. Central Library" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Starting Point</label>
+          <input type="text" id="safewalk-origin" placeholder="e.g. Central Library" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-blue-500" />
         </div>
         <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Destination</label>
-          <input type="text" id="safewalk-destination" placeholder="e.g. Hostel Block B" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Destination</label>
+          <input type="text" id="safewalk-destination" placeholder="e.g. Hostel Block B" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-blue-500" />
         </div>
-        <button onclick="window.csStudent.startSafeWalkSession()" class="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
-          Start Safe Walk Session
+        <button onclick="window.csStudent.startSafeWalkSession()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
+          Start Safe Walk
         </button>
       </div>
     `;
@@ -1705,13 +1698,13 @@ export async function loadEmergencyContacts() {
     const res = await api.get('/api/admin/contacts');
     if (res.success && res.contacts) {
       container.innerHTML = res.contacts.map((c) => `
-        <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+        <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition">
           <div>
-            <div class="font-bold text-white">${c.name}</div>
-            <div class="text-[11px] text-cyan-400">${c.role}</div>
+            <div class="font-bold text-slate-900">${c.name}</div>
+            <div class="text-[11px] text-blue-600 font-medium">${c.role}</div>
             <div class="text-[10px] text-slate-500">📍 ${c.location}</div>
           </div>
-          <a href="tel:${c.phone}" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 font-bold font-mono rounded-lg border border-emerald-500/40 flex items-center gap-1">
+          <a href="tel:${c.phone}" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold font-mono rounded-lg border border-emerald-200 flex items-center gap-1">
             📞 ${c.phone}
           </a>
         </div>
@@ -1777,68 +1770,68 @@ export function renderSafetyBanner() {
   // Update SOS button appearance if restricted
   if (sosBtn) {
     if (sosAccessStatus === 'restricted') {
-      sosBtn.className = 'relative w-48 h-48 rounded-full bg-gradient-to-tr from-slate-800 via-slate-700 to-slate-600 text-white font-black text-2xl tracking-widest shadow-2xl border-4 border-rose-500 flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-90';
+      sosBtn.className = 'w-44 h-44 rounded-full bg-slate-200 text-slate-600 font-bold text-xl shadow-md border-4 border-slate-300 flex flex-col items-center justify-center gap-1 cursor-not-allowed';
       sosBtn.innerHTML = `
         <span class="text-3xl">🔒</span>
-        <span class="text-lg font-black text-rose-300">RESTRICTED</span>
-        <span class="text-[9px] font-mono uppercase tracking-normal text-slate-300 font-bold">HOTLINES ONLY</span>
+        <span class="text-base font-bold text-slate-700">RESTRICTED</span>
+        <span class="text-[9px] uppercase text-slate-500 font-bold">HOTLINES ONLY</span>
       `;
     } else {
-      sosBtn.className = 'relative w-48 h-48 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-red-500 text-white font-black text-3xl tracking-widest shadow-2xl shadow-rose-900/90 border-4 border-rose-400 hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col items-center justify-center gap-1 group cursor-pointer';
+      sosBtn.className = 'w-44 h-44 rounded-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-2xl tracking-wide shadow-lg border-4 border-red-500/80 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer';
       sosBtn.innerHTML = `
-        <span class="text-4xl group-hover:scale-110 transition">🚨</span>
+        <span class="text-3xl">🚨</span>
         <span>SOS</span>
-        <span class="text-[10px] font-mono uppercase tracking-normal opacity-90 font-bold">TAP TO REPORT</span>
+        <span class="text-[10px] uppercase opacity-90 font-bold">TAP TO REPORT</span>
       `;
     }
   }
 
   if (sosAccessStatus === 'restricted') {
     container.innerHTML = `
-      <div class="p-5 rounded-2xl bg-rose-950/70 border-2 border-rose-600 text-white shadow-2xl animate-pulse space-y-3">
+      <div class="p-4 rounded-xl bg-red-50 border border-red-300 text-red-900 shadow-sm space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center text-2xl">
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-xl font-bold">
               🛑
             </div>
             <div>
-              <h4 class="text-sm font-black text-rose-100 uppercase tracking-wider">
-                SOS PRIVILEGES RESTRICTED — SAFETY POLICY ENFORCEMENT
+              <h4 class="text-xs font-bold text-red-900 uppercase tracking-wider">
+                SOS Privileges Restricted — Safety Policy Enforcement
               </h4>
-              <p class="text-xs text-rose-200/90 font-medium">
+              <p class="text-xs text-red-700">
                 ${restrictionReason || 'Your emergency alert privileges have been suspended after accumulating confirmed false alarms.'}
               </p>
             </div>
           </div>
           <button onclick="window.csStudent.showRestrictedSosModal()" 
-                  class="px-4 py-2 bg-white text-rose-950 font-black text-xs rounded-xl shadow hover:bg-rose-100 transition flex items-center gap-2">
+                  class="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
             <span>📞</span> Emergency Helplines
           </button>
         </div>
 
-        <div class="pt-3 border-t border-rose-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div class="text-rose-200">
-            Confirmed Intentional False Alarms: <strong class="text-white font-mono font-bold">${confirmedIntentionalFalseAlarmCount}</strong>
+        <div class="pt-2 border-t border-red-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="text-red-800">
+            Confirmed Intentional False Alarms: <strong class="font-mono font-bold">${confirmedIntentionalFalseAlarmCount}</strong>
           </div>
-          <a href="#disciplinary-cases-section" class="text-rose-300 font-bold underline hover:text-white">
-            View Disciplinary Hearing & Appeal Details →
+          <a href="#disciplinary-cases-section" class="text-red-700 font-semibold underline hover:text-red-900">
+            View Disciplinary Hearing Details →
           </a>
         </div>
       </div>
     `;
   } else if (warningLevel === 'final_warning') {
     container.innerHTML = `
-      <div class="p-4 rounded-2xl bg-amber-950/80 border-2 border-amber-500 text-white shadow-xl space-y-2">
+      <div class="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 shadow-sm space-y-2">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-xl">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
             🚨
           </div>
           <div>
-            <h4 class="text-xs font-black text-amber-200 uppercase tracking-wider">
-              CRITICAL NOTICE: FINAL WARNING (3 Confirmed Intentional False Alarms)
+            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider">
+              Critical Notice: Final Warning (3 Confirmed False Alarms)
             </h4>
-            <p class="text-[11px] text-amber-100/90">
-              Your account has been flagged for administrative review. Any further verified false alarm will trigger immediate, automatic termination of your SOS alert privileges and referral to the Institution Disciplinary Committee.
+            <p class="text-xs text-amber-700">
+              Your account has been flagged. Any further verified false alarm will trigger automatic termination of SOS alert privileges.
             </p>
           </div>
         </div>
@@ -1846,17 +1839,17 @@ export function renderSafetyBanner() {
     `;
   } else if (warningLevel === 'warning_level_1') {
     container.innerHTML = `
-      <div class="p-4 rounded-2xl bg-yellow-950/70 border border-yellow-600/80 text-white shadow-lg space-y-2">
+      <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 shadow-sm space-y-2">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-yellow-600 flex items-center justify-center text-xl">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
             ⚠️
           </div>
           <div>
-            <h4 class="text-xs font-black text-yellow-200 uppercase tracking-wider">
-              FORMAL SAFETY WARNING (2 Confirmed Intentional False Alarms)
+            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider">
+              Formal Safety Notice (2 Confirmed False Alarms)
             </h4>
-            <p class="text-[11px] text-yellow-100/90">
-              Campus emergency SOS triggers are strictly reserved for genuine life safety incidents. Reaching more than 3 confirmed false alarms will result in automatic privilege restriction and disciplinary proceedings.
+            <p class="text-xs text-amber-700">
+              Emergency SOS triggers are strictly reserved for genuine life safety incidents. Reaching 3 confirmed false alarms leads to restricted access.
             </p>
           </div>
         </div>
@@ -1880,24 +1873,24 @@ export function renderFalseAlarmHistoryTable() {
 
     if (warnEl) {
       const warnMap = {
-        none: '<span class="text-emerald-400">Normal (0-1)</span>',
-        warning_level_1: '<span class="text-yellow-400 font-bold">Formal Warning 1</span>',
-        final_warning: '<span class="text-amber-400 font-bold">Final Warning</span>',
-        restricted: '<span class="text-rose-400 font-bold">Threshold Exceeded</span>'
+        none: '<span class="text-emerald-700 font-semibold">Normal (0-1)</span>',
+        warning_level_1: '<span class="text-amber-700 font-semibold">Formal Warning 1</span>',
+        final_warning: '<span class="text-amber-800 font-bold">Final Warning</span>',
+        restricted: '<span class="text-red-700 font-bold">Threshold Exceeded</span>'
       };
       warnEl.innerHTML = warnMap[mySafetyStatus.warningLevel] || 'Normal';
     }
 
     if (sosPrivEl) {
       sosPrivEl.innerHTML = mySafetyStatus.sosAccessStatus === 'active'
-        ? '<span class="text-emerald-400">Active</span>'
-        : '<span class="text-rose-400 font-bold">Suspended</span>';
+        ? '<span class="text-emerald-700 font-semibold">Active</span>'
+        : '<span class="text-red-700 font-bold">Suspended</span>';
     }
 
     if (badgeContainer) {
       badgeContainer.innerHTML = mySafetyStatus.sosAccessStatus === 'active'
-        ? '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">✓ Privileges Active</span>'
-        : '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950 text-rose-300 border border-rose-600 animate-pulse">🛑 Privileges Suspended</span>';
+        ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">✓ Privileges Active</span>'
+        : '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">🛑 Privileges Suspended</span>';
     }
   }
 
@@ -1906,7 +1899,7 @@ export function renderFalseAlarmHistoryTable() {
   if (myFalseAlarmRecords.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="5" class="p-6 text-center text-slate-500 text-xs italic">
+        <td colspan="5" class="p-6 text-center text-slate-500 text-xs">
           No false alarm records on file. Thank you for using emergency services responsibly.
         </td>
       </tr>
@@ -1917,24 +1910,24 @@ export function renderFalseAlarmHistoryTable() {
   tableBody.innerHTML = myFalseAlarmRecords.map((r) => {
     const classBadgeColor =
       r.classification === 'Genuine Emergency'
-        ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
         : r.classification === 'False Alarm — Accidental'
-        ? 'bg-amber-950 text-amber-300 border-amber-700'
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
         : r.classification === 'False Alarm — Intentional'
-        ? 'bg-rose-950 text-rose-300 border-rose-700'
-        : 'bg-blue-950 text-blue-300 border-blue-700';
+        ? 'bg-red-50 text-red-700 border-red-200'
+        : 'bg-blue-50 text-blue-700 border-blue-200';
 
     return `
-      <tr class="border-b border-slate-800/80 hover:bg-slate-800/30 text-xs">
-        <td class="p-3.5 font-mono text-cyan-300 font-bold">${r.incidentId}</td>
+      <tr class="border-b border-slate-200 hover:bg-slate-50 text-xs">
+        <td class="p-3.5 font-mono text-slate-900 font-bold">${r.incidentId}</td>
         <td class="p-3.5">
           <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${classBadgeColor}">
             ${r.classification}
           </span>
         </td>
-        <td class="p-3.5 text-slate-300 max-w-xs">${r.investigationNotes || 'No notes logged.'}</td>
-        <td class="p-3.5 text-slate-400">${r.verifierName || 'Security Team'}</td>
-        <td class="p-3.5 text-right font-mono text-slate-400 text-[11px]">
+        <td class="p-3.5 text-slate-700 max-w-xs">${r.investigationNotes || 'No notes logged.'}</td>
+        <td class="p-3.5 text-slate-600">${r.verifierName || 'Security Team'}</td>
+        <td class="p-3.5 text-right font-mono text-slate-500 text-[11px]">
           ${new Date(r.verifiedAt || r.createdAt).toLocaleDateString()}
         </td>
       </tr>
@@ -1951,7 +1944,7 @@ export function renderDisciplinaryCases() {
   if (myDisciplinaryCases.length === 0) {
     if (statusEl) statusEl.innerText = 'None';
     container.innerHTML = `
-      <div class="p-6 text-center text-slate-500 text-xs italic bg-slate-950/40 rounded-2xl border border-slate-800">
+      <div class="p-6 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-slate-200">
         No active or pending disciplinary committee cases.
       </div>
     `;
@@ -1959,7 +1952,7 @@ export function renderDisciplinaryCases() {
   }
 
   if (statusEl) {
-    statusEl.innerHTML = `<span class="text-rose-400 font-bold">${myDisciplinaryCases[0].caseStatus}</span>`;
+    statusEl.innerHTML = `<span class="text-red-700 font-bold">${myDisciplinaryCases[0].caseStatus}</span>`;
   }
 
   container.innerHTML = myDisciplinaryCases.map((c) => {
@@ -1967,12 +1960,12 @@ export function renderDisciplinaryCases() {
     const hasResponse = !!(c.studentResponse && c.studentResponse.trim());
 
     return `
-      <div class="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-4 text-xs">
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div class="p-4 bg-white rounded-xl border border-slate-200 space-y-3 text-xs shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-slate-200">
           <div class="flex items-center gap-2">
-            <span class="font-mono font-bold text-rose-400 text-sm">${c.caseId}</span>
+            <span class="font-mono font-bold text-slate-900 text-sm">${c.caseId}</span>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-              isResolved ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-amber-950 text-amber-300 border border-amber-700'
+              isResolved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
             }">
               ${c.caseStatus}
             </span>
@@ -1981,41 +1974,41 @@ export function renderDisciplinaryCases() {
         </div>
 
         <!-- Meeting & Location -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
           <div>
-            <span class="text-slate-500 block text-[10px] uppercase font-mono">SCHEDULED HEARING:</span>
-            <strong class="text-white">${c.meetingDate ? new Date(c.meetingDate).toLocaleString() : 'Awaiting Schedule'}</strong>
+            <span class="text-slate-500 block text-[10px] uppercase font-mono">Scheduled Hearing:</span>
+            <strong class="text-slate-900">${c.meetingDate ? new Date(c.meetingDate).toLocaleString() : 'Awaiting Schedule'}</strong>
           </div>
           <div>
-            <span class="text-slate-500 block text-[10px] uppercase font-mono">LOCATION:</span>
-            <span class="text-slate-200">${c.meetingLocation || 'Campus Committee Room'}</span>
+            <span class="text-slate-500 block text-[10px] uppercase font-mono">Location:</span>
+            <span class="text-slate-800">${c.meetingLocation || 'Campus Committee Room'}</span>
           </div>
         </div>
 
         ${
           c.committeeNotes
             ? `<div>
-                <span class="text-slate-400 font-bold block text-[11px] mb-1">Committee Case Notes:</span>
-                <p class="text-slate-300 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">${c.committeeNotes}</p>
+                <span class="text-slate-600 font-semibold block text-[11px] mb-1">Committee Case Notes:</span>
+                <p class="text-slate-800 bg-slate-50 p-2.5 rounded-lg border border-slate-200">${c.committeeNotes}</p>
                </div>`
             : ''
         }
 
         <!-- Linked Incidents -->
-        <div class="text-[11px] text-slate-400">
+        <div class="text-[11px] text-slate-600">
           <strong>Linked False Alarm Incidents: </strong>
-          <span class="font-mono text-cyan-300">${(c.linkedIncidentIds || []).join(', ') || 'N/A'}</span>
+          <span class="font-mono text-slate-900 font-semibold">${(c.linkedIncidentIds || []).join(', ') || 'N/A'}</span>
         </div>
 
         ${
           isResolved && c.finalDecision
             ? `
-            <div class="p-3.5 bg-emerald-950/60 rounded-xl border border-emerald-600/80 text-emerald-200 space-y-1">
-              <span class="font-bold text-xs flex items-center gap-1.5 text-emerald-300">
+            <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-800 space-y-1">
+              <span class="font-bold text-xs flex items-center gap-1.5 text-emerald-900">
                 <span>⚖️</span> Official Committee Decision:
               </span>
-              <p class="text-xs font-semibold text-white">${c.finalDecision}</p>
-              <div class="text-[10px] text-emerald-400/80 pt-1">
+              <p class="text-xs font-semibold text-emerald-950">${c.finalDecision}</p>
+              <div class="text-[10px] text-emerald-700 pt-1">
                 Decided by: ${c.deciderName || 'Committee Board'} • ${c.decisionDate ? new Date(c.decisionDate).toLocaleDateString() : ''}
               </div>
             </div>
@@ -2024,15 +2017,15 @@ export function renderDisciplinaryCases() {
         }
 
         <!-- Student Representation / Appeal Box -->
-        <div class="pt-2 border-t border-slate-800 space-y-2">
+        <div class="pt-2 border-t border-slate-200 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-300 text-[11px]">Your Explanation & Appeal Representation:</span>
+            <span class="font-semibold text-slate-700 text-[11px]">Your Explanation & Appeal Representation:</span>
             <span class="text-[10px] text-slate-500">${hasResponse ? 'Submitted' : 'Pending Submission'}</span>
           </div>
           ${
             hasResponse
               ? `
-              <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-200 text-xs">
+              <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-800 text-xs">
                 "${c.studentResponse}"
                 <div class="text-[10px] text-slate-500 mt-1 font-mono">Submitted: ${new Date(c.studentResponseSubmittedAt || c.updatedAt).toLocaleString()}</div>
               </div>
@@ -2040,9 +2033,9 @@ export function renderDisciplinaryCases() {
               : `
               <div class="space-y-2">
                 <textarea id="appeal-input-${c.caseId}" rows="3" placeholder="Explain circumstances, mitigating factors, or submit written appeal for committee review..." 
-                          class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"></textarea>
+                          class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500"></textarea>
                 <div class="flex justify-end">
-                  <button onclick="window.csStudent.submitStudentAppeal('${c.caseId}')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow transition">
+                  <button onclick="window.csStudent.submitStudentAppeal('${c.caseId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer">
                     Submit Representation
                   </button>
                 </div>

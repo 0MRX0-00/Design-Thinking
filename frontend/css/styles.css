@@ -1,24 +1,25 @@
-/* CampusShield Tactical Theme & Design System */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* CampusShield — Modern University Safety & Emergency Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg-primary: #070a13;
-  --bg-secondary: #0d1322;
-  --bg-card: #121a2e;
-  --bg-card-hover: #18233e;
-  --border-color: #1e2c4a;
-  --border-highlight: #2c4270;
-  
-  --accent-cyan: #06b6d4;
-  --accent-blue: #3b82f6;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-purple: #8b5cf6;
+  /* Official Design System Tokens */
+  --bg-page: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --primary-navy: #1E3A5F;
+  --primary-blue: #2563EB;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border-color: #E2E8F0;
+  --border-strong: #CBD5E1;
 
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --color-emergency: #DC2626;
+  --color-warning: #D97706;
+  --color-success: #15803D;
+  --color-neutral: #475569;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
 }
 
 * {
@@ -26,85 +27,62 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-page);
   color: var(--text-main);
+  line-height: 1.5;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Custom Scrollbar */
+/* Subtle, Clean Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090e1a;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1f2c47;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #33466f;
+  background: #94A3B8;
 }
 
-/* Tactical Glassmorphism */
-.tactical-glass {
-  background: rgba(18, 26, 46, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-}
-
+/* Base Card & Container Styles */
+.card-base,
+.tactical-glass,
 .tactical-glass-elevated {
-  background: rgba(24, 35, 62, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-highlight);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  border-radius: 0.75rem;
 }
 
-/* Radar Sweep Animation */
-@keyframes radar-sweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.card-hover {
+  transition: all 0.15s ease-in-out;
+}
+.card-hover:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
 }
 
-.radar-scanner {
-  position: relative;
-  overflow: hidden;
-}
-
-.radar-scanner::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(6, 182, 212, 0.15) 60deg, transparent 60.1deg);
-  animation: radar-sweep 4s linear infinite;
-  pointer-events: none;
-}
-
-/* Emergency Pulse Effect */
+/* Emergency Button Pulse (Reserved only for active SOS) */
 @keyframes emergency-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 20px rgba(244, 63, 94, 0);
+    box-shadow: 0 0 0 16px rgba(220, 38, 38, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
   }
 }
 
@@ -112,179 +90,107 @@ body {
   animation: emergency-pulse 2s infinite;
 }
 
-/* Glow Badges */
-.glow-rose {
-  box-shadow: 0 0 15px rgba(244, 63, 94, 0.35);
-}
-
-.glow-amber {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
-}
-
-/* CRT Scanline Simulation for CCTV */
-.scanlines {
-  position: relative;
-}
-.scanlines::before {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  z-index: 2;
-  background-size: 100% 3px, 6px 100%;
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-/* Interactive Card Transitions */
-.tactical-card {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.tactical-card:hover {
-  border-color: var(--border-highlight);
-  transform: translateY(-2px);
-}
-
-/* Active Incident Selected State */
+/* Active Incident Selection in Queue */
 .incident-active-selected {
-  border-color: var(--accent-cyan) !important;
-  background: rgba(6, 182, 212, 0.08) !important;
+  border-color: var(--primary-blue) !important;
+  background-color: #EFF6FF !important;
 }
 
-/* Toast Notifications */
+/* Toast Notifications (Clean, accessible, floating top-right) */
 #toast-container {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: 20px;
+  right: 20px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
+  max-width: 380px;
+  width: calc(100% - 40px);
 }
 
 .toast-msg {
   pointer-events: auto;
-  animation: toast-slide 0.3s ease forwards;
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: toast-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes toast-slide {
   from {
-    transform: translateX(100%);
+    transform: translateY(-12px);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
-/* =========================================================
-   LEAFLET TACTICAL MAP STYLES & RADAR EFFECTS
-   ========================================================= */
-
+/* Clean Leaflet Map Styling (Light university look) */
 .leaflet-container {
-  background-color: #0d1527 !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
-  color: #f1f5f9 !important;
+  background-color: #E2E8F0 !important;
+  font-family: 'Inter', sans-serif !important;
+  color: var(--text-main) !important;
   width: 100% !important;
   height: 100% !important;
 }
 
-#student-pinpoint-map, #tactical-campus-map, #full-tactical-campus-map {
+#student-pinpoint-map, 
+#tactical-campus-map, 
+#full-tactical-campus-map {
   width: 100% !important;
   height: 100% !important;
-  min-height: 180px !important;
-  background-color: #0d1527 !important;
+  min-height: 200px !important;
+  background-color: #F1F5F9 !important;
 }
 
-/* Custom Radar Waves */
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2.8);
-    opacity: 0;
-  }
+.leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--text-main) !important;
+  padding: 4px 6px !important;
 }
 
-.radar-ping {
-  animation: radar-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+.leaflet-popup-tip {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border-color) !important;
 }
 
-.radar-ping-fast {
-  animation: radar-pulse 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* Tactical Dark Popups */
-.tactical-popup .leaflet-popup-content-wrapper {
-  background: rgba(13, 19, 34, 0.95) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  border: 1px solid #1e2c4a !important;
-  border-radius: 14px !important;
-  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(6, 182, 212, 0.15) !important;
-  color: #f1f5f9 !important;
-  padding: 0 !important;
-}
-
-.tactical-popup .leaflet-popup-content {
-  margin: 0 !important;
-  line-height: 1.4 !important;
-}
-
-.tactical-popup .leaflet-popup-tip {
-  background: #0d1322 !important;
-  border: 1px solid #1e2c4a !important;
-}
-
-.tactical-popup a.leaflet-popup-close-button {
-  color: #94a3b8 !important;
-  padding: 8px 8px 0 0 !important;
-}
-
-.tactical-popup a.leaflet-popup-close-button:hover {
-  color: #ffffff !important;
-}
-
-/* Custom Map Marker Icons */
-.custom-tactical-pin {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-/* Leaflet Zoom Control Tactical Theme */
 .leaflet-bar {
-  border: 1px solid #1e2c4a !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-  border-radius: 10px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: 0.5rem !important;
   overflow: hidden !important;
 }
 
 .leaflet-bar a {
-  background-color: #0d1322 !important;
-  color: #06b6d4 !important;
-  border-bottom: 1px solid #1e2c4a !important;
+  background-color: #FFFFFF !important;
+  color: var(--text-main) !important;
+  border-bottom: 1px solid var(--border-color) !important;
 }
 
 .leaflet-bar a:hover {
-  background-color: #18233e !important;
-  color: #ffffff !important;
+  background-color: #F8FAFC !important;
+  color: var(--primary-blue) !important;
 }
 
 .leaflet-bar a:last-child {
   border-bottom: none !important;
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
 }

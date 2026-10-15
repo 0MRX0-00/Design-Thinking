@@ -240,50 +240,48 @@ export function renderIncidentQueue() {
 
   container.innerHTML = filtered.map((inc) => {
     const isSelected = selectedIncident && (selectedIncident._id === inc._id || selectedIncident.incidentId === inc.incidentId);
-    const isCritical = inc.severity === 'critical';
-    const isResolved = inc.status === 'Resolved';
     const timeAgo = formatTimeAgo(inc.reportedAt);
 
     const severityColor = {
-      critical: 'text-rose-400 bg-rose-950/70 border-rose-700/60',
-      high: 'text-amber-400 bg-amber-950/70 border-amber-700/60',
-      medium: 'text-yellow-400 bg-yellow-950/70 border-yellow-700/60',
-      low: 'text-emerald-400 bg-emerald-950/70 border-emerald-700/60'
-    }[inc.severity] || 'text-cyan-400 bg-cyan-950/70 border-cyan-700/60';
+      critical: 'text-red-700 bg-red-50 border-red-200',
+      high: 'text-amber-800 bg-amber-50 border-amber-200',
+      medium: 'text-amber-700 bg-amber-50 border-amber-200',
+      low: 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    }[inc.severity] || 'text-blue-700 bg-blue-50 border-blue-200';
 
     const statusBadgeColor = {
-      Submitted: 'text-rose-400 bg-rose-500/10 border-rose-500/40 animate-pulse',
-      Acknowledged: 'text-amber-400 bg-amber-500/10 border-amber-500/40',
-      Assigned: 'text-blue-400 bg-blue-500/10 border-blue-500/40',
-      Dispatched: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/40',
-      'On Scene': 'text-purple-400 bg-purple-500/10 border-purple-500/40',
-      Resolved: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/40',
-      Cancelled: 'text-slate-400 bg-slate-500/10 border-slate-500/40'
-    }[inc.status] || 'text-slate-400 bg-slate-800';
+      Submitted: 'text-red-700 bg-red-50 border-red-200 font-bold',
+      Acknowledged: 'text-amber-700 bg-amber-50 border-amber-200',
+      Assigned: 'text-blue-700 bg-blue-50 border-blue-200',
+      Dispatched: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+      'On Scene': 'text-purple-700 bg-purple-50 border-purple-200',
+      Resolved: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      Cancelled: 'text-slate-600 bg-slate-100 border-slate-200'
+    }[inc.status] || 'text-slate-600 bg-slate-100 border-slate-200';
 
     return `
       <div onclick="window.csSecurity.selectIncident('${inc._id}')" 
-           class="p-3.5 rounded-xl border tactical-card cursor-pointer transition-all ${
+           class="p-3.5 rounded-xl border cursor-pointer transition-all ${
              isSelected
-               ? 'bg-cyan-950/40 border-cyan-500/80 shadow-lg shadow-cyan-950/30'
-               : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/50 hover:border-slate-700'
+               ? 'bg-blue-50/70 border-blue-500 shadow-xs ring-1 ring-blue-500/30'
+               : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
            }">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-xs font-bold text-white tracking-wider">${inc.incidentId}</span>
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-xs font-bold text-slate-900">${inc.incidentId}</span>
             <span class="px-1.5 py-0.5 text-[10px] uppercase font-bold rounded border ${severityColor}">${inc.severity}</span>
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1">
             ${
               inc.falseAlarmRecord
                 ? `<span class="px-1.5 py-0.5 text-[9px] font-bold rounded border ${
                     inc.falseAlarmRecord.classification === 'Genuine Emergency'
-                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : inc.falseAlarmRecord.classification === 'False Alarm — Accidental'
-                      ? 'bg-amber-950/80 text-amber-300 border-amber-700/60'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
                       : inc.falseAlarmRecord.classification === 'False Alarm — Intentional'
-                      ? 'bg-rose-950/80 text-rose-300 border-rose-700/60'
-                      : 'bg-blue-950/80 text-blue-300 border-blue-700/60'
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
                   }">⚖️ ${inc.falseAlarmRecord.classification.replace('False Alarm — ', 'FA: ')}</span>`
                 : ''
             }
@@ -291,18 +289,18 @@ export function renderIncidentQueue() {
           </div>
         </div>
 
-        <div class="text-sm font-semibold text-slate-100 line-clamp-1 mb-1">
+        <div class="text-xs font-bold text-slate-900 line-clamp-1 mb-1">
           ${getCategoryIcon(inc.category)} ${inc.category}
         </div>
 
-        <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
-          <span class="text-cyan-400 text-xs">📍</span>
+        <div class="flex items-center gap-1 text-xs text-slate-600 mb-2">
+          <span class="text-blue-600 text-xs">📍</span>
           <span class="truncate">${inc.location?.campusLocation || 'Main Campus'}</span>
         </div>
 
-        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/60">
-          <span>Reporter: <strong class="text-slate-300">${inc.reporter?.name || 'Anonymous'}</strong></span>
-          <span class="font-mono">${timeAgo}</span>
+        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+          <span>Reporter: <strong class="text-slate-800">${inc.reporter?.name || 'Anonymous'}</strong></span>
+          <span class="font-mono text-slate-400">${timeAgo}</span>
         </div>
       </div>
     `;
@@ -362,86 +360,86 @@ export function renderEmergencyDossier() {
     : 'None Assigned';
 
   container.innerHTML = `
-    <div class="p-5 tactical-glass rounded-2xl border border-slate-800 flex flex-col gap-5">
+    <div class="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-4">
       <!-- Dossier Header -->
-      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
         <div>
-          <div class="flex items-center gap-2.5">
-            <span class="text-xs font-mono font-bold text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/60">
-              DOSSIER: ${inc.incidentId}
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono font-bold text-blue-700 px-2 py-0.5 rounded bg-blue-50 border border-blue-200">
+              REPORT ${inc.incidentId}
             </span>
             <span class="text-xs uppercase font-bold px-2 py-0.5 rounded ${
-              inc.severity === 'critical' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-amber-950 text-amber-300 border border-amber-800'
+              inc.severity === 'critical' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
             }">
               ${inc.severity} Priority
             </span>
             <span class="text-xs font-bold px-2 py-0.5 rounded-full ${
-              inc.status === 'Resolved' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-cyan-950 text-cyan-300 border border-cyan-700'
+              inc.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
             }">
               Status: ${inc.status}
             </span>
           </div>
-          <h2 class="text-xl font-black text-white mt-2 flex items-center gap-2">
+          <h2 class="text-lg font-bold text-slate-900 mt-2 flex items-center gap-2">
             ${getCategoryIcon(inc.category)} ${inc.category}
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Reported: ${timeFormatted}</p>
+          <p class="text-xs text-slate-500 mt-0.5">Reported: ${timeFormatted}</p>
         </div>
 
         <!-- Primary Action Buttons -->
         <div class="flex flex-wrap items-center gap-2">
           ${
             inc.status === 'Submitted'
-              ? `<button onclick="window.csSecurity.acknowledgeAlert('${inc.incidentId}')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-1.5">
+              ? `<button onclick="window.csSecurity.acknowledgeAlert('${inc.incidentId}')" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                   ⚡ Acknowledge Alert
                 </button>`
               : ''
           }
           ${
             inc.status !== 'Resolved'
-              ? `<button onclick="window.csSecurity.openAssignModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-1.5">
+              ? `<button onclick="window.csSecurity.openAssignModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                   🚔 Assign / Dispatch Unit
                 </button>`
               : ''
           }
           ${
             ['Dispatched', 'Assigned'].includes(inc.status)
-              ? `<button onclick="window.csSecurity.markOnScene('${inc.incidentId}')" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-1.5">
+              ? `<button onclick="window.csSecurity.markOnScene('${inc.incidentId}')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                   📍 Mark On Scene
                 </button>`
               : ''
           }
           ${
             inc.status !== 'Resolved'
-              ? `<button onclick="window.csSecurity.openResolveModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-1.5">
+              ? `<button onclick="window.csSecurity.openResolveModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                   ✅ Resolve Incident
                 </button>`
               : ''
           }
-          <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-1.5 border border-amber-500/50">
-            ⚖️ Verify / Classify False Alarm
+          <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center gap-1.5 cursor-pointer">
+            ⚖️ Verify False Alarm
           </button>
         </div>
       </div>
 
       <!-- Lifecycle Progression Stepper -->
-      <div class="p-4 bg-slate-950/60 rounded-xl border border-slate-800/80">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
-          <span>Lifecycle Response Timeline</span>
-          <span class="text-cyan-400 font-bold">${inc.status}</span>
+      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+        <div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2.5 flex items-center justify-between font-semibold">
+          <span>Response Progression</span>
+          <span class="text-blue-700 font-bold">${inc.status}</span>
         </div>
         <div class="grid grid-cols-5 gap-2">
           ${lifecycleSteps
             .map(
               (s, i) => `
             <div class="flex flex-col items-center text-center">
-              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1 border ${
+              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mb-1 border ${
                 s.done
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-sm shadow-cyan-500/50'
-                  : 'bg-slate-900 text-slate-600 border-slate-800'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-white text-slate-400 border-slate-300'
               }">
                 ${s.done ? '✓' : i + 1}
               </div>
-              <span class="text-[10px] font-semibold ${s.done ? 'text-slate-200' : 'text-slate-600'}">${s.name}</span>
+              <span class="text-[10px] font-medium ${s.done ? 'text-slate-900 font-bold' : 'text-slate-500'}">${s.name}</span>
             </div>
           `
             )
@@ -450,93 +448,89 @@ export function renderEmergencyDossier() {
       </div>
 
       <!-- Reporter and Location Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <!-- Reporter Info Card -->
-        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-          <div class="text-xs font-mono font-bold uppercase text-slate-400 mb-3 flex items-center gap-2">
-            <span>👤</span> Reporter Identification
+        <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200">
+          <div class="text-xs font-bold uppercase text-slate-600 mb-2.5 flex items-center gap-1.5">
+            <span>👤</span> Reporter Information
           </div>
-          <div class="space-y-2 text-xs">
+          <div class="space-y-1.5 text-xs">
             <div class="flex justify-between">
-              <span class="text-slate-400">Name:</span>
-              <span class="font-bold text-white">${inc.reporter?.name || 'Anonymous Student'}</span>
+              <span class="text-slate-500">Name:</span>
+              <span class="font-bold text-slate-900">${inc.reporter?.name || 'Anonymous Student'}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Roll/Emp ID:</span>
-              <span class="font-mono text-cyan-300">${inc.reporter?.identifier || 'N/A'}</span>
+              <span class="text-slate-500">Roll/Emp ID:</span>
+              <span class="font-mono text-slate-800 font-semibold">${inc.reporter?.identifier || 'N/A'}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Phone:</span>
-              <a href="tel:${inc.reporter?.phone}" class="font-mono text-emerald-400 hover:underline">${inc.reporter?.phone || 'Not Provided'}</a>
+              <span class="text-slate-500">Phone:</span>
+              <a href="tel:${inc.reporter?.phone}" class="font-mono text-blue-700 hover:underline font-bold">${inc.reporter?.phone || 'Not Provided'}</a>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Department:</span>
-              <span class="text-slate-300">${inc.reporter?.department || 'Information Technology'}</span>
+              <span class="text-slate-500">Department:</span>
+              <span class="text-slate-700">${inc.reporter?.department || 'Information Technology'}</span>
             </div>
           </div>
         </div>
 
         <!-- Location & Responder Card -->
-        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-          <div class="text-xs font-mono font-bold uppercase text-slate-400 mb-3 flex items-center gap-2">
-            <span>📍</span> Location & Fleet Unit
+        <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200">
+          <div class="text-xs font-bold uppercase text-slate-600 mb-2.5 flex items-center gap-1.5">
+            <span>📍</span> Location & Patrol Assignment
           </div>
-          <div class="space-y-2 text-xs">
+          <div class="space-y-1.5 text-xs">
             <div class="flex justify-between">
-              <span class="text-slate-400">Live Address / Area:</span>
-              <span class="font-bold text-white text-right max-w-[220px]">${inc.location?.campusLocation || 'Kongu Campus Zone'}</span>
+              <span class="text-slate-500">Campus Location:</span>
+              <span class="font-bold text-slate-900 text-right max-w-[200px]">${inc.location?.campusLocation || 'Main Campus'}</span>
             </div>
             ${inc.locationDetails ? `
-            <div class="p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300">
-              <span class="text-slate-500 font-mono text-[10px] block uppercase">Exact Geocoded Details:</span>
+            <div class="p-2 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-700">
+              <span class="text-slate-500 text-[10px] block uppercase font-semibold">Location Notes:</span>
               ${inc.locationDetails}
             </div>` : ''}
             <div class="flex items-center justify-between">
-              <span class="text-slate-400">GPS Coordinates:</span>
+              <span class="text-slate-500">GPS Coordinates:</span>
               <div class="text-right">
-                <span class="font-mono text-cyan-300 font-bold block">
+                <span class="font-mono text-slate-800 font-semibold block text-[11px]">
                   ${
                     inc.location?.latitude && inc.location?.longitude
-                      ? `${inc.location.latitude.toFixed(5)}, ${inc.location.longitude.toFixed(5)} (±${inc.location.accuracy || 10}m)`
+                      ? `${inc.location.latitude.toFixed(5)}, ${inc.location.longitude.toFixed(5)}`
                       : 'Manual Landmark'
                   }
                 </span>
                 ${
                   inc.location?.latitude && inc.location?.longitude
-                    ? `<a href="https://www.google.com/maps?q=${inc.location.latitude},${inc.location.longitude}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-400 hover:text-emerald-300 underline font-mono flex items-center gap-1 justify-end mt-0.5">
-                        <span>🗺️</span> Open Google Maps Route ↗
+                    ? `<a href="https://www.google.com/maps?q=${inc.location.latitude},${inc.location.longitude}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-blue-600 hover:underline flex items-center gap-1 justify-end font-medium">
+                        Open in Google Maps ↗
                        </a>`
                     : ''
                 }
               </div>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Assigned Unit:</span>
-              <span class="font-bold text-blue-300">${assignedUnit}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">Resolved At:</span>
-              <span class="text-slate-300">${inc.resolvedAt ? new Date(inc.resolvedAt).toLocaleTimeString() : 'Pending'}</span>
+              <span class="text-slate-500">Assigned Unit:</span>
+              <span class="font-bold text-blue-700">${assignedUnit}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Incident Description & Requirements -->
-      <div class="p-4 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
+      <!-- Incident Description & Assistance Requirements -->
+      <div class="p-3.5 bg-slate-50/50 rounded-xl border border-slate-200 space-y-2.5">
         <div>
-          <div class="text-xs font-mono uppercase text-slate-400 mb-1 font-bold">Emergency Description:</div>
-          <p class="text-xs text-slate-200 leading-relaxed">${inc.description || 'No additional narrative provided during emergency SOS.'}</p>
+          <div class="text-xs font-semibold uppercase text-slate-500 mb-1">Description:</div>
+          <p class="text-xs text-slate-800 leading-relaxed">${inc.description || 'No additional narrative provided during emergency report.'}</p>
         </div>
 
         ${inc.requirements && inc.requirements.length > 0 ? `
-          <div class="pt-2 border-t border-slate-800/80">
-            <div class="text-xs font-mono uppercase text-rose-400 mb-1.5 font-bold flex items-center gap-1.5">
-              <span>⚠️</span> Requested Assistance Requirements:
+          <div class="pt-2 border-t border-slate-200">
+            <div class="text-xs uppercase text-slate-600 mb-1.5 font-bold flex items-center gap-1.5">
+              <span>⚠️</span> Requested Assistance:
             </div>
             <div class="flex flex-wrap gap-1.5">
               ${inc.requirements.map(req => `
-                <span class="px-2.5 py-1 rounded-lg bg-rose-950/80 border border-rose-700 text-rose-200 text-xs font-bold flex items-center gap-1">
+                <span class="px-2.5 py-0.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-1">
                   <span>🚨</span> ${req}
                 </span>
               `).join('')}
@@ -544,79 +538,64 @@ export function renderEmergencyDossier() {
           </div>
         ` : ''}
 
-        ${inc.locationDetails || inc.peopleInvolved || inc.silentAlert ? `
-          <div class="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-            ${inc.locationDetails ? `<div><span class="text-slate-400">Room / Landmark:</span> <span class="font-bold text-white">${inc.locationDetails}</span></div>` : ''}
-            ${inc.peopleInvolved ? `<div><span class="text-slate-400">People Involved:</span> <span class="font-bold text-white">${inc.peopleInvolved}</span></div>` : ''}
-            ${inc.silentAlert ? `<div><span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 font-bold">🤫 Silent Alert</span></div>` : ''}
-          </div>
-        ` : ''}
-
         ${
           inc.resolutionNotes
-            ? `<div class="mt-3 pt-3 border-t border-slate-800 text-xs">
-                <span class="text-emerald-400 font-bold">Resolution Notes: </span>
-                <span class="text-slate-300">${inc.resolutionNotes}</span>
+            ? `<div class="mt-2 pt-2 border-t border-slate-200 text-xs">
+                <span class="text-emerald-700 font-bold">Resolution Notes: </span>
+                <span class="text-slate-700">${inc.resolutionNotes}</span>
                </div>`
             : ''
         }
       </div>
 
-      <!-- False Alarm Investigation Dossier Card -->
-      <div class="p-4 bg-slate-900/70 rounded-xl border border-slate-800">
-        <div class="flex items-center justify-between mb-3">
-          <div class="text-xs font-mono font-bold uppercase text-slate-300 flex items-center gap-2">
+      <!-- False Alarm Classification Card -->
+      <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-bold uppercase text-slate-700 flex items-center gap-1.5">
             <span>⚖️</span> False Alarm Verification Status
           </div>
-          <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="text-xs font-bold text-cyan-400 hover:underline">
+          <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="text-xs font-bold text-blue-600 hover:underline cursor-pointer">
             ${inc.falseAlarmRecord ? 'Update Classification' : '+ Classify Incident'}
           </button>
         </div>
         ${
           inc.falseAlarmRecord
             ? `
-            <div class="space-y-2.5 text-xs">
+            <div class="space-y-2 text-xs">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 rounded-lg font-bold text-xs ${
+                <span class="px-2.5 py-0.5 rounded-full font-bold text-xs border ${
                   inc.falseAlarmRecord.classification === 'Genuine Emergency'
-                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : inc.falseAlarmRecord.classification === 'False Alarm — Accidental'
-                    ? 'bg-amber-950 text-amber-300 border border-amber-700'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
                     : inc.falseAlarmRecord.classification === 'False Alarm — Intentional'
-                    ? 'bg-rose-950 text-rose-300 border border-rose-700 animate-pulse'
-                    : 'bg-blue-950 text-blue-300 border border-blue-700'
+                    ? 'bg-red-50 text-red-700 border-red-200'
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
                 }">
                   ${inc.falseAlarmRecord.classification}
                 </span>
-                <span class="text-slate-400 text-[11px]">
-                  Verified by: <strong class="text-slate-200">${inc.falseAlarmRecord.verifierName || 'Campus Security'}</strong>
-                  • ${new Date(inc.falseAlarmRecord.verifiedAt || inc.falseAlarmRecord.createdAt).toLocaleString()}
+                <span class="text-slate-500 text-[11px]">
+                  Verified by: <strong class="text-slate-700">${inc.falseAlarmRecord.verifierName || 'Campus Security'}</strong>
+                  • ${new Date(inc.falseAlarmRecord.verifiedAt || inc.falseAlarmRecord.createdAt).toLocaleDateString()}
                 </span>
               </div>
               ${
                 inc.falseAlarmRecord.investigationNotes
-                  ? `<div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80">
-                      <span class="text-slate-400 font-semibold block text-[11px] mb-0.5">Investigation Findings:</span>
-                      <p class="text-slate-200">${inc.falseAlarmRecord.investigationNotes}</p>
-                    </div>`
-                  : ''
-              }
-              ${
-                inc.falseAlarmRecord.evidenceReferences
-                  ? `<div class="text-[11px] text-slate-400 font-mono">
-                      <span>Evidence / Reference: </span><span class="text-cyan-300">${inc.falseAlarmRecord.evidenceReferences}</span>
+                  ? `<div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                      <span class="text-slate-500 font-semibold block text-[11px] mb-0.5">Investigation Findings:</span>
+                      <p class="text-slate-800">${inc.falseAlarmRecord.investigationNotes}</p>
                     </div>`
                   : ''
               }
             </div>
             `
             : `
-            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-amber-400">⚠️</span>
-                <span>Incident pending security investigation classification (Genuine, Accidental, or Intentional False Alarm).</span>
+            <div class="p-2.5 bg-white rounded-lg border border-slate-200 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-amber-600">⚠️</span>
+                <span>Investigation classification pending (Genuine, Accidental, or Intentional False Alarm).</span>
               </div>
-              <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold text-xs shadow">
+              <button onclick="window.csSecurity.openVerifyModal('${inc.incidentId}')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-xs cursor-pointer">
                 Classify Now
               </button>
             </div>
@@ -626,8 +605,8 @@ export function renderEmergencyDossier() {
 
       <!-- Dispatch Notes & Communication Trail -->
       <div class="space-y-2">
-        <div class="flex items-center justify-between text-xs font-mono uppercase text-slate-400 font-bold">
-          <span>Dispatch & Response Notes (${inc.notes?.length || 0})</span>
+        <div class="flex items-center justify-between text-xs uppercase text-slate-500 font-bold">
+          <span>Dispatch & Operational Notes (${inc.notes?.length || 0})</span>
         </div>
         
         <div class="max-h-36 overflow-y-auto space-y-2 pr-1">
@@ -636,25 +615,25 @@ export function renderEmergencyDossier() {
               ? inc.notes
                   .map(
                     (n) => `
-                <div class="p-2.5 bg-slate-950/80 rounded-lg border border-slate-800/80 text-xs">
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
                   <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                    <span class="font-bold text-cyan-400">${n.authorName || 'Dispatcher'}</span>
+                    <span class="font-bold text-slate-900">${n.authorName || 'Dispatcher'}</span>
                     <span class="font-mono">${new Date(n.createdAt).toLocaleTimeString()}</span>
                   </div>
-                  <p class="text-slate-200">${n.text}</p>
+                  <p class="text-slate-700">${n.text}</p>
                 </div>
               `
                   )
                   .join('')
-              : '<div class="text-xs text-slate-600 italic">No dispatch notes logged yet.</div>'
+              : '<div class="text-xs text-slate-400 italic">No dispatch notes logged yet.</div>'
           }
         </div>
 
         <!-- Add Note Input -->
-        <div class="flex gap-2 pt-2">
+        <div class="flex gap-2 pt-1">
           <input type="text" id="dispatch-note-input" placeholder="Type dispatch note or responder update..." 
-                 class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
-          <button onclick="window.csSecurity.addDispatchNote('${inc.incidentId}')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs rounded-xl border border-slate-700">
+                 class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500" />
+          <button onclick="window.csSecurity.addDispatchNote('${inc.incidentId}')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 transition cursor-pointer">
             Log Note
           </button>
         </div>
@@ -667,11 +646,11 @@ function renderEmptyDossier() {
   const container = document.getElementById('emergency-dossier-panel');
   if (!container) return;
   container.innerHTML = `
-    <div class="p-12 tactical-glass rounded-2xl border border-slate-800 text-center text-slate-500">
+    <div class="p-12 bg-white rounded-2xl border border-slate-200 text-center text-slate-500 shadow-xs">
       <div class="text-4xl mb-3">🛡️</div>
-      <h3 class="text-base font-bold text-slate-300">No Incident Selected</h3>
+      <h3 class="text-base font-bold text-slate-800">No Incident Selected</h3>
       <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-        Select an emergency from the queue to inspect tactical coordinates, dispatch security patrol, and view incident history.
+        Select an incident from the queue on the left to view reporter details, inspect coordinates, dispatch patrol units, or log notes.
       </p>
     </div>
   `;
@@ -751,27 +730,27 @@ export function renderFleetStatus() {
 
   container.innerHTML = responders.map((r) => {
     const statusColor = {
-      available: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40',
-      dispatched: 'bg-blue-500/10 text-blue-400 border-blue-500/40',
-      busy: 'bg-amber-500/10 text-amber-400 border-amber-500/40',
-      off_duty: 'bg-slate-500/10 text-slate-400 border-slate-500/40'
-    }[r.availabilityStatus] || 'bg-slate-800 text-slate-400';
+      available: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      dispatched: 'bg-blue-50 text-blue-700 border-blue-200',
+      busy: 'bg-amber-50 text-amber-700 border-amber-200',
+      off_duty: 'bg-slate-100 text-slate-500 border-slate-200'
+    }[r.availabilityStatus] || 'bg-slate-100 text-slate-600 border-slate-200';
 
     return `
-      <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+      <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-white font-mono">${r.callSign}</span>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-slate-900 font-mono">${r.callSign}</span>
             <span class="text-[10px] text-slate-400">(${r.badgeNumber})</span>
           </div>
-          <div class="text-[11px] text-slate-400 mt-0.5">${r.team}</div>
-          <div class="text-[10px] text-cyan-400 mt-0.5">📍 ${r.lastKnownLocation?.campusZone || 'Patrol Unit'}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">${r.team}</div>
+          <div class="text-[10px] text-blue-600 mt-0.5 font-medium">📍 ${r.lastKnownLocation?.campusZone || 'Patrol Unit'}</div>
         </div>
 
         <div class="flex flex-col items-end gap-1.5">
-          <span class="px-2 py-0.5 text-[10px] font-bold rounded border ${statusColor} uppercase">${r.availabilityStatus}</span>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border ${statusColor} uppercase">${r.availabilityStatus}</span>
           <button onclick="window.csSecurity.toggleResponderStatus('${r._id}', '${r.availabilityStatus}')" 
-                  class="text-[10px] text-cyan-400 hover:text-cyan-300 underline font-mono">
+                  class="text-[10px] text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium">
             Toggle Status
           </button>
         </div>
@@ -800,23 +779,23 @@ export function openAssignModal(incidentId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'assign-responder-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4';
     document.body.appendChild(modal);
   }
 
   const availableUnits = responders.filter((r) => r.availabilityStatus !== 'off_duty');
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
           🚔 Dispatch Security Unit
         </h3>
-        <button onclick="document.getElementById('assign-responder-modal').remove()" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="document.getElementById('assign-responder-modal').remove()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">✕</button>
       </div>
 
-      <p class="text-xs text-slate-400 mb-4">
-        Select a security response unit to assign to Incident <strong class="text-cyan-400">${incidentId}</strong>:
+      <p class="text-xs text-slate-500 mb-4">
+        Select an active patrol unit to dispatch to Incident <strong class="text-slate-800">${incidentId}</strong>:
       </p>
 
       <div class="space-y-2 max-h-60 overflow-y-auto mb-4">
@@ -825,14 +804,14 @@ export function openAssignModal(incidentId) {
             ? availableUnits
                 .map(
                   (r) => `
-              <label class="flex items-center justify-between p-3 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800/80 cursor-pointer text-xs">
+              <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-xs transition">
                 <div>
-                  <div class="font-bold text-white font-mono">${r.callSign} (${r.badgeNumber})</div>
-                  <div class="text-[11px] text-slate-400">${r.team} • Active: ${r.activeIncidentCount || 0}</div>
+                  <div class="font-bold text-slate-900 font-mono">${r.callSign} (${r.badgeNumber})</div>
+                  <div class="text-[11px] text-slate-500">${r.team} • Active: ${r.activeIncidentCount || 0}</div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="text-[10px] px-2 py-0.5 rounded border ${
-                    r.availabilityStatus === 'available' ? 'border-emerald-600 text-emerald-300' : 'border-amber-600 text-amber-300'
+                  <span class="text-[10px] px-2 py-0.5 rounded-full border ${
+                    r.availabilityStatus === 'available' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold' : 'bg-amber-50 border-amber-200 text-amber-700 font-semibold'
                   }">${r.availabilityStatus}</span>
                   <input type="radio" name="selected_responder" value="${r._id}" ${r.availabilityStatus === 'available' ? 'checked' : ''} />
                 </div>
@@ -840,15 +819,15 @@ export function openAssignModal(incidentId) {
             `
                 )
                 .join('')
-            : '<p class="text-xs text-amber-400">No active response units on shift.</p>'
+            : '<p class="text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">No active response units currently on shift.</p>'
         }
       </div>
 
-      <div class="flex justify-end gap-2">
-        <button onclick="document.getElementById('assign-responder-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('assign-responder-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csSecurity.confirmDispatch('${incidentId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg">
+        <button onclick="window.csSecurity.confirmDispatch('${incidentId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Confirm Dispatch
         </button>
       </div>
@@ -887,31 +866,31 @@ export function openResolveModal(incidentId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'resolve-incident-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4';
     document.body.appendChild(modal);
   }
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
           ✅ Resolve Emergency Incident
         </h3>
-        <button onclick="document.getElementById('resolve-incident-modal').remove()" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="document.getElementById('resolve-incident-modal').remove()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">✕</button>
       </div>
 
-      <p class="text-xs text-slate-400 mb-3">
-        Record resolution summary and operational notes for Incident <strong class="text-cyan-400">${incidentId}</strong>:
+      <p class="text-xs text-slate-500 mb-3">
+        Record resolution summary and operational notes for Incident <strong class="text-slate-800">${incidentId}</strong>:
       </p>
 
       <textarea id="resolution-notes-input" rows="3" placeholder="Explain how the emergency was resolved (medical aid rendered, student escorted, situation normalized, etc.)..." 
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 mb-4"></textarea>
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 mb-4"></textarea>
 
-      <div class="flex justify-end gap-2">
-        <button onclick="document.getElementById('resolve-incident-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('resolve-incident-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csSecurity.confirmResolve('${incidentId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg">
+        <button onclick="window.csSecurity.confirmResolve('${incidentId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Confirm Resolution
         </button>
       </div>
@@ -954,94 +933,94 @@ export function openVerifyModal(incidentId) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'verify-false-alarm-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   const currentUser = getCurrentUser() || { name: 'Officer Raman', identifier: 'SEC-01' };
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-amber-500/50 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-6 shadow-xl relative my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500 flex items-center justify-center text-xl">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-xl text-amber-700">
             ⚖️
           </div>
           <div>
-            <h3 class="text-sm font-black text-white uppercase tracking-wider">
-              Security Incident & False Alarm Verification
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              Security Incident & False Alarm Classification
             </h3>
-            <p class="text-xs text-slate-400 font-mono">
+            <p class="text-xs text-slate-500 font-mono">
               ${inc.incidentId} • Reporter: ${inc.reporter?.name || 'Student'} (${inc.reporter?.identifier || 'N/A'})
             </p>
           </div>
         </div>
-        <button onclick="document.getElementById('verify-false-alarm-modal').remove()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-sm">
+        <button onclick="document.getElementById('verify-false-alarm-modal').remove()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg text-sm cursor-pointer">
           ✕
         </button>
       </div>
 
-      <!-- Legal & Policy Safeguard Callout -->
-      <div class="p-3 bg-blue-950/40 rounded-xl border border-blue-800/60 mb-4 text-xs text-blue-200">
-        <div class="font-bold flex items-center gap-1.5 text-blue-300 mb-1">
+      <!-- Policy Callout -->
+      <div class="p-3 bg-blue-50 rounded-xl border border-blue-200 mb-4 text-xs text-blue-900">
+        <div class="font-bold flex items-center gap-1.5 text-blue-800 mb-1">
           <span>🛡️</span> Institutional Policy Rules:
         </div>
-        <p class="text-[11px] text-blue-200/90 leading-relaxed">
-          Only incidents marked <strong>Verified Intentional False Alarm</strong> will increase the student's false alarm count. Genuine emergencies, accidental triggers, unresolved incidents, and unverified reports will <strong>never</strong> increase this count.
+        <p class="text-[11px] text-blue-800/90 leading-relaxed">
+          Only incidents marked <strong>Verified Intentional False Alarm</strong> will increase the student's false alarm count. Genuine emergencies and accidental triggers will <strong>never</strong> increase this count.
         </p>
       </div>
 
       <!-- 4 Classification Options -->
       <div class="space-y-2 mb-4">
-        <label class="block text-xs font-bold text-slate-300">Select Verified Outcome:</label>
+        <label class="block text-xs font-bold text-slate-700">Select Verified Outcome:</label>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           
           <button type="button" onclick="window.csSecurity.selectVerifyOption('Genuine Emergency', this)"
-                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
                     selectedVerifyClassification === 'Genuine Emergency'
-                      ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-lg shadow-emerald-950/50'
-                      : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-300'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-xs ring-1 ring-emerald-500/30'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                   }">
-            <div class="flex items-center gap-2 font-bold text-xs text-emerald-400">
+            <div class="flex items-center gap-1.5 font-bold text-xs text-emerald-700">
               <span>🟢</span> Genuine Emergency
             </div>
-            <p class="text-[10px] text-slate-400">The emergency was legitimate. Aid rendered or situation stabilized.</p>
+            <p class="text-[10px] text-slate-500">The emergency was legitimate. Aid rendered or situation stabilized.</p>
           </button>
 
           <button type="button" onclick="window.csSecurity.selectVerifyOption('False Alarm — Accidental', this)"
-                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
                     selectedVerifyClassification === 'False Alarm — Accidental'
-                      ? 'bg-amber-950/80 border-amber-500 text-white shadow-lg shadow-amber-950/50'
-                      : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-300'
+                      ? 'bg-amber-50 border-amber-500 text-amber-950 shadow-xs ring-1 ring-amber-500/30'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                   }">
-            <div class="flex items-center gap-2 font-bold text-xs text-amber-400">
+            <div class="flex items-center gap-1.5 font-bold text-xs text-amber-700">
               <span>🟡</span> False Alarm — Accidental
             </div>
-            <p class="text-[10px] text-slate-400">SOS was triggered unintentionally (pocket press, misdial, device drop).</p>
+            <p class="text-[10px] text-slate-500">SOS was triggered unintentionally (pocket press, accidental tap).</p>
           </button>
 
           <button type="button" onclick="window.csSecurity.selectVerifyOption('False Alarm — Intentional', this)"
-                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
                     selectedVerifyClassification === 'False Alarm — Intentional'
-                      ? 'bg-rose-950/80 border-rose-500 text-white shadow-lg shadow-rose-950/50'
-                      : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-300'
+                      ? 'bg-red-50 border-red-500 text-red-950 shadow-xs ring-1 ring-red-500/30'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                   }">
-            <div class="flex items-center gap-2 font-bold text-xs text-rose-400">
+            <div class="flex items-center gap-1.5 font-bold text-xs text-red-700">
               <span>🔴</span> False Alarm — Intentional
             </div>
-            <p class="text-[10px] text-slate-400">Student deliberately submitted a false emergency alert (prank, distraction).</p>
+            <p class="text-[10px] text-slate-500">Deliberately submitted a false emergency alert (prank, distraction).</p>
           </button>
 
           <button type="button" onclick="window.csSecurity.selectVerifyOption('Under Investigation', this)"
-                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+                  class="verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
                     selectedVerifyClassification === 'Under Investigation'
-                      ? 'bg-blue-950/80 border-blue-500 text-white shadow-lg shadow-blue-950/50'
-                      : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-300'
+                      ? 'bg-blue-50 border-blue-500 text-blue-950 shadow-xs ring-1 ring-blue-500/30'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                   }">
-            <div class="flex items-center gap-2 font-bold text-xs text-blue-400">
+            <div class="flex items-center gap-1.5 font-bold text-xs text-blue-700">
               <span>🔵</span> Under Investigation
             </div>
-            <p class="text-[10px] text-slate-400">Investigation pending CCTV review, witness statements, or interview.</p>
+            <p class="text-[10px] text-slate-500">Pending further review, witness statements, or incident inquiry.</p>
           </button>
 
         </div>
@@ -1050,43 +1029,43 @@ export function openVerifyModal(incidentId) {
       <!-- Investigation Details Form -->
       <div class="space-y-3 mb-4">
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1" id="investigation-notes-label">
-            Investigation Notes <span id="notes-required-asterisk" class="${selectedVerifyClassification === 'False Alarm — Intentional' ? 'text-rose-400 font-bold' : 'text-slate-500'}">*</span>
+          <label class="block text-xs font-bold text-slate-700 mb-1" id="investigation-notes-label">
+            Investigation Notes <span id="notes-required-asterisk" class="${selectedVerifyClassification === 'False Alarm — Intentional' ? 'text-red-600 font-bold' : 'text-slate-400'}">*</span>
           </label>
           <textarea id="verify-notes-input" rows="3" 
-                    placeholder="Provide detailed findings explaining why this incident is classified as such (facts observed, statements, CCTV review)..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">${inc.falseAlarmRecord?.investigationNotes || ''}</textarea>
+                    placeholder="Provide detailed findings explaining why this incident is classified as such (facts observed, statements, etc.)..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500">${inc.falseAlarmRecord?.investigationNotes || ''}</textarea>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">
-            Supporting Evidence / Attachment References (Optional)
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Supporting Evidence References (Optional)
           </label>
           <input type="text" id="verify-evidence-input" 
-                 placeholder="e.g. CCTV CAM-04 clip 14:22, Proctor signed memo #204, photo ref..." 
+                 placeholder="e.g. Duty log #204, CCTV clip ref, proctor memo..." 
                  value="${inc.falseAlarmRecord?.evidenceReferences || ''}"
-                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500" />
         </div>
 
-        <!-- Verification Metadata Footnote -->
-        <div class="grid grid-cols-2 gap-2 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400">
+        <!-- Verification Metadata -->
+        <div class="grid grid-cols-2 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500">
           <div>
-            <span class="text-slate-500 block">Security Personnel:</span>
-            <strong class="text-slate-200">${currentUser.name}</strong> (${currentUser.identifier || 'SEC-OFFICER'})
+            <span class="block">Security Officer:</span>
+            <strong class="text-slate-800">${currentUser.name}</strong> (${currentUser.identifier || 'SEC-OFFICER'})
           </div>
           <div>
-            <span class="text-slate-500 block">Timestamp:</span>
-            <span class="font-mono text-cyan-300">${new Date().toLocaleTimeString()} (Active Session)</span>
+            <span class="block">Timestamp:</span>
+            <span class="font-mono text-slate-700">${new Date().toLocaleTimeString()} (Active Session)</span>
           </div>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="document.getElementById('verify-false-alarm-modal').remove()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="document.getElementById('verify-false-alarm-modal').remove()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">
           Cancel
         </button>
-        <button onclick="window.csSecurity.confirmVerifyModal('${incidentId}')" class="px-5 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">
+        <button onclick="window.csSecurity.confirmVerifyModal('${incidentId}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
           Confirm Classification
         </button>
       </div>
@@ -1098,22 +1077,22 @@ export function selectVerifyOption(classification, btnElement) {
   selectedVerifyClassification = classification;
   const allBtns = document.querySelectorAll('.verify-opt-btn');
   allBtns.forEach((b) => {
-    b.className = 'verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-300';
+    b.className = 'verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700';
   });
 
   const asterisk = document.getElementById('notes-required-asterisk');
   if (asterisk) {
-    asterisk.className = classification === 'False Alarm — Intentional' ? 'text-rose-400 font-bold' : 'text-slate-500';
+    asterisk.className = classification === 'False Alarm — Intentional' ? 'text-red-600 font-bold' : 'text-slate-400';
   }
 
   if (btnElement) {
     const colorMap = {
-      'Genuine Emergency': 'bg-emerald-950/80 border-emerald-500 text-white shadow-lg shadow-emerald-950/50',
-      'False Alarm — Accidental': 'bg-amber-950/80 border-amber-500 text-white shadow-lg shadow-amber-950/50',
-      'False Alarm — Intentional': 'bg-rose-950/80 border-rose-500 text-white shadow-lg shadow-rose-950/50',
-      'Under Investigation': 'bg-blue-950/80 border-blue-500 text-white shadow-lg shadow-blue-950/50'
+      'Genuine Emergency': 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-xs ring-1 ring-emerald-500/30',
+      'False Alarm — Accidental': 'bg-amber-50 border-amber-500 text-amber-950 shadow-xs ring-1 ring-amber-500/30',
+      'False Alarm — Intentional': 'bg-red-50 border-red-500 text-red-950 shadow-xs ring-1 ring-red-500/30',
+      'Under Investigation': 'bg-blue-50 border-blue-500 text-blue-950 shadow-xs ring-1 ring-blue-500/30'
     };
-    btnElement.className = `verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 ${colorMap[classification] || ''}`;
+    btnElement.className = `verify-opt-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${colorMap[classification] || ''}`;
   }
 }
 
@@ -1554,10 +1533,10 @@ export function switchView(viewName) {
     if (fullMapView) fullMapView.classList.remove('hidden');
 
     if (tabOps) {
-      tabOps.className = 'px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 flex items-center gap-2 transition cursor-pointer';
+      tabOps.className = 'px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center gap-2 transition cursor-pointer';
     }
     if (tabFull) {
-      tabFull.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-cyan-600 text-white shadow-sm flex items-center gap-2 transition cursor-pointer';
+      tabFull.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-white text-blue-700 shadow-xs border border-slate-200/80 flex items-center gap-2 transition cursor-pointer';
     }
 
     initTacticalMaps();
@@ -1570,10 +1549,10 @@ export function switchView(viewName) {
     if (opsView) opsView.classList.remove('hidden');
 
     if (tabOps) {
-      tabOps.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-cyan-600 text-white shadow-sm flex items-center gap-2 transition cursor-pointer';
+      tabOps.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-white text-blue-700 shadow-xs border border-slate-200/80 flex items-center gap-2 transition cursor-pointer';
     }
     if (tabFull) {
-      tabFull.className = 'px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 flex items-center gap-2 transition cursor-pointer';
+      tabFull.className = 'px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center gap-2 transition cursor-pointer';
     }
 
     setTimeout(() => {
@@ -1657,22 +1636,23 @@ export async function toggleMapTileLayer() {
     if (currentTileStyle === 'satellite') {
       btn.innerHTML = '<span>🛰️</span> Satellite HD';
     } else if (currentTileStyle === 'dark') {
-      btn.innerHTML = '<span>🌙</span> Tactical Dark';
+      btn.innerHTML = '<span>🌙</span> Night Mode';
     } else {
       btn.innerHTML = '<span>🗺️</span> Street Map';
     }
   }
-  showToast('Map Layer', `Mapbox Layer: ${currentTileStyle.toUpperCase()}`, 'info');
+  showToast('Map Layer', `Map Layer: ${currentTileStyle.toUpperCase()}`, 'info');
 }
 
 // Filter helpers
 export function setQueueFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.queue-filter-btn').forEach((btn) => {
-    btn.classList.toggle('bg-cyan-600', btn.dataset.filter === filter);
+    btn.classList.toggle('bg-blue-600', btn.dataset.filter === filter);
     btn.classList.toggle('text-white', btn.dataset.filter === filter);
-    btn.classList.toggle('bg-slate-800', btn.dataset.filter !== filter);
-    btn.classList.toggle('text-slate-400', btn.dataset.filter !== filter);
+    btn.classList.toggle('shadow-xs', btn.dataset.filter === filter);
+    btn.classList.toggle('bg-slate-100', btn.dataset.filter !== filter);
+    btn.classList.toggle('text-slate-600', btn.dataset.filter !== filter);
   });
   renderIncidentQueue();
 }
