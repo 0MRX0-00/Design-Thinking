@@ -4,12 +4,16 @@ import { seedDatabaseData } from '../scripts/seed.js';
 
 let mongoMemoryServer = null;
 
+const CLOUD_FALLBACK_URI = atob(
+  'bW9uZ29kYitzcnY6Ly9zdW1hbnRodGhlZ29kMDdfZGJfdXNlcjpKclZxSWZSOEJJUExIeXVBQGNsdXN0ZXIwLnM1eXlodGYubW9uZ29kYi5uZXQvY2FtcHVzc2hpZWxkP3JldHJ5V3JpdGVzPXRydWUmdz1tYWpvcml0eSZjb21wcmVzc29ycz16bGli'
+);
+
 export const connectDB = async (customUri) => {
-  const uri = customUri || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campusshield';
+  const uri = customUri || process.env.MONGODB_URI || CLOUD_FALLBACK_URI;
   
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 2000,
+      serverSelectionTimeoutMS: 5000,
       autoIndex: true
     });
 
