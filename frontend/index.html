@@ -514,8 +514,8 @@
         showInlineAlert(`Authentication verified as ${result.user.name} (${result.user.role.toUpperCase()}). Redirecting...`, 'success');
         
         setTimeout(() => {
-          window.location.href = result.redirectUrl;
-        }, 600);
+          window.location.replace(result.redirectUrl);
+        }, 400);
       } catch (err) {
         setSubmitLoading(false);
         showInlineAlert(err.message || 'Authentication failed. Please verify credentials.', 'error');

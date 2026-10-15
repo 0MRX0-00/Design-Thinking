@@ -56,19 +56,9 @@ export const DEMO_PERSONAS = {
 };
 
 export function getDashboardUrl(role) {
-  const currentPath = window.location.pathname.toLowerCase();
-  const isHtmlDirect = currentPath.endsWith('.html') || currentPath.includes('/frontend/');
-  const isCustomPortOrFile = window.location.protocol === 'file:' || (window.location.port && window.location.port !== '5000');
-
-  if (isHtmlDirect || isCustomPortOrFile) {
-    if (role === 'admin' || role === 'faculty') return 'admin.html';
-    if (role === 'security') return 'security.html';
-    return 'student.html';
-  }
-
-  if (role === 'admin' || role === 'faculty') return '/admin';
-  if (role === 'security') return '/security';
-  return '/student';
+  if (role === 'admin' || role === 'faculty') return 'admin.html';
+  if (role === 'security') return 'security.html';
+  return 'student.html';
 }
 
 /**
@@ -144,7 +134,7 @@ export async function initAuth(requiredRole = null) {
   if (!isLoginPage) {
     console.warn('[CampusShield Auth] Unauthenticated session. Redirecting to login.');
     const redirectParam = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.replace(`/login?redirect=${redirectParam}`);
+    window.location.replace(`index.html?redirect=${redirectParam}`);
     return null;
   }
 
@@ -241,15 +231,7 @@ export async function logout() {
   localStorage.removeItem('cs_user');
   sessionStorage.clear();
 
-  const currentPath = window.location.pathname.toLowerCase();
-  const isHtmlDirect = currentPath.endsWith('.html') || currentPath.includes('/frontend/');
-  const isCustomPortOrFile = window.location.protocol === 'file:' || (window.location.port && window.location.port !== '5000');
-
-  if (isHtmlDirect || isCustomPortOrFile) {
-    window.location.replace('index.html');
-  } else {
-    window.location.replace('/login');
-  }
+  window.location.replace('index.html');
 }
 
 export function updateAuthUI(user) {
