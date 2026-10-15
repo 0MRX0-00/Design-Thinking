@@ -1,6 +1,6 @@
 // CampusShield Centralized API Client
 export const getApiBase = () => {
-  if (typeof window === 'undefined') return 'http://localhost:5000';
+  if (typeof window === 'undefined') return 'https://design-thinking-7ne9.onrender.com';
 
   // 1. User manual override (configured in app settings modal)
   const custom = localStorage.getItem('cs_backend_url');
@@ -9,13 +9,13 @@ export const getApiBase = () => {
   }
 
   const { protocol, hostname, port, origin } = window.location;
-  if (protocol === 'file:') return 'http://10.229.94.151:5000';
+  if (protocol === 'file:') return 'https://design-thinking-7ne9.onrender.com';
 
   // 2. Native Android / Capacitor app detection
-  // Inside APK, window.location.hostname is localhost, but localhost on phone has no backend!
+  // Inside APK, window.location.hostname is localhost, but the backend is hosted on Render
   const isCapacitor = Boolean(window.Capacitor) || protocol === 'capacitor:' || (hostname === 'localhost' && (!port || port === '80'));
   if (isCapacitor) {
-    return 'http://10.229.94.151:5000';
+    return 'https://design-thinking-7ne9.onrender.com';
   }
 
   // 3. If hosted on production / cloud domain (Render, Vercel, etc.)
@@ -26,8 +26,8 @@ export const getApiBase = () => {
   // 4. If accessing directly on port 5000 (localhost or LAN IP:5000)
   if (port === '5000') return origin;
 
-  // 5. If running via Live Server (5500, etc.), point to local backend on 5000
-  return `http://${hostname || 'localhost'}:5000`;
+  // 5. Default cloud production backend
+  return 'https://design-thinking-7ne9.onrender.com';
 };
 
 let API_BASE = getApiBase();
@@ -210,9 +210,9 @@ export function showBackendSettingsModal() {
             <span class="text-[10px] text-cyan-400 font-bold">Select</span>
           </button>
           <button type="button" 
-                  onclick="document.getElementById('custom-backend-url-input').value='https://design-thinking-0mrx0-00.onrender.com'"
-                  class="p-2 text-left bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-between text-slate-300 hover:text-white transition cursor-pointer">
-            <span class="font-mono text-[11px]">🌐 Render Cloud Service</span>
+                  onclick="document.getElementById('custom-backend-url-input').value='https://design-thinking-7ne9.onrender.com'"
+                  class="p-2 text-left bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-700/60 rounded-lg flex items-center justify-between text-cyan-200 hover:text-white transition cursor-pointer">
+            <span class="font-mono text-[11px]">🌐 Render Cloud (design-thinking-7ne9.onrender.com)</span>
             <span class="text-[10px] text-cyan-400 font-bold">Select</span>
           </button>
           <button type="button" 
