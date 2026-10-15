@@ -117,21 +117,27 @@
         <!-- Quick 1-Click Demo Profiles for Professors -->
         <div class="pt-3 border-t border-slate-100">
           <div class="text-[11px] text-slate-500 font-medium mb-1.5 text-center">
-            Demo Login Accounts:
+            Demo Accounts (1-Click Fill):
           </div>
           <div class="grid grid-cols-3 gap-1 text-xs">
             <button type="button" onclick="quickFillPersona('student')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
               Student
             </button>
             <button type="button" onclick="quickFillPersona('security')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
               Security
             </button>
             <button type="button" onclick="quickFillPersona('admin')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-medium transition">
+                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
               Admin
             </button>
+          </div>
+          <div class="mt-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-0.5 font-mono">
+            <div><strong class="text-slate-700 font-sans">Student:</strong> sumanth@kongu.edu</div>
+            <div><strong class="text-slate-700 font-sans">Security:</strong> security.raman@campusshield.kec.edu</div>
+            <div><strong class="text-slate-700 font-sans">Admin:</strong> admin@campusshield.kec.edu</div>
+            <div><strong class="text-slate-700 font-sans">Password:</strong> Password@123</div>
           </div>
         </div>
 
@@ -222,14 +228,14 @@
       if (!credInput || !passInput) return;
 
       if (role === 'student') {
-        credInput.value = 'student@campusshield.edu';
-        passInput.value = 'student123';
+        credInput.value = 'sumanth@kongu.edu';
+        passInput.value = 'Password@123';
       } else if (role === 'security') {
-        credInput.value = 'security@campusshield.edu';
-        passInput.value = 'security123';
+        credInput.value = 'security.raman@campusshield.kec.edu';
+        passInput.value = 'Password@123';
       } else if (role === 'admin') {
-        credInput.value = 'admin@campusshield.edu';
-        passInput.value = 'admin123';
+        credInput.value = 'admin@campusshield.kec.edu';
+        passInput.value = 'Password@123';
       }
     };
 
@@ -305,7 +311,9 @@
         if (btnText) btnText.innerText = 'Signing in...';
         if (submitBtn) submitBtn.disabled = true;
 
-        await window.csAuth.login(credential, password, currentRole);
+        const authRes = await window.csAuth.login(credential, password, currentRole);
+        const destination = (authRes && authRes.redirectUrl) ? authRes.redirectUrl : window.csAuth.getDashboardUrl(currentRole);
+        window.location.replace(destination);
       } catch (err) {
         if (banner && bannerMsg) {
           bannerMsg.innerText = err.message || 'Authentication failed. Please verify credentials.';
