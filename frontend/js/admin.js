@@ -67,6 +67,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Load Admin Dashboard Metrics & Trends
 export async function loadAdminDashboard() {
+  const cached = localStorage.getItem('cs_cached_admin_summary');
+  if (cached && !adminStats) {
+    try {
+      adminStats = JSON.parse(cached);
+      renderAdminMetricCards(adminStats);
+    } catch {}
+  }
+
   try {
     const [summaryRes, trendsRes, healthRes] = await Promise.all([
       api.get('/api/dashboard/summary'),
@@ -76,6 +84,7 @@ export async function loadAdminDashboard() {
 
     if (summaryRes.success && summaryRes.summary) {
       adminStats = summaryRes.summary;
+      localStorage.setItem('cs_cached_admin_summary', JSON.stringify(adminStats));
       renderAdminMetricCards(adminStats);
     }
 

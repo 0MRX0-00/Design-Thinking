@@ -112,10 +112,24 @@ export async function loadIncidents() {
     `;
   }
 
+  // Stale-while-revalidate: Render cached queue immediately
+  const cached = localStorage.getItem('cs_cached_all_incidents');
+  if (cached && (!incidents || incidents.length === 0)) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        incidents = parsed;
+        renderIncidentQueue();
+        selectIncident(incidents[0]._id);
+      }
+    } catch {}
+  }
+
   try {
     const res = await api.get('/api/incidents');
     if (res.success && res.incidents) {
       incidents = res.incidents;
+      localStorage.setItem('cs_cached_all_incidents', JSON.stringify(incidents));
       renderIncidentQueue();
       if (incidents.length > 0) {
         selectIncident(incidents[0]._id);

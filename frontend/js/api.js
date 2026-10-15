@@ -58,8 +58,8 @@ class ApiClient {
     return this.token;
   }
 
-  async request(endpoint, options = {}) {
-    const url = new URL(`${API_BASE}${endpoint}`);
+  async _executeFetch(baseUrl, endpoint, options = {}, timeoutMs = 5000) {
+    const url = new URL(`${baseUrl}${endpoint}`);
     if (options.params) {
       Object.keys(options.params).forEach((key) => {
         if (options.params[key] !== undefined && options.params[key] !== null && options.params[key] !== '') {
@@ -78,22 +78,16 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    let warmupTimer = null;
-    if (API_BASE.includes('onrender.com')) {
-      warmupTimer = setTimeout(() => {
-        showToast('Waking Cloud Server ⏳', 'Render cloud instance is waking up from sleep (~15-25s)...', 'info');
-      }, 1800);
-    }
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(url.toString(), {
         method: options.method || 'GET',
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: controller.signal
       });
-
-      this.isBackendOnline = true;
-      updateBackendConnectionBadge(true);
 
       const data = await response.json().catch(() => ({
         success: false,
@@ -111,16 +105,58 @@ class ApiClient {
       }
 
       return data;
-    } catch (err) {
-      if (!window.navigator.onLine) {
-        err.isOffline = true;
-        err.message = 'Network offline. Check your internet connection.';
-      } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
+    } finally {
+      clearTimeout(timeoutTimer);
+    }
+  }
+
+  async request(endpoint, options = {}) {
+    const startTime = performance.now();
+    let warmupTimer = null;
+
+    if (API_BASE.includes('onrender.com')) {
+      warmupTimer = setTimeout(() => {
+        showToast('Connecting to Server ⏳', 'Connecting to cloud backend...', 'info');
+      }, 2500);
+    }
+
+    // 1. Attempt Primary Request with 4.5s timeout
+    try {
+      const result = await this._executeFetch(API_BASE, endpoint, options, 4500);
+      this.isBackendOnline = true;
+      const latency = Math.round(performance.now() - startTime);
+      updateBackendConnectionBadge(true, latency);
+      return result;
+    } catch (primaryErr) {
+      // 2. Intelligent Auto-Failover: If primary server times out or fails to connect, try alternate server immediately
+      const alternate = API_BASE.includes('10.229.94.151')
+        ? 'https://design-thinking-7ne9.onrender.com'
+        : 'http://10.229.94.151:5000';
+
+      console.warn(`[CampusShield Failover] Primary server (${API_BASE}) slow or unreachable. Auto-trying ${alternate}...`);
+      
+      try {
+        const altResult = await this._executeFetch(alternate, endpoint, options, 6000);
+        // Fallback succeeded! Dynamically switch API_BASE so future calls are immediate
+        API_BASE = alternate;
+        localStorage.setItem('cs_backend_url', API_BASE);
+        this.isBackendOnline = true;
+        const latency = Math.round(performance.now() - startTime);
+        updateBackendConnectionBadge(true, latency);
+        console.log(`[CampusShield Failover] Successfully connected to ${alternate} (${latency}ms)!`);
+        return altResult;
+      } catch (fallbackErr) {
+        // Both servers failed or server explicitly returned 4xx/5xx business error
+        if (primaryErr.status) {
+          // If the primary server actually answered with HTTP error (e.g. wrong password), throw that
+          throw primaryErr;
+        }
         this.isBackendOnline = false;
         updateBackendConnectionBadge(false);
-        err.message = `Cannot connect to CampusShield Backend at ${API_BASE}. Ensure the server is running.`;
+        const err = new Error(primaryErr.message || 'Cannot reach CampusShield backend. Check connection.');
+        err.isOffline = !window.navigator.onLine;
+        throw err;
       }
-      throw err;
     } finally {
       if (warmupTimer) clearTimeout(warmupTimer);
     }

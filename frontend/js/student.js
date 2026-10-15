@@ -1178,48 +1178,63 @@ export async function loadMyIncidents() {
   const container = document.getElementById('my-incident-history-list');
   if (!container) return;
 
+  // Stale-while-revalidate: Render cached incidents immediately if available
+  const cachedStr = localStorage.getItem('cs_cached_my_incidents');
+  if (cachedStr && (!myIncidents || myIncidents.length === 0)) {
+    try {
+      const cached = JSON.parse(cachedStr);
+      if (Array.isArray(cached) && cached.length > 0) {
+        myIncidents = cached;
+        renderIncidentsList(container, myIncidents);
+      }
+    } catch {}
+  }
+
   try {
     const res = await api.get('/api/incidents/my');
     if (res.success && res.incidents) {
       myIncidents = res.incidents;
-      
-      // Auto-set active incident if one is pending
-      const pending = myIncidents.find((i) => ['Submitted', 'Acknowledged', 'Assigned', 'Dispatched', 'On Scene'].includes(i.status));
-      if (pending && !activeIncident) {
-        activeIncident = pending;
-        renderActiveIncidentTracker();
-      }
-
-      if (myIncidents.length === 0) {
-        container.innerHTML = `
-          <div class="p-8 text-center text-slate-500 text-xs">
-            No past incidents reported. Stay safe!
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = myIncidents.map((i) => `
-        <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 text-xs flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-mono font-bold text-white">${i.incidentId}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-                i.status === 'Resolved' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-cyan-950 text-cyan-300 border border-cyan-700'
-              }">${i.status}</span>
-            </div>
-            <div class="text-slate-300 font-semibold">${i.category}</div>
-            <div class="text-[11px] text-slate-500">📍 ${i.location?.campusLocation} • ${new Date(i.reportedAt).toLocaleDateString()}</div>
-          </div>
-          <button onclick="window.csStudent.viewIncidentDetails('${i._id}')" class="px-2.5 py-1 text-xs text-cyan-400 hover:text-white border border-slate-700 rounded-lg">
-            Details
-          </button>
-        </div>
-      `).join('');
+      localStorage.setItem('cs_cached_my_incidents', JSON.stringify(myIncidents));
+      renderIncidentsList(container, myIncidents);
     }
   } catch (err) {
     console.warn('[CampusShield Student] Could not load my incidents:', err.message);
   }
+}
+
+function renderIncidentsList(container, incidents) {
+  const pending = incidents.find((i) => ['Submitted', 'Acknowledged', 'Assigned', 'Dispatched', 'On Scene'].includes(i.status));
+  if (pending && !activeIncident) {
+    activeIncident = pending;
+    renderActiveIncidentTracker();
+  }
+
+  if (incidents.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center text-slate-500 text-xs">
+        No past incidents reported. Stay safe!
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = incidents.map((i) => `
+    <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 text-xs flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="font-mono font-bold text-white">${i.incidentId}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+            i.status === 'Resolved' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-cyan-950 text-cyan-300 border border-cyan-700'
+          }">${i.status}</span>
+        </div>
+        <div class="text-slate-300 font-semibold">${i.category}</div>
+        <div class="text-[11px] text-slate-500">📍 ${i.location?.campusLocation} • ${new Date(i.reportedAt).toLocaleDateString()}</div>
+      </div>
+      <button onclick="window.csStudent.viewIncidentDetails('${i._id}')" class="px-2.5 py-1 text-xs text-cyan-400 hover:text-white border border-slate-700 rounded-lg">
+        Details
+      </button>
+    </div>
+  `).join('');
 }
 
 export function viewIncidentDetails(id) {
