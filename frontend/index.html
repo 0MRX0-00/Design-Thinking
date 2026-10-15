@@ -54,15 +54,24 @@
         </div>
       </div>
 
-      <!-- Quick Emergency Hotline Badge -->
-      <div class="hidden sm:flex items-center gap-3 text-xs">
-        <span class="text-slate-400 flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-          Emergency Control Room:
-        </span>
-        <a href="tel:+919443311223" class="font-mono font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-2.5 py-1 rounded-lg hover:bg-rose-900/80 transition">
-          📞 +91 94433 11223
-        </a>
+      <div class="flex items-center gap-2.5">
+        <!-- Interactive Backend Server Badge -->
+        <div id="backend-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-xs cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-emerald-300 font-mono text-[11px] font-bold">SERVER STATUS</span>
+          <span class="text-[10px] text-emerald-400 opacity-70">⚙️</span>
+        </div>
+
+        <!-- Quick Emergency Hotline Badge -->
+        <div class="hidden sm:flex items-center gap-3 text-xs">
+          <span class="text-slate-400 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            Emergency Control Room:
+          </span>
+          <a href="tel:+919443311223" class="font-mono font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-2.5 py-1 rounded-lg hover:bg-rose-900/80 transition">
+            📞 +91 94433 11223
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -389,6 +398,7 @@
   <script type="module" src="./js/auth.js"></script>
   <script type="module">
     import { login, initAuth, forgotPassword, resetPassword, DEMO_PERSONAS } from './js/auth.js';
+    import { api, updateBackendConnectionBadge } from './js/api.js';
 
     let currentRole = 'student';
 
@@ -642,6 +652,14 @@
       const preRole = params.get('role');
       if (preRole && ['student', 'security', 'admin'].includes(preRole)) {
         selectRole(preRole);
+      }
+
+      // Ping backend server connectivity
+      try {
+        await api.get('/api/health');
+        updateBackendConnectionBadge(true);
+      } catch {
+        updateBackendConnectionBadge(false);
       }
 
       // Check if user is already logged in
