@@ -226,8 +226,10 @@ export function evaluateCampusGeofence(lat, lng) {
   userGps.geofenceDistance = distanceMeters;
 
   if (!inside) {
-    isGeofenceLocked = true;
-    showGeofenceLock(distanceMeters, lat, lng);
+    if (!window._offCampusAcknowledged) {
+      isGeofenceLocked = true;
+      showGeofenceLock(distanceMeters, lat, lng);
+    }
   } else {
     isGeofenceLocked = false;
     dismissGeofenceLock();
@@ -261,8 +263,149 @@ export function updateGeofenceUIBadge(inside, distanceMeters, isSimulated) {
   }
 }
 
+/**
+ * Returns the native Capacitor Geolocation plugin if available.
+ */
+export function getCapacitorGeolocation() {
+  if (typeof window !== 'undefined' && window.Capacitor?.Plugins?.Geolocation) {
+    return window.Capacitor.Plugins.Geolocation;
+  }
+  return null;
+}
+
+/**
+ * Primary GPS Unlock Handler
+ * Directly checks device GPS / satellite fix and unlocks the Student Portal.
+ */
+export async function unlockStudentWithGps(userInitiated = true) {
+  console.log('[CampusShield GPS] Unlocking student portal via GPS request...');
+  const btn = document.getElementById('btn-unlock-gps');
+  const subtextEl = document.getElementById('gps-lock-subtext');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin inline-block mr-2"></span>
+      <span>Connecting Satellite GPS...</span>
+    `;
+    btn.classList.add('opacity-80', 'cursor-wait');
+  }
+
+  showToast('Connecting GPS 📡', 'Checking device satellite & location sensors...', 'info');
+
+  const capGeo = getCapacitorGeolocation();
+
+  // Helper when coordinates are acquired
+  const onLocationSuccess = (coords) => {
+    console.log('[CampusShield GPS] Satellite lock acquired successfully:', coords);
+    window._offCampusAcknowledged = true; // prevent trapping student off-campus
+    dismissGpsDisabledLock();
+    dismissGeofenceLock();
+
+    userGps.latitude = parseFloat(coords.latitude.toFixed(6));
+    userGps.longitude = parseFloat(coords.longitude.toFixed(6));
+    userGps.accuracy = Math.round(coords.accuracy || 10);
+    userGps.status = 'locked';
+    userGps.timestamp = new Date();
+
+    updateGpsUI();
+
+    if (studentPinpointMap && studentPinMarker) {
+      studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
+      studentPinpointMap.flyTo([userGps.latitude, userGps.longitude], 17);
+    }
+
+    // Evaluate geofence
+    evaluateCampusGeofence(userGps.latitude, userGps.longitude);
+
+    fetchLiveAddress(userGps.latitude, userGps.longitude).then((addr) => {
+      if (addr) {
+        userGps.address = addr.shortAddress;
+        userGps.fullAddress = addr.fullAddress;
+        updateGpsUI();
+      }
+    });
+
+    showToast(
+      '📍 GPS Connected ✅',
+      `Live coordinates locked: ${userGps.latitude}° N, ${userGps.longitude}° E. Welcome to Student Portal!`,
+      'success'
+    );
+  };
+
+  // Helper when location check fails or times out
+  const onLocationError = (errMsg) => {
+    console.warn('[CampusShield GPS] Failed to acquire GPS lock:', errMsg);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span>⚡ Turn On GPS & Unlock Portal</span>`;
+      btn.classList.remove('opacity-80', 'cursor-wait');
+    }
+    if (subtextEl) {
+      subtextEl.innerHTML = `
+        <div class="p-3 bg-amber-950/80 border border-amber-600 rounded-xl text-amber-200 text-xs text-left space-y-1.5 animate-fade-in">
+          <div class="font-bold text-amber-400 flex items-center gap-1.5">
+            <span>⚠️</span> Location is still OFF on your phone:
+          </div>
+          <div class="text-[11px] text-slate-300">
+            1. Swipe down from the top of your phone screen to open Quick Settings.<br/>
+            2. Tap and turn <strong>ON Location / GPS</strong>.<br/>
+            3. Tap <strong>⚡ Turn On GPS & Unlock Portal</strong> again above.
+          </div>
+        </div>
+      `;
+    }
+    showToast('GPS Required ⚠️', 'Please enable Location in your phone status bar, then tap to unlock.', 'warning');
+  };
+
+  // 1. Try Native Android Capacitor Geolocation first
+  if (capGeo) {
+    try {
+      console.log('[CampusShield GPS] Requesting native Android location permission...');
+      try {
+        await capGeo.requestPermissions();
+      } catch (permErr) {
+        console.warn('[CampusShield GPS] Native permission warning:', permErr.message);
+      }
+
+      const pos = await capGeo.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+
+      if (pos && pos.coords && pos.coords.latitude) {
+        onLocationSuccess(pos.coords);
+        return;
+      }
+    } catch (capErr) {
+      console.warn('[CampusShield GPS] Native Capacitor Geolocation error:', capErr.message);
+    }
+  }
+
+  // 2. Web / Browser Geolocation Fallback
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onLocationSuccess(pos.coords);
+      },
+      (err) => {
+        onLocationError(err.message || 'GPS location is disabled or permission was denied.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  } else {
+    onLocationError('Geolocation is unsupported on this device.');
+  }
+}
+
 export function showGpsDisabledLock(reason = 'Location services are disabled on this device.') {
   if (isDemoSimulationActive) return;
+
+  // If we already have locked GPS coordinates, do not show lock
+  if (userGps.status === 'locked' && userGps.latitude && userGps.longitude) {
+    return;
+  }
 
   let lockModal = document.getElementById('campus-gps-required-lock-screen');
   if (!lockModal) {
@@ -273,7 +416,7 @@ export function showGpsDisabledLock(reason = 'Location services are disabled on 
   }
 
   lockModal.innerHTML = `
-    <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 animate-fade-in">
+    <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 animate-fade-in my-auto">
       
       <!-- Pulsing Radar GPS Icon -->
       <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
@@ -292,6 +435,8 @@ export function showGpsDisabledLock(reason = 'Location services are disabled on 
           The <strong>Student Safety Portal</strong> is restricted and will not function unless GPS location is enabled on your phone.
         </p>
       </div>
+
+      <div id="gps-lock-subtext"></div>
 
       <!-- Mandatory Security Policy Rules -->
       <div class="bg-black/60 rounded-2xl p-4 border border-slate-800 text-left space-y-2.5 text-xs">
@@ -320,12 +465,12 @@ export function showGpsDisabledLock(reason = 'Location services are disabled on 
 
       <!-- Action Buttons -->
       <div class="pt-1 flex flex-col gap-2.5">
-        <button onclick="window.csStudent?.requestRealGps(true)" 
+        <button id="btn-unlock-gps"
                 class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-amber-950/50">
           <span>⚡ Turn On GPS & Unlock Portal</span>
         </button>
 
-        <button onclick="window.csStudent?.simulateCampusLocation()" 
+        <button id="btn-simulate-gps"
                 class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
           <span>🧪</span> Demo Testing: Simulate Campus GPS
         </button>
@@ -339,6 +484,23 @@ export function showGpsDisabledLock(reason = 'Location services are disabled on 
 
     </div>
   `;
+
+  // Attach direct event listeners for maximum reliability
+  const btnUnlock = document.getElementById('btn-unlock-gps');
+  if (btnUnlock) {
+    btnUnlock.onclick = (e) => {
+      e.preventDefault();
+      unlockStudentWithGps(true);
+    };
+  }
+
+  const btnSim = document.getElementById('btn-simulate-gps');
+  if (btnSim) {
+    btnSim.onclick = (e) => {
+      e.preventDefault();
+      simulateCampusLocation();
+    };
+  }
 }
 
 export function dismissGpsDisabledLock() {
@@ -360,7 +522,7 @@ export function showGeofenceLock(distanceMeters = 5000, lat = 11.0, lng = 76.9) 
   }
 
   lockModal.innerHTML = `
-    <div class="max-w-lg w-full bg-slate-900 border-2 border-rose-600 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6">
+    <div class="max-w-lg w-full bg-slate-900 border-2 border-rose-600 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 my-auto animate-fade-in">
       
       <!-- Pulsing Lock Shield Icon -->
       <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
@@ -429,22 +591,53 @@ export function showGeofenceLock(distanceMeters = 5000, lat = 11.0, lng = 76.9) 
 
       <!-- Action Buttons -->
       <div class="pt-2 flex flex-col gap-2.5">
-        <button onclick="window.csStudent?.requestRealGps(true)" 
+        <button id="btn-geofence-recheck"
                 class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg">
           <span>🔄</span> Re-Check Live Satellite GPS
         </button>
 
-        <button onclick="window.csStudent?.simulateCampusLocation()" 
+        <button id="btn-geofence-simulate"
                 class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
           <span>🧪</span> Demo Override: Simulate Inside KEC Campus
+        </button>
+
+        <button id="btn-geofence-proceed"
+                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs rounded-xl border border-slate-600 transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>📱 Proceed to Student Portal (Off-Campus Mode)</span>
         </button>
       </div>
 
     </div>
   `;
+
+  const btnRecheck = document.getElementById('btn-geofence-recheck');
+  if (btnRecheck) {
+    btnRecheck.onclick = (e) => {
+      e.preventDefault();
+      unlockStudentWithGps(true);
+    };
+  }
+
+  const btnSim = document.getElementById('btn-geofence-simulate');
+  if (btnSim) {
+    btnSim.onclick = (e) => {
+      e.preventDefault();
+      simulateCampusLocation();
+    };
+  }
+
+  const btnProceed = document.getElementById('btn-geofence-proceed');
+  if (btnProceed) {
+    btnProceed.onclick = (e) => {
+      e.preventDefault();
+      dismissGeofenceLock();
+      showToast('Off-Campus Mode', 'Student portal is accessible in off-campus safety mode.', 'info');
+    };
+  }
 }
 
 export function dismissGeofenceLock() {
+  window._offCampusAcknowledged = true;
   const lockModal = document.getElementById('campus-geofence-lock-screen');
   if (lockModal) {
     lockModal.remove();
@@ -736,13 +929,14 @@ export function requestRealGps(userInitiated = false) {
         }
       },
       (err) => {
-        console.warn('[CampusShield GPS Watch] Signal lost or turned off:', err.message);
-        if (!isDemoSimulationActive) {
+        console.warn('[CampusShield GPS Watch] Signal warning:', err.code, err.message);
+        // Only re-lock if location permission was explicitly denied or GPS disabled in system (code 1)
+        if (err.code === 1 && !isDemoSimulationActive) {
           userGps.status = 'disabled';
           userGps.latitude = null;
           userGps.longitude = null;
           updateGpsUI();
-          showGpsDisabledLock('GPS was disabled. Please turn on location to use the app.');
+          showGpsDisabledLock('GPS location was turned off or permission was revoked.');
         }
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
@@ -1954,8 +2148,16 @@ export function showRestrictedSosModal(extraData = {}) {
   `;
 }
 
-// Window Global Export
+// Window Global Direct Functions for Inline HTML Handlers
+window.unlockStudentWithGps = unlockStudentWithGps;
+window.simulateCampusLocation = simulateCampusLocation;
+window.dismissGpsDisabledLock = dismissGpsDisabledLock;
+window.dismissGeofenceLock = dismissGeofenceLock;
+window.requestRealGps = requestRealGps;
+
+// Window Global Export Object
 window.csStudent = {
+  unlockStudentWithGps,
   openSosModal,
   openSosConfirmation: openSosModal,
   setQuickCategory,
