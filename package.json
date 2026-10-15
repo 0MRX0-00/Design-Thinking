@@ -12,6 +12,7 @@
     "start": "npm --prefix backend start",
     "dev": "npm --prefix backend run dev",
     "seed": "npm --prefix backend run seed",
+    "seed:clean": "npm --prefix backend run seed:clean",
     "test": "npm --prefix backend test"
   },
   "dependencies": {

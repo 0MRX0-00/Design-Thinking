@@ -5,7 +5,7 @@ import { seedDatabaseData } from '../scripts/seed.js';
 let mongoMemoryServer = null;
 
 const CLOUD_FALLBACK_URI = atob(
-  'bW9uZ29kYitzcnY6Ly9zdW1hbnRodGhlZ29kMDdfZGJfdXNlcjpKclZxSWZSOEJJUExIeXVBQGNsdXN0ZXIwLnM1eXlodGYubW9uZ29kYi5uZXQvY2FtcHVzc2hpZWxkP3JldHJ5V3JpdGVzPXRydWUmdz1tYWpvcml0eSZjb21wcmVzc29ycz16bGli'
+  'bW9uZ29kYitzcnY6Ly9zdW1hbnRodGhlZ29kMDdfZGJfdXNlcjpKclZxSWZSOEJJUExIeXVBQGNsdXN0ZXIwLnM1eXlodGYubW9uZ29kYi5uZXQvY2FtcHVzc2hpZWxkP3JldHJ5V3JpdGVzPXRydWUmdz1tYWpvcml0eQ=='
 );
 
 export const connectDB = async (customUri) => {
