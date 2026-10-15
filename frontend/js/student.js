@@ -211,12 +211,14 @@ export function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
 export function evaluateCampusGeofence(lat, lng) {
   if (isDemoSimulationActive) {
     dismissGeofenceLock();
+    dismissGpsDisabledLock();
     updateGeofenceUIBadge(true, 120, true);
     return { inside: true, distanceMeters: 120, simulated: true };
   }
 
   if (!lat || !lng) {
-    return { inside: true, distanceMeters: 0, simulated: false };
+    showGpsDisabledLock('Active GPS coordinates are required to verify campus presence.');
+    return { inside: false, distanceMeters: Infinity, simulated: false };
   }
 
   const distanceMeters = calculateDistanceMeters(lat, lng, KEC_GEOFENCE.centerLat, KEC_GEOFENCE.centerLng);
@@ -256,6 +258,93 @@ export function updateGeofenceUIBadge(inside, distanceMeters, isSimulated) {
 
   if (simBtn) {
     simBtn.classList.toggle('hidden', !isSimulated && inside);
+  }
+}
+
+export function showGpsDisabledLock(reason = 'Location services are disabled on this device.') {
+  if (isDemoSimulationActive) return;
+
+  let lockModal = document.getElementById('campus-gps-required-lock-screen');
+  if (!lockModal) {
+    lockModal = document.createElement('div');
+    lockModal.id = 'campus-gps-required-lock-screen';
+    lockModal.className = 'fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 overflow-y-auto';
+    document.body.appendChild(lockModal);
+  }
+
+  lockModal.innerHTML = `
+    <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 animate-fade-in">
+      
+      <!-- Pulsing Radar GPS Icon -->
+      <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full bg-amber-500/20 animate-ping pointer-events-none"></div>
+        <div class="w-16 h-16 rounded-full bg-amber-950 border-2 border-amber-500 flex items-center justify-center text-3xl shadow-xl">
+          📡
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/80 border border-amber-700 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> GPS Telemetry Mandatory
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">GPS REQUIRED TO USE APP</h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+          The <strong>Student Safety Portal</strong> is restricted and will not function unless GPS location is enabled on your phone.
+        </p>
+      </div>
+
+      <!-- Mandatory Security Policy Rules -->
+      <div class="bg-black/60 rounded-2xl p-4 border border-slate-800 text-left space-y-2.5 text-xs">
+        <div class="flex items-start gap-2.5 text-slate-300">
+          <span class="text-amber-400 text-base leading-none">📍</span>
+          <div>
+            <div class="font-bold text-white">Campus Boundary Verification</div>
+            <div class="text-[11px] text-slate-400">Verifies you are physically within the 167-acre Kongu Engineering College safe perimeter.</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2.5 text-slate-300 pt-2 border-t border-slate-800/80">
+          <span class="text-rose-400 text-base leading-none">🚨</span>
+          <div>
+            <div class="font-bold text-white">Rapid Emergency Dispatch</div>
+            <div class="text-[11px] text-slate-400">Security quick-reaction patrol units require exact satellite coordinates to reach you in distress.</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2.5 text-slate-300 pt-2 border-t border-slate-800/80">
+          <span class="text-cyan-400 text-base leading-none">🛡️</span>
+          <div>
+            <div class="font-bold text-white">SafeWalk & Anti-Spoofing Protocol</div>
+            <div class="text-[11px] text-slate-400">Live coordinate breadcrumbs verify your journey across campus without false alerts.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-1 flex flex-col gap-2.5">
+        <button onclick="window.csStudent?.requestRealGps(true)" 
+                class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-amber-950/50">
+          <span>⚡ Turn On GPS & Unlock Portal</span>
+        </button>
+
+        <button onclick="window.csStudent?.simulateCampusLocation()" 
+                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>🧪</span> Demo Testing: Simulate Campus GPS
+        </button>
+      </div>
+
+      <!-- Emergency Helpline Fallback -->
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+        <span>Need urgent help without GPS?</span>
+        <a href="tel:112" class="font-mono font-bold text-rose-400 hover:underline">Call 112 (Police)</a>
+      </div>
+
+    </div>
+  `;
+}
+
+export function dismissGpsDisabledLock() {
+  const lockModal = document.getElementById('campus-gps-required-lock-screen');
+  if (lockModal) {
+    lockModal.remove();
   }
 }
 
@@ -366,6 +455,7 @@ export function simulateCampusLocation() {
   isDemoSimulationActive = true;
   isGeofenceLocked = false;
   dismissGeofenceLock();
+  dismissGpsDisabledLock();
 
   // Pin student inside KEC IT Park / CSE Block
   userGps.latitude = 11.2751;
@@ -549,21 +639,23 @@ export function requestRealGps(userInitiated = false) {
   }
 
   if (!navigator.geolocation) {
-    userGps.status = 'unsupported';
+    userGps.status = 'disabled';
+    userGps.latitude = null;
+    userGps.longitude = null;
+    updateGpsUI();
     if (statusEl) {
       statusEl.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-slate-500"></span>
-        <span class="text-slate-400 font-mono">GPS: Browser unsupported (Campus KEC fix active)</span>
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        <span class="text-rose-300 font-mono">GPS: Browser unsupported</span>
       `;
     }
-    if (userInitiated) {
-      showToast('GPS Unsupported', 'Browser geolocation unavailable. Please tap your campus building below.', 'warning');
-    }
+    showGpsDisabledLock('Browser geolocation is unavailable or unsupported on this device.');
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
+      dismissGpsDisabledLock();
       userGps.latitude = parseFloat(pos.coords.latitude.toFixed(6));
       userGps.longitude = parseFloat(pos.coords.longitude.toFixed(6));
       userGps.accuracy = Math.round(pos.coords.accuracy);
@@ -576,6 +668,9 @@ export function requestRealGps(userInitiated = false) {
         studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
         studentPinpointMap.flyTo([userGps.latitude, userGps.longitude], 17);
       }
+
+      // Check campus boundary
+      evaluateCampusGeofence(userGps.latitude, userGps.longitude);
 
       // Trigger Live Reverse Geocoding API
       fetchLiveAddress(userGps.latitude, userGps.longitude).then((addr) => {
@@ -598,45 +693,33 @@ export function requestRealGps(userInitiated = false) {
       }
     },
     (err) => {
-      console.warn('[CampusShield GPS] Geolocation error:', err.message);
-      // Fallback default to Kongu Engineering College
-      if (!userGps.latitude) {
-        userGps.latitude = 11.2742;
-        userGps.longitude = 77.6070;
-        userGps.accuracy = 20;
-        userGps.status = 'fallback';
-        userGps.address = 'Kongu Engineering College, Perundurai';
-        userGps.fullAddress = 'Kongu Engineering College, Perundurai, Erode, Tamil Nadu 638052';
-      }
+      console.warn('[CampusShield GPS] Geolocation error:', err.code, err.message);
+      userGps.latitude = null;
+      userGps.longitude = null;
+      userGps.status = 'disabled';
 
       if (statusEl) {
         statusEl.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span class="text-amber-300 font-mono">📍 GPS Signal Weak / Wi-Fi Fix (Tap campus building to pinpoint)</span>
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+          <span class="text-rose-300 font-mono">📍 GPS Disabled / Access Denied</span>
         `;
       }
 
       updateGpsUI();
-      if (studentPinpointMap && studentPinMarker) {
-        studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
-        studentPinpointMap.setView([userGps.latitude, userGps.longitude], 17);
-      }
 
-      if (userInitiated) {
-        showToast(
-          'GPS Notice',
-          'Exact satellite GPS was not received. Please tap your campus building below to lock 100% exact spot.',
-          'info'
-        );
+      // STRICT ENFORCEMENT: If GPS is disabled, lock the student portal immediately!
+      if (!isDemoSimulationActive) {
+        showGpsDisabledLock(err.message || 'GPS location is disabled or permission was denied.');
       }
     },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 
   // Setup continuous watch if not already started
   if (!window._campusShieldGpsWatch && navigator.geolocation.watchPosition) {
     window._campusShieldGpsWatch = navigator.geolocation.watchPosition(
       (pos) => {
+        dismissGpsDisabledLock();
         if (userGps.status !== 'pinpointed') {
           userGps.latitude = parseFloat(pos.coords.latitude.toFixed(6));
           userGps.longitude = parseFloat(pos.coords.longitude.toFixed(6));
@@ -648,10 +731,21 @@ export function requestRealGps(userInitiated = false) {
           if (studentPinpointMap && studentPinMarker) {
             studentPinMarker.setLatLng([userGps.latitude, userGps.longitude]);
           }
+
+          evaluateCampusGeofence(userGps.latitude, userGps.longitude);
         }
       },
-      null,
-      { enableHighAccuracy: true, maximumAge: 5000 }
+      (err) => {
+        console.warn('[CampusShield GPS Watch] Signal lost or turned off:', err.message);
+        if (!isDemoSimulationActive) {
+          userGps.status = 'disabled';
+          userGps.latitude = null;
+          userGps.longitude = null;
+          updateGpsUI();
+          showGpsDisabledLock('GPS was disabled. Please turn on location to use the app.');
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
   }
 }
@@ -804,6 +898,13 @@ export function openSosModal(initialCategory = null) {
     return;
   }
 
+  // STRICT GPS ENFORCEMENT: If GPS is disabled or not locked, block the action!
+  if ((!userGps.latitude || !userGps.longitude || userGps.status === 'disabled') && !isDemoSimulationActive) {
+    showToast('GPS Disabled', 'GPS must be enabled to transmit emergency dispatch.', 'critical');
+    showGpsDisabledLock('Active GPS is required to transmit emergency coordinates.');
+    return;
+  }
+
   // Enforce Geofence Limitation Check
   if (isGeofenceLocked && !isDemoSimulationActive) {
     showToast('Boundary Locked', 'You are outside Kongu campus boundary. App is locked.', 'critical');
@@ -931,6 +1032,13 @@ export async function instantSos(category = 'Medical emergency') {
     return;
   }
 
+  // STRICT GPS ENFORCEMENT: If GPS is disabled or not locked, block the action!
+  if ((!userGps.latitude || !userGps.longitude || userGps.status === 'disabled') && !isDemoSimulationActive) {
+    showToast('GPS Disabled', 'GPS must be enabled to transmit emergency dispatch.', 'critical');
+    showGpsDisabledLock('Active GPS is required to transmit emergency coordinates.');
+    return;
+  }
+
   // Ensure high-accuracy GPS
   if (!userGps.latitude && navigator.geolocation) {
     try {
@@ -948,6 +1056,12 @@ export async function instantSos(category = 'Medical emergency') {
         );
       });
     } catch (_) {}
+  }
+
+  if ((!userGps.latitude || !userGps.longitude || userGps.status === 'disabled') && !isDemoSimulationActive) {
+    showToast('GPS Signal Missing', 'Could not acquire active GPS coordinates.', 'critical');
+    showGpsDisabledLock('Active GPS coordinates could not be acquired.');
+    return;
   }
 
   const reqs = Array.from(selectedRequirements.size ? selectedRequirements : [category]);
@@ -1260,6 +1374,12 @@ export async function loadSafeWalkSession() {
 }
 
 export async function startSafeWalkSession() {
+  if ((!userGps.latitude || !userGps.longitude || userGps.status === 'disabled') && !isDemoSimulationActive) {
+    showToast('GPS Disabled', 'GPS must be enabled to activate SafeWalk tracking.', 'critical');
+    showGpsDisabledLock('Active GPS is required to activate SafeWalk telemetry.');
+    return;
+  }
+
   if (isGeofenceLocked && !isDemoSimulationActive) {
     showToast('Boundary Locked', 'SafeWalk companion service is only available inside Kongu campus.', 'critical');
     showGeofenceLock(userGps.geofenceDistance || 5000, userGps.latitude, userGps.longitude);
@@ -1861,5 +1981,7 @@ window.csStudent = {
   simulateCampusLocation,
   toggleDemoSimulation,
   dismissGeofenceLock,
+  showGpsDisabledLock,
+  dismissGpsDisabledLock,
   logout
 };
