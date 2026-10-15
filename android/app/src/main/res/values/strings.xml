@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CampusShield</string>
+    <string name="title_activity_main">CampusShield</string>
+    <string name="package_name">edu.kec.campusshield</string>
+    <string name="custom_url_scheme">edu.kec.campusshield</string>
+</resources>

@@ -1,0 +1,15 @@
+{
+  "appId": "edu.kec.campusshield",
+  "appName": "CampusShield",
+  "webDir": "frontend",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "allowNavigation": [
+      "*"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
