@@ -47,11 +47,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   subscribe('safety_status:updated', (status) => {
+    if (status) {
+      mySafetyStatus = status.safetyStatus || status;
+      renderSafetyBanner();
+      renderFalseAlarmHistoryTable();
+    }
     loadFalseAlarmStatusAndHistory();
   });
 
-  subscribe('false_alarm:verified', () => {
+  subscribe('false_alarm:verified', (data) => {
+    if (data && data.safetyStatus) {
+      mySafetyStatus = data.safetyStatus;
+      renderSafetyBanner();
+      renderFalseAlarmHistoryTable();
+    }
     loadFalseAlarmStatusAndHistory();
+    loadMyIncidents();
   });
 
   subscribe('disciplinary_case:created', () => {
@@ -1354,6 +1365,9 @@ export function renderActiveIncidentTracker() {
     return;
   }
 
+  // Automatically ensure user is on the SOS tab where the active tracker is displayed
+  switchTab('sos');
+
   const inc = activeIncident;
   const statusStep = {
     Submitted: 1,
@@ -2148,12 +2162,79 @@ export function showRestrictedSosModal(extraData = {}) {
   `;
 }
 
+// Tab switching handler for simple & clean mobile experience
+export function switchTab(tabName) {
+  const tabs = ['sos', 'safewalk', 'hotlines', 'status'];
+  tabs.forEach(t => {
+    const panel = document.getElementById(`tab-panel-${t}`);
+    const deskBtn = document.getElementById(`tab-btn-${t}`);
+    const mobBtn = document.getElementById(`mobile-tab-btn-${t}`);
+    if (panel) {
+      if (t === tabName) {
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+    if (deskBtn) {
+      if (t === tabName) {
+        deskBtn.className = 'student-tab-btn px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer';
+      } else {
+        deskBtn.className = 'student-tab-btn px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-semibold text-xs transition flex items-center gap-2 cursor-pointer';
+      }
+    }
+    if (mobBtn) {
+      if (t === tabName) {
+        mobBtn.className = 'mobile-tab-btn flex-1 py-2 flex flex-col items-center justify-center text-rose-400 transition font-bold text-[10px] cursor-pointer';
+      } else {
+        mobBtn.className = 'mobile-tab-btn flex-1 py-2 flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 transition font-medium text-[10px] cursor-pointer';
+      }
+    }
+  });
+
+  if (tabName === 'sos') {
+    if (studentPinpointMap) {
+      setTimeout(() => studentPinpointMap.invalidateSize(), 60);
+      setTimeout(() => studentPinpointMap.invalidateSize(), 300);
+    }
+  }
+}
+
+// Toggle collapsible map
+export function toggleMapVisibility() {
+  const container = document.getElementById('student-map-collapsible');
+  const arrow = document.getElementById('student-map-toggle-arrow');
+  if (!container) return;
+  const isHidden = container.classList.contains('hidden');
+  if (isHidden) {
+    container.classList.remove('hidden');
+    if (arrow) arrow.innerText = '▲';
+    if (studentPinpointMap) {
+      setTimeout(() => studentPinpointMap.invalidateSize(), 60);
+      setTimeout(() => studentPinpointMap.invalidateSize(), 300);
+    }
+  } else {
+    container.classList.add('hidden');
+    if (arrow) arrow.innerText = '▼';
+  }
+}
+
+export function refreshMapSize() {
+  if (studentPinpointMap) {
+    setTimeout(() => studentPinpointMap.invalidateSize(), 60);
+    setTimeout(() => studentPinpointMap.invalidateSize(), 300);
+  }
+}
+
 // Window Global Direct Functions for Inline HTML Handlers
 window.unlockStudentWithGps = unlockStudentWithGps;
 window.simulateCampusLocation = simulateCampusLocation;
 window.dismissGpsDisabledLock = dismissGpsDisabledLock;
 window.dismissGeofenceLock = dismissGeofenceLock;
 window.requestRealGps = requestRealGps;
+window.switchStudentTab = switchTab;
+window.switchTab = switchTab;
+window.toggleMapVisibility = toggleMapVisibility;
 
 // Window Global Export Object
 window.csStudent = {
@@ -2185,5 +2266,8 @@ window.csStudent = {
   dismissGeofenceLock,
   showGpsDisabledLock,
   dismissGpsDisabledLock,
+  switchTab,
+  toggleMapVisibility,
+  refreshMapSize,
   logout
 };

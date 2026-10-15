@@ -111,6 +111,26 @@ export async function initSocket() {
       notifySubscribers('notification:new', notif);
     });
 
+    socket.on('false_alarm:verified', (data) => {
+      console.log('[CampusShield RealTime] False alarm verified event received:', data);
+      notifySubscribers('false_alarm:verified', data);
+    });
+
+    socket.on('safety_status:updated', (data) => {
+      console.log('[CampusShield RealTime] Safety status updated event received:', data);
+      notifySubscribers('safety_status:updated', data);
+    });
+
+    socket.on('disciplinary_case:created', (data) => {
+      console.log('[CampusShield RealTime] Disciplinary case created:', data);
+      notifySubscribers('disciplinary_case:created', data);
+    });
+
+    socket.on('disciplinary_case:updated', (data) => {
+      console.log('[CampusShield RealTime] Disciplinary case updated:', data);
+      notifySubscribers('disciplinary_case:updated', data);
+    });
+
     return socket;
   } catch (err) {
     console.warn('[CampusShield Socket Error]:', err.message);

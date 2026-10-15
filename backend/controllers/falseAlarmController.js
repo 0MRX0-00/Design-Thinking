@@ -235,12 +235,18 @@ export const verifyIncidentFalseAlarm = async (req, res, next) => {
       });
     }
 
-    // Lookup incident
-    let incident;
-    if (incidentId.startsWith('CS-')) {
-      incident = await Incident.findOne({ incidentId });
-    } else {
-      incident = await Incident.findById(incidentId);
+    // Lookup incident safely by incidentId or _id
+    let incident = null;
+    const cleanId = String(incidentId || '').trim();
+    if (cleanId) {
+      if (cleanId.startsWith('CS-')) {
+        incident = await Incident.findOne({ incidentId: cleanId });
+      } else if (cleanId.length === 24 && /^[0-9a-fA-F]{24}$/.test(cleanId)) {
+        incident = await Incident.findById(cleanId);
+      }
+      if (!incident) {
+        incident = await Incident.findOne({ incidentId: cleanId });
+      }
     }
 
     if (!incident) {
@@ -250,14 +256,13 @@ export const verifyIncidentFalseAlarm = async (req, res, next) => {
       });
     }
 
-    const studentId = incident.reporter;
-    const student = await User.findById(studentId);
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: 'Incident reporter student account could not be found.'
-      });
+    const studentId = incident.reporter?._id || incident.reporter;
+    let student = null;
+    if (studentId) {
+      student = await User.findById(studentId);
     }
+    const studentName = student ? student.name : (incident.reporterName || 'Student');
+    const studentIdentifier = student ? student.identifier : (incident.reporterIdentifier || 'N/A');
 
     const canonicalIncidentId = incident.incidentId;
 
@@ -279,7 +284,7 @@ export const verifyIncidentFalseAlarm = async (req, res, next) => {
       await record.save();
     } else {
       record = await FalseAlarmRecord.create({
-        studentId,
+        studentId: studentId || req.user._id,
         incidentId: canonicalIncidentId,
         incidentObjectId: incident._id,
         classification,
@@ -293,8 +298,24 @@ export const verifyIncidentFalseAlarm = async (req, res, next) => {
       });
     }
 
-    // If classification is intentional false alarm, notify student immediately
-    if (classification === 'False Alarm — Intentional') {
+    // Auto-resolve incident if verified as false alarm or resolved emergency
+    if (classification === 'False Alarm — Accidental' || classification === 'False Alarm — Intentional' || classification === 'Genuine Emergency') {
+      if (incident.status !== 'Resolved') {
+        incident.status = 'Resolved';
+        incident.resolutionNotes = `[Verified: ${classification}] ${investigationNotes.trim()}`;
+        incident.resolvedAt = new Date();
+        incident.statusHistory.push({
+          status: 'Resolved',
+          changedBy: req.user._id,
+          note: `Classified as ${classification}. ${investigationNotes.trim()}`,
+          timestamp: new Date()
+        });
+        await incident.save();
+      }
+    }
+
+    // If classification is intentional false alarm and student exists, notify student immediately
+    if (classification === 'False Alarm — Intentional' && studentId) {
       await Notification.create({
         recipient: studentId,
         incident: incident._id,
@@ -316,34 +337,51 @@ export const verifyIncidentFalseAlarm = async (req, res, next) => {
         classification,
         previousClassification,
         studentId,
-        studentName: student.name,
-        studentIdentifier: student.identifier,
+        studentName,
+        studentIdentifier,
         investigationNotes: investigationNotes.trim(),
         evidenceReferences
       },
       ipAddress: req.ip
     });
 
-    // Evaluate student threshold
-    const { safetyStatus, disciplinaryCase } = await evaluateStudentThreshold(studentId, {
-      actorId: req.user._id,
-      actorName: req.user.name,
-      actorRole: req.user.role,
-      ipAddress: req.ip
-    });
+    // Evaluate student threshold if student exists
+    let safetyStatus = null;
+    let disciplinaryCase = null;
+    if (studentId) {
+      const evalRes = await evaluateStudentThreshold(studentId, {
+        actorId: req.user._id,
+        actorName: req.user.name,
+        actorRole: req.user.role,
+        ipAddress: req.ip
+      });
+      safetyStatus = evalRes.safetyStatus;
+      disciplinaryCase = evalRes.disciplinaryCase;
+    }
 
-    // Real-time broadcast
+    // Real-time broadcast to ALL rooms and specific roles
     const io = getIO();
     if (io) {
+      const incObj = incident.toObject ? incident.toObject() : { ...incident };
+      incObj.falseAlarmRecord = record;
+      io.emit('incident:updated', incObj);
+      io.emit('false_alarm:verified', {
+        record,
+        safetyStatus,
+        incidentId: canonicalIncidentId,
+        studentId
+      });
       io.to('role:security').to('role:admin').emit('false_alarm:verified', {
         record,
         safetyStatus,
         incidentId: canonicalIncidentId
       });
-      io.to(`user:${studentId}`).emit('false_alarm:verified', {
-        record,
-        safetyStatus
-      });
+      if (studentId) {
+        io.to(`user:${studentId}`).emit('false_alarm:verified', {
+          record,
+          safetyStatus
+        });
+      }
     }
 
     res.json({

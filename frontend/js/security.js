@@ -38,7 +38,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   subscribe('incident:updated', (updatedInc) => {
     const idx = incidents.findIndex((i) => i.incidentId === updatedInc.incidentId || i._id === updatedInc._id);
     if (idx !== -1) {
-      incidents[idx] = updatedInc;
+      const existingFA = incidents[idx].falseAlarmRecord;
+      incidents[idx] = { ...incidents[idx], ...updatedInc };
+      if (!incidents[idx].falseAlarmRecord && existingFA) {
+        incidents[idx].falseAlarmRecord = existingFA;
+      }
     } else {
       incidents.unshift(updatedInc);
     }
@@ -46,8 +50,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateDashboardMetrics();
     renderCampusTacticalMap();
     if (selectedIncident && (selectedIncident.incidentId === updatedInc.incidentId || selectedIncident._id === updatedInc._id)) {
-      selectIncident(updatedInc._id || updatedInc.incidentId);
+      const existingFA = selectedIncident.falseAlarmRecord;
+      selectedIncident = { ...selectedIncident, ...updatedInc };
+      if (!selectedIncident.falseAlarmRecord && existingFA) {
+        selectedIncident.falseAlarmRecord = existingFA;
+      }
+      renderEmergencyDossier();
     }
+  });
+
+  subscribe('false_alarm:verified', (data) => {
+    console.log('[CampusShield Security] Real-time false_alarm:verified:', data);
+    if (!data) return;
+    const targetId = data.incidentId || data.record?.incidentId;
+    const record = data.record;
+
+    const idx = incidents.findIndex((i) => i.incidentId === targetId || i._id === targetId);
+    if (idx !== -1) {
+      incidents[idx].falseAlarmRecord = record;
+      if (['Genuine Emergency', 'False Alarm — Accidental', 'False Alarm — Intentional'].includes(record?.classification)) {
+        incidents[idx].status = 'Resolved';
+      }
+    }
+
+    if (selectedIncident && (selectedIncident.incidentId === targetId || selectedIncident._id === targetId)) {
+      selectedIncident.falseAlarmRecord = record;
+      if (['Genuine Emergency', 'False Alarm — Accidental', 'False Alarm — Intentional'].includes(record?.classification)) {
+        selectedIncident.status = 'Resolved';
+      }
+      renderEmergencyDossier();
+    }
+
+    renderIncidentQueue();
+    updateDashboardMetrics();
+    loadDashboardSummary();
   });
 
   subscribe('responder:status_changed', (responder) => {
@@ -120,7 +156,12 @@ export async function loadIncidents() {
       if (Array.isArray(parsed) && parsed.length > 0) {
         incidents = parsed;
         renderIncidentQueue();
-        selectIncident(incidents[0]._id);
+        const stillSelected = selectedIncident && incidents.find(i => (i._id === selectedIncident._id || i.incidentId === selectedIncident.incidentId));
+        if (stillSelected) {
+          selectIncident(stillSelected._id || stillSelected.incidentId);
+        } else {
+          selectIncident(incidents[0]._id);
+        }
       }
     } catch {}
   }
@@ -132,7 +173,12 @@ export async function loadIncidents() {
       localStorage.setItem('cs_cached_all_incidents', JSON.stringify(incidents));
       renderIncidentQueue();
       if (incidents.length > 0) {
-        selectIncident(incidents[0]._id);
+        const stillSelected = selectedIncident && incidents.find(i => (i._id === selectedIncident._id || i.incidentId === selectedIncident.incidentId));
+        if (stillSelected) {
+          selectIncident(stillSelected._id || stillSelected.incidentId);
+        } else {
+          selectIncident(incidents[0]._id);
+        }
       } else {
         renderEmptyDossier();
       }
@@ -227,7 +273,22 @@ export function renderIncidentQueue() {
             <span class="font-mono text-xs font-bold text-white tracking-wider">${inc.incidentId}</span>
             <span class="px-1.5 py-0.5 text-[10px] uppercase font-bold rounded border ${severityColor}">${inc.severity}</span>
           </div>
-          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border ${statusBadgeColor}">${inc.status}</span>
+          <div class="flex items-center gap-1.5">
+            ${
+              inc.falseAlarmRecord
+                ? `<span class="px-1.5 py-0.5 text-[9px] font-bold rounded border ${
+                    inc.falseAlarmRecord.classification === 'Genuine Emergency'
+                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60'
+                      : inc.falseAlarmRecord.classification === 'False Alarm — Accidental'
+                      ? 'bg-amber-950/80 text-amber-300 border-amber-700/60'
+                      : inc.falseAlarmRecord.classification === 'False Alarm — Intentional'
+                      ? 'bg-rose-950/80 text-rose-300 border-rose-700/60'
+                      : 'bg-blue-950/80 text-blue-300 border-blue-700/60'
+                  }">⚖️ ${inc.falseAlarmRecord.classification.replace('False Alarm — ', 'FA: ')}</span>`
+                : ''
+            }
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border ${statusBadgeColor}">${inc.status}</span>
+          </div>
         </div>
 
         <div class="text-sm font-semibold text-slate-100 line-clamp-1 mb-1">
@@ -1090,6 +1151,23 @@ export async function confirmVerifyModal(incidentId) {
       } else if (res.safetyStatus && res.safetyStatus.warningLevel === 'final_warning') {
         showToast('Final Warning Issued', 'Student reached 3 confirmed false alarms. Account flagged for review.', 'warning');
       }
+
+      // Immediately patch local state
+      const target = incidents.find(i => i._id === incidentId || i.incidentId === incidentId);
+      if (target) {
+        target.falseAlarmRecord = res.record;
+        if (['Genuine Emergency', 'False Alarm — Accidental', 'False Alarm — Intentional'].includes(selectedVerifyClassification)) {
+          target.status = 'Resolved';
+        }
+      }
+      if (selectedIncident && (selectedIncident._id === incidentId || selectedIncident.incidentId === incidentId)) {
+        selectedIncident.falseAlarmRecord = res.record;
+        if (['Genuine Emergency', 'False Alarm — Accidental', 'False Alarm — Intentional'].includes(selectedVerifyClassification)) {
+          selectedIncident.status = 'Resolved';
+        }
+        renderEmergencyDossier();
+      }
+      renderIncidentQueue();
 
       await selectIncident(incidentId);
       await loadIncidents();
