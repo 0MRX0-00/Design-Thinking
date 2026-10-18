@@ -262,8 +262,80 @@ export async function toggleUserStatus(userId, currentStatus) {
       showToast('Status Updated', `User account status set to ${nextStatus}.`, 'info');
       await loadUsers();
     }
+// User Onboarding (Admin Only)
+export function openAddUserModal() {
+  const modal = document.getElementById('add-user-modal');
+  const alertBox = document.getElementById('add-user-alert');
+  if (alertBox) {
+    alertBox.className = 'hidden';
+    alertBox.innerHTML = '';
+  }
+  if (modal) modal.classList.remove('hidden');
+}
+
+export function closeAddUserModal() {
+  const modal = document.getElementById('add-user-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+export async function submitAddUser(e) {
+  if (e) e.preventDefault();
+  const alertBox = document.getElementById('add-user-alert');
+  const submitBtn = document.getElementById('add-user-submit-btn');
+  const btnText = document.getElementById('add-user-btn-text');
+  const spinner = document.getElementById('add-user-spinner');
+
+  const name = document.getElementById('new-user-name')?.value?.trim();
+  const email = document.getElementById('new-user-email')?.value?.trim();
+  const role = document.getElementById('new-user-role')?.value || 'student';
+  const identifier = document.getElementById('new-user-identifier')?.value?.trim();
+  const phone = document.getElementById('new-user-phone')?.value?.trim();
+  const department = document.getElementById('new-user-dept')?.value?.trim();
+  const password = document.getElementById('new-user-pwd')?.value;
+
+  if (!name || !email || !password) {
+    if (alertBox) {
+      alertBox.className = 'p-2.5 rounded text-xs border border-amber-300 bg-amber-50 text-amber-900';
+      alertBox.innerText = 'Name, email, and password are required.';
+      alertBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  try {
+    if (submitBtn) submitBtn.disabled = true;
+    if (btnText) btnText.innerText = 'Saving...';
+    if (spinner) spinner.classList.remove('hidden');
+    if (alertBox) alertBox.classList.add('hidden');
+
+    const res = await api.post('/api/admin/users', {
+      name,
+      email,
+      role,
+      identifier,
+      phone,
+      department,
+      password
+    });
+
+    if (res.success) {
+      showToast('User Created ✅', res.message || `User ${name} registered successfully.`, 'success');
+      closeAddUserModal();
+      document.getElementById('add-user-form')?.reset();
+      const pwdInput = document.getElementById('new-user-pwd');
+      if (pwdInput) pwdInput.value = 'Password@123';
+      await loadUsers();
+    }
   } catch (err) {
-    showToast('Failed to change status', err.message, 'critical');
+    if (alertBox) {
+      alertBox.className = 'p-2.5 rounded text-xs border border-red-300 bg-red-50 text-red-900';
+      alertBox.innerText = err.message || 'Failed to add user. Verify details.';
+      alertBox.classList.remove('hidden');
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+    if (btnText) btnText.innerText = 'Save User';
+    if (spinner) spinner.classList.add('hidden');
   }
 }
 
@@ -1085,6 +1157,9 @@ window.csAdmin = {
   renderUsersTable,
   updateRole,
   toggleUserStatus,
+  openAddUserModal,
+  closeAddUserModal,
+  submitAddUser,
   addEmergencyContact,
   deleteContact,
   loadFalseAlarmStats,

@@ -217,3 +217,84 @@ export const deleteEmergencyContact = async (req, res, next) => {
     next(error);
   }
 };
+
+export const createUser = async (req, res, next) => {
+  try {
+    const { name, email, password, identifier, phone, department, role, accountStatus } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, institutional email, and initial password are required.'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.'
+      });
+    }
+
+    const validRoles = ['student', 'faculty', 'security', 'admin'];
+    const assignedRole = role && validRoles.includes(role) ? role : 'student';
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'A user account with this email address already exists.'
+      });
+    }
+
+    if (identifier && identifier.trim()) {
+      const existingId = await User.findOne({ identifier: identifier.trim() });
+      if (existingId) {
+        return res.status(409).json({
+          success: false,
+          message: `A user with Roll No / Identifier "${identifier.trim()}" already exists.`
+        });
+      }
+    }
+
+    const passwordHash = await User.hashPassword(password);
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      identifier: identifier ? identifier.trim() : '',
+      phone: phone ? phone.trim() : '',
+      department: department ? department.trim() : 'General Campus',
+      role: assignedRole,
+      accountStatus: accountStatus || 'active'
+    });
+
+    await AuditLog.logAction({
+      actor: req.user._id,
+      actorName: req.user.name,
+      actorRole: req.user.role,
+      action: 'USER_CREATED_BY_ADMIN',
+      entityType: 'User',
+      entityId: user._id,
+      metadata: { createdUserEmail: user.email, role: user.role, identifier: user.identifier },
+      ipAddress: req.ip
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `User ${user.name} (${user.role.toUpperCase()}) added successfully.`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        identifier: user.identifier,
+        department: user.department,
+        accountStatus: user.accountStatus
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getUsers,
+  createUser,
   updateUserRole,
   updateUserStatus,
   getAuditLogs,
@@ -14,6 +15,7 @@ const router = Router();
 
 // User management (Admin only)
 router.get('/users', authenticate, authorize('admin'), getUsers);
+router.post('/users', authenticate, authorize('admin'), createUser);
 router.patch('/users/:id/role', authenticate, authorize('admin'), updateUserRole);
 router.patch('/users/:id/status', authenticate, authorize('admin'), updateUserStatus);
 
