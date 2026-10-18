@@ -44,7 +44,9 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id)
+      .select('name email role identifier phone department accountStatus')
+      .lean();
     if (!user) {
       return res.status(401).json({
         success: false,

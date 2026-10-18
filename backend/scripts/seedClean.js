@@ -19,20 +19,21 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config();
 
-const CLOUD_FALLBACK_URI = atob(
-  'bW9uZ29kYitzcnY6Ly9zdW1hbnRodGhlZ29kMDdfZGJfdXNlcjpKclZxSWZSOEJJUExIeXVBQGNsdXN0ZXIwLnM1eXlodGYubW9uZ29kYi5uZXQvY2FtcHVzc2hpZWxkP3JldHJ5V3JpdGVzPXRydWUmdz1tYWpvcml0eQ=='
-);
-
-const MONGODB_URI = process.env.MONGODB_URI || CLOUD_FALLBACK_URI;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campusshield';
 
 export const seedCleanDatabase = async () => {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    throw new Error('[CampusShield Safety Gate] Seeding is blocked in production to protect real records. Set ALLOW_PRODUCTION_SEED=true only if intentional.');
+  }
+
   try {
     if (mongoose.connection.readyState !== 1) {
-      console.log(`[CampusShield Clean Seed] Connecting to MongoDB Atlas: ${MONGODB_URI.split('@')[1] || MONGODB_URI}...`);
+      const masked = MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+      console.log(`[CampusShield Clean Seed] Connecting to MongoDB: ${masked}...`);
       await mongoose.connect(MONGODB_URI);
     }
 
-    console.log('[CampusShield Clean Seed] Connected. Clearing all incidents and alerts...');
+    console.log('[CampusShield Clean Seed] Connected. Clearing collections for clean seed...');
 
     // 1. Wipe all active/historical incidents and notifications for a fresh queue
     await Incident.deleteMany({});

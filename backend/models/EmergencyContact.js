@@ -37,4 +37,6 @@ const emergencyContactSchema = new mongoose.Schema(
   }
 );
 
+emergencyContactSchema.index({ priority: 1, name: 1 });
+
 export const EmergencyContact = mongoose.model('EmergencyContact', emergencyContactSchema);

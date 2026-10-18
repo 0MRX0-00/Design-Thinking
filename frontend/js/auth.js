@@ -78,6 +78,16 @@ export async function initAuth(requiredRole = null) {
     try {
       currentUser = JSON.parse(cachedUserStr);
       updateAuthUI(currentUser);
+
+      // Instant pre-validation: check role immediately before any network request
+      if (requiredRole && currentUser && currentUser.role) {
+        const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        if (!allowedRoles.includes(currentUser.role)) {
+          console.warn(`[CampusShield RBAC] Unauthorized cached role: ${currentUser.role} accessed ${currentPath}`);
+          window.location.replace(getDashboardUrl(currentUser.role));
+          return null;
+        }
+      }
     } catch {}
   }
 
@@ -96,12 +106,11 @@ export async function initAuth(requiredRole = null) {
           return currentUser;
         }
 
-        // On protected pages, enforce role-based access control
+        // On protected pages, strictly enforce role-based access control
         if (requiredRole) {
           const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-          if (!allowedRoles.includes(currentUser.role) && currentUser.role !== 'admin') {
+          if (!allowedRoles.includes(currentUser.role)) {
             console.warn(`[CampusShield RBAC] Unauthorized role: ${currentUser.role} accessed ${currentPath}`);
-            alert(`Access Restricted: Your account (${currentUser.name} - ${currentUser.role.toUpperCase()}) does not have permission to access this portal.`);
             window.location.replace(getDashboardUrl(currentUser.role));
             return null;
           }
@@ -118,8 +127,14 @@ export async function initAuth(requiredRole = null) {
         localStorage.removeItem('cs_user');
         currentUser = null;
       } else if (currentUser) {
-        // Retain session indefinitely across device restarts, network switches, or offline app usage
-        console.log('[CampusShield Auth] Retaining persistent local session for:', currentUser.name);
+        // Enforce role-based access control even when offline
+        if (requiredRole && currentUser.role) {
+          const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+          if (!allowedRoles.includes(currentUser.role)) {
+            window.location.replace(getDashboardUrl(currentUser.role));
+            return null;
+          }
+        }
         if (isLoginPage) {
           const redirectUrl = getQueryParam('redirect') || getDashboardUrl(currentUser.role);
           window.location.replace(redirectUrl);

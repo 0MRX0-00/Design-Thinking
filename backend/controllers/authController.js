@@ -94,8 +94,15 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, loginId, identifier, password, role: requestedRole } = req.body;
-    const credential = (loginId || email || identifier || '').trim();
+    
+    if (typeof password !== 'string' || (!loginId && !email && !identifier)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both institutional email/ID and password.'
+      });
+    }
 
+    const credential = (loginId || email || identifier || '').trim();
     if (!credential || !password) {
       return res.status(400).json({
         success: false,
@@ -116,6 +123,8 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({
       $or: [
         { email: normalizedCred },
+        { identifier: credential },
+        { identifier: credential.toUpperCase() },
         { identifier: { $regex: new RegExp(`^${escapedTerm}$`, 'i') } }
       ]
     }).select('+passwordHash');
@@ -129,13 +138,11 @@ export const login = async (req, res, next) => {
 
     let isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      // Support demo accounts with evaluation passwords
-      const isDemoAlias = (
-        (credential.toLowerCase() === 'student@campusshield.edu' || credential.toLowerCase() === 'student') && password === 'student123'
-      ) || (
-        (credential.toLowerCase() === 'security@campusshield.edu' || credential.toLowerCase() === 'security') && password === 'security123'
-      ) || (
-        (credential.toLowerCase() === 'admin@campusshield.edu' || credential.toLowerCase() === 'admin') && password === 'admin123'
+      // Support demo accounts with evaluation passwords strictly in non-production development/test mode
+      const isDemoAlias = (process.env.NODE_ENV !== 'production') && (
+        ((credential.toLowerCase() === 'student@campusshield.edu' || credential.toLowerCase() === 'student') && password === 'student123') ||
+        ((credential.toLowerCase() === 'security@campusshield.edu' || credential.toLowerCase() === 'security') && password === 'security123') ||
+        ((credential.toLowerCase() === 'admin@campusshield.edu' || credential.toLowerCase() === 'admin') && password === 'admin123')
       );
 
       if (isDemoAlias) {
@@ -168,7 +175,8 @@ export const login = async (req, res, next) => {
       }
     }
 
-    await AuditLog.logAction({
+    // Asynchronous audit log writing — do not block user login response
+    AuditLog.logAction({
       actor: user._id,
       actorName: user.name,
       actorRole: user.role,
@@ -177,7 +185,7 @@ export const login = async (req, res, next) => {
       entityId: user._id,
       metadata: { role: user.role },
       ipAddress: req.ip
-    });
+    }).catch((err) => console.warn('[CampusShield Audit] Login audit log deferred error:', err.message));
 
     const token = generateToken(user);
 
@@ -247,8 +255,8 @@ export const forgotPassword = async (req, res, next) => {
     return res.json({
       success: true,
       message: 'If an authorized account matches those credentials, recovery instructions and a secure one-time reset token have been generated.',
-      // Provided in development/evaluation mode so password reset can be tested immediately in the UI/tests
-      resetToken: resetToken || null
+      // Provided in development/test mode so password reset can be tested immediately in automated tests
+      resetToken: process.env.NODE_ENV === 'production' ? null : (resetToken || null)
     });
   } catch (error) {
     next(error);
@@ -335,7 +343,7 @@ export const logout = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = req.user;
     if (!user) {
       return res.status(404).json({
         success: false,

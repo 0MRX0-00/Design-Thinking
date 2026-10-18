@@ -661,7 +661,7 @@ export async function acknowledgeAlert(incidentId) {
   try {
     const res = await api.patch(`/api/incidents/${incidentId}/status`, {
       status: 'Acknowledged',
-      note: 'Alert acknowledged by Security Command Center.'
+      note: 'Alert acknowledged by Campus Security.'
     });
     if (res.success) {
       showToast('Incident Acknowledged', `Incident ${incidentId} marked as acknowledged.`, 'success');
@@ -1042,7 +1042,7 @@ export function openVerifyModal(incidentId) {
             Supporting Evidence References (Optional)
           </label>
           <input type="text" id="verify-evidence-input" 
-                 placeholder="e.g. Duty log #204, CCTV clip ref, proctor memo..." 
+                 placeholder="e.g. Duty log #204, physical inspection, proctor memo..." 
                  value="${inc.falseAlarmRecord?.evidenceReferences || ''}"
                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500" />
         </div>

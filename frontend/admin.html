@@ -2,78 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CampusShield — Administration</title>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#1E3A5F" />
-  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
-  <!-- Tailwind CSS CDN -->
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              navy: '#1E3A5F',
-              blue: '#2563EB',
-              emergency: '#DC2626'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <link rel="stylesheet" href="./css/styles.css" />
   <script src="./js/socket.io.min.js"></script>
 </head>
-<body class="bg-white text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
-  <!-- TOP APP BAR -->
+  <!-- Header -->
   <header class="border-b border-slate-200 bg-white sticky top-0 z-40 px-4 py-2.5">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
       <!-- Brand & Title -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-lg text-[#1E3A5F]">
-          🏛️
-        </div>
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🛡️</span>
         <div>
-          <h1 class="text-sm font-bold text-[#1E3A5F] leading-tight">CampusShield</h1>
-          <p class="text-[11px] text-slate-500">Administration & Governance</p>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm font-bold text-[#1E3A5F] leading-tight">CampusShield</h1>
+            <span class="px-1.5 py-0.5 bg-slate-100 text-slate-800 font-semibold text-[10px] rounded">Admin</span>
+          </div>
+          <p class="text-[11px] text-slate-500">System Administration</p>
         </div>
       </div>
 
-      <!-- Navigation Portals -->
-      <nav class="hidden md:flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-medium">
-        <a href="security.html" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-          Security Console
-        </a>
-        <a href="student.html" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-          Student Portal
-        </a>
-        <a href="admin.html" class="px-3 py-1 rounded-md bg-[#1E3A5F] text-white shadow-xs font-semibold">
-          Administration
-        </a>
-      </nav>
 
-      <!-- System Status & Admin Profile -->
+
+      <!-- Status & Profile -->
       <div class="flex items-center gap-2">
-        <div id="backend-status-badge" class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+        <div id="backend-status-badge" class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span id="admin-db-status" class="text-[11px] font-semibold">Connected</span>
+          <span id="admin-db-status" class="text-[11px] font-medium">Connected</span>
         </div>
 
-        <div id="auth-profile-badge" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs">
-          <div class="w-5 h-5 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center font-bold text-[9px]" id="user-avatar-initials">
-            AD
-          </div>
-          <span id="user-display-name" class="font-semibold text-slate-800 text-xs">Admin</span>
+        <div id="auth-profile-badge" class="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs">
+          <span class="font-medium text-slate-800 text-xs" id="user-display-name">Admin</span>
         </div>
 
         <button id="auth-logout-btn" 
                 onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
-                class="px-2.5 py-1 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-slate-200 font-medium transition cursor-pointer">
+                class="px-2.5 py-1 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded border border-slate-200 transition">
           Sign Out
         </button>
 
@@ -87,33 +56,34 @@
     </div>
   </header>
 
-  <!-- MAIN ADMIN DASHBOARD -->
-  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-6">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 space-y-4">
     
-    <!-- ESSENTIAL METRICS (4 Clean Cards) -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-      <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <span class="text-slate-500 text-[10px] uppercase font-semibold block">Total Incidents</span>
-        <div id="admin-stat-total" class="text-2xl font-bold text-slate-900 font-mono mt-0.5">0</div>
-        <span class="text-[10px] text-slate-400">All-time logged</span>
+    <!-- 5 Essential Governance Metrics -->
+    <section class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+      <div class="p-3 bg-white rounded-lg border border-slate-200 shadow-xs">
+        <span class="text-slate-500 text-[10px] uppercase font-bold block">Active Incidents</span>
+        <div id="admin-stat-active" class="text-xl font-bold text-red-600 font-mono mt-0.5">0</div>
       </div>
 
-      <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <span class="text-red-700 text-[10px] uppercase font-semibold block">Active Alerts</span>
-        <div id="admin-stat-active" class="text-2xl font-bold text-red-600 font-mono mt-0.5">0</div>
-        <span class="text-[10px] text-slate-400">Under response</span>
+      <div class="p-3 bg-white rounded-lg border border-slate-200 shadow-xs">
+        <span class="text-slate-500 text-[10px] uppercase font-bold block">Total Logged</span>
+        <div id="admin-stat-total" class="text-xl font-bold text-slate-900 font-mono mt-0.5">0</div>
       </div>
 
-      <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <span class="text-amber-700 text-[10px] uppercase font-semibold block">False Alarms</span>
-        <div id="fa-stat-total" class="text-2xl font-bold text-amber-600 font-mono mt-0.5">0</div>
-        <span class="text-[10px] text-slate-400">Logged reviews</span>
+      <div class="p-3 bg-white rounded-lg border border-slate-200 shadow-xs">
+        <span class="text-slate-500 text-[10px] uppercase font-bold block">Verified False Alarms</span>
+        <div id="fa-stat-confirmed" class="text-xl font-bold text-amber-600 font-mono mt-0.5">0</div>
       </div>
 
-      <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <span class="text-slate-600 text-[10px] uppercase font-semibold block">Registered Users</span>
-        <div id="admin-stat-users" class="text-2xl font-bold text-slate-800 font-mono mt-0.5">0</div>
-        <span class="text-[10px] text-slate-400">Students & staff</span>
+      <div class="p-3 bg-white rounded-lg border border-slate-200 shadow-xs">
+        <span class="text-slate-500 text-[10px] uppercase font-bold block">Restricted SOS</span>
+        <div id="fa-stat-suspended" class="text-xl font-bold text-red-700 font-mono mt-0.5">0</div>
+      </div>
+
+      <div class="p-3 bg-white rounded-lg border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+        <span class="text-slate-500 text-[10px] uppercase font-bold block">Pending Inquiries</span>
+        <div id="fa-stat-cases-pending" class="text-xl font-bold text-blue-700 font-mono mt-0.5">0</div>
       </div>
     </section>
 
@@ -122,31 +92,25 @@
       <div id="admin-stat-critical">0</div>
       <div id="admin-stat-resolved">0</div>
       <div id="admin-stat-avg-resp">0</div>
+      <div id="admin-stat-users">0</div>
+      <div id="fa-stat-total">0</div>
+      <div id="fa-stat-pending">0</div>
+      <div id="fa-stat-students-2plus">0</div>
+      <div id="fa-stat-cases-resolved">0</div>
       <div id="admin-category-chart-container"></div>
       <div id="admin-severity-chart-container"></div>
-      <div id="fa-stat-pending">0</div>
-      <div id="fa-stat-confirmed">0</div>
-      <div id="fa-stat-students-2plus">0</div>
-      <div id="fa-stat-suspended">0</div>
-      <div id="fa-stat-cases-pending">0</div>
-      <div id="fa-stat-cases-resolved">0</div>
-      <select id="disc-case-status-filter"><option value="">All</option></select>
-      <table><tbody id="disc-cases-table-body"></tbody></table>
     </div>
 
     <!-- SECTION 1: USER & ROLE MANAGEMENT -->
-    <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <span>👥</span> User & Role Management
-          </h2>
-          <p class="text-xs text-slate-500">Manage user accounts, roles, and access privileges.</p>
-        </div>
+    <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+        <h2 class="text-sm font-bold text-slate-900">
+          User Accounts
+        </h2>
 
         <div class="flex items-center gap-2">
-          <input type="text" id="admin-user-search" oninput="window.csAdmin.renderUsersTable()" placeholder="Search name, email, roll no..." class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] w-48" />
-          <select id="admin-user-role-filter" onchange="window.csAdmin.renderUsersTable()" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 focus:outline-none">
+          <input type="text" id="admin-user-search" oninput="window.csAdmin.renderUsersTable()" placeholder="Search name or roll no..." class="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] w-44" />
+          <select id="admin-user-role-filter" onchange="window.csAdmin.renderUsersTable()" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-800">
             <option value="">All Roles</option>
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
@@ -156,11 +120,11 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <div class="overflow-x-auto rounded border border-slate-200">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold uppercase text-slate-600">
-              <th class="p-2.5">User & Email</th>
+              <th class="p-2.5">User</th>
               <th class="p-2.5">Identifier</th>
               <th class="p-2.5">Role</th>
               <th class="p-2.5">Status</th>
@@ -176,67 +140,64 @@
       </div>
     </section>
 
-    <!-- SECTION 2: FALSE ALARM & SAFETY GOVERNANCE -->
-    <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5" id="false-alarm-management-module">
-      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-        <div>
-          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <span>⚖️</span> False Alarm & Safety Records
-          </h2>
-          <p class="text-xs text-slate-500">Student incident classifications and automatic SOS threshold restrictions.</p>
-        </div>
+    <!-- SECTION 2: FALSE ALARM & SAFETY RECORDS -->
+    <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3" id="false-alarm-management-module">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-2">
+        <h2 class="text-sm font-bold text-slate-900">
+          False Alarm Records & Threshold
+        </h2>
 
-        <!-- Threshold Setting -->
-        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 text-xs">
-          <span class="text-slate-600 font-medium text-[11px] pl-1">Suspension Limit:</span>
+        <!-- Suspension Threshold -->
+        <div class="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+          <span class="text-slate-600 text-[11px]">Suspension Threshold:</span>
           <input type="number" id="admin-threshold-input" min="1" max="10" value="3" 
-                 class="w-12 bg-white border border-slate-300 rounded px-1.5 py-0.5 text-center font-mono font-bold text-slate-900 text-xs focus:outline-none" />
+                 class="w-10 bg-white border border-slate-300 rounded px-1 py-0.5 text-center font-mono font-bold text-slate-900 text-xs" />
           <button onclick="window.csAdmin.updateThresholdSetting()" 
-                  class="px-2 py-0.5 bg-[#1E3A5F] hover:bg-[#152843] text-white font-semibold rounded text-xs transition cursor-pointer">
+                  class="px-2 py-0.5 bg-[#1E3A5F] hover:bg-[#152843] text-white rounded text-xs font-semibold">
             Save
           </button>
         </div>
       </div>
 
-      <!-- Student Records Filters & Search -->
+      <!-- Filters & Search -->
       <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
         <input type="text" id="fa-student-search" oninput="window.csAdmin.loadStudentSafetyRecords()" 
                placeholder="Search student or roll no..." 
-               class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] w-48" />
+               class="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] w-44" />
 
-        <div class="flex flex-wrap items-center gap-1.5">
+        <div class="flex items-center gap-1.5">
           <select id="fa-filter-min-count" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                  class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800">
+                  class="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-800">
             <option value="">All Counts</option>
             <option value="1">≥ 1 False Alarm</option>
-            <option value="2">≥ 2 (Warned)</option>
+            <option value="2">≥ 2 (Warning)</option>
             <option value="3">≥ 3 (Final Warning)</option>
             <option value="4">≥ 4 (Suspended)</option>
           </select>
 
           <select id="fa-filter-sos-status" onchange="window.csAdmin.loadStudentSafetyRecords()" 
-                  class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800">
-            <option value="">All Access</option>
+                  class="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-800">
+            <option value="">All SOS Status</option>
             <option value="active">Active SOS</option>
             <option value="restricted">Restricted SOS</option>
           </select>
 
           <button onclick="window.csAdmin.exportFalseAlarmCsv()" 
-                  class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#1E3A5F] rounded-lg text-xs font-semibold transition cursor-pointer">
+                  class="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#1E3A5F] rounded text-xs font-semibold">
             Export CSV
           </button>
         </div>
       </div>
 
-      <!-- Hidden compatibility filters -->
+      <!-- Hidden filters -->
       <select id="fa-filter-dept" class="hidden"><option value="">All</option></select>
       <select id="fa-filter-disc-status" class="hidden"><option value="">All</option></select>
 
-      <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <div class="overflow-x-auto rounded border border-slate-200">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold uppercase text-slate-600">
-              <th class="p-2.5">Student & Roll No</th>
+              <th class="p-2.5">Student</th>
               <th class="p-2.5">Department</th>
               <th class="p-2.5">False Alarms</th>
               <th class="p-2.5">SOS Access</th>
@@ -253,18 +214,54 @@
       </div>
     </section>
 
-    <!-- SECTION 3: EMERGENCY CONTACTS & AUDIT LOG -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      
-      <!-- Emergency Directory CRUD -->
-      <div class="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
-        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-          <span>📞</span> Emergency Contacts Directory
-        </h3>
+    <!-- SECTION 3: DISCIPLINARY COMMITTEE INQUIRIES -->
+    <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h2 class="text-sm font-bold text-slate-900">
+          Disciplinary Committee Inquiries
+        </h2>
+        <select id="disc-case-status-filter" onchange="window.csAdmin.loadDisciplinaryCases()" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-800">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="in_review">In Review</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
 
+      <div class="overflow-x-auto rounded border border-slate-200">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold uppercase text-slate-600">
+              <th class="p-2.5">Case ID</th>
+              <th class="p-2.5">Student</th>
+              <th class="p-2.5">Confirmed Alarms</th>
+              <th class="p-2.5">Status</th>
+              <th class="p-2.5">Date Opened</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="disc-cases-table-body" class="divide-y divide-slate-100 bg-white">
+            <tr>
+              <td colspan="6" class="p-4 text-center text-slate-500 text-xs">Loading inquiry cases...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 4: EMERGENCY DIRECTORY -->
+    <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+      <div class="border-b border-slate-100 pb-2">
+        <h3 class="text-sm font-bold text-slate-900">
+          Emergency Contacts Directory
+        </h3>
+        <p class="text-xs text-slate-500">Manage verified institutional and medical emergency contacts.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Add Contact Form -->
-        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2 text-xs">
-          <div class="font-semibold text-slate-700 text-[11px]">Add New Contact</div>
+        <div class="p-3 bg-slate-50 rounded border border-slate-200 space-y-2 text-xs">
+          <div class="font-semibold text-slate-700 text-[11px]">Add Emergency Contact</div>
           <div class="grid grid-cols-2 gap-1.5">
             <input type="text" id="new-contact-name" placeholder="Name" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900" />
             <input type="text" id="new-contact-role" placeholder="Role (e.g. Chief Warden)" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900" />
@@ -278,32 +275,21 @@
           </button>
         </div>
 
-        <div id="admin-contacts-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1 text-xs"></div>
-      </div>
-
-      <!-- Security Audit Log -->
-      <div class="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <span>🛡️</span> Security Audit Log
-          </h3>
-          <span class="text-[10px] text-slate-400">Activity Trail</span>
-        </div>
-
-        <div id="admin-audit-logs-container" class="space-y-1.5 max-h-80 overflow-y-auto pr-1 text-xs">
-          <div class="p-4 text-center text-slate-500">Loading audit logs...</div>
-        </div>
+        <!-- Contacts List -->
+        <div id="admin-contacts-list" class="space-y-1 max-h-60 overflow-y-auto pr-1 text-xs"></div>
       </div>
     </section>
 
+    <!-- Hidden background element for audit logs -->
+    <div id="admin-audit-logs-container" class="hidden" aria-hidden="true" style="display:none;"></div>
+
   </main>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-400 mt-auto">
-    <p>CampusShield Administration • Kongu Engineering College</p>
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500 mt-auto">
+    <p>CampusShield • Kongu Engineering College</p>
   </footer>
 
-  <!-- Scripts -->
   <script type="module" src="./js/api.js"></script>
   <script type="module" src="./js/auth.js"></script>
   <script type="module" src="./js/admin.js"></script>

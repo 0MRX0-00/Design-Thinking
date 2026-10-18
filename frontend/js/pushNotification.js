@@ -338,8 +338,13 @@ export async function updateNotificationUiBadge() {
   const badge = document.getElementById('push-notification-badge');
   if (!badge) return;
 
-  const localNotif = getCapacitorLocalNotifications();
   const isCommandCentre = isCommandCentreContext();
+
+  // On student dashboard, keep notification setup in background and do not show persistent header button
+  if (!isCommandCentre) {
+    badge.classList.add('hidden');
+    return;
+  }
 
   // 1. Check Native Android Permission first
   if (localNotif) {

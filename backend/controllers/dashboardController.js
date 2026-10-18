@@ -5,22 +5,32 @@ import { isDbConnected } from '../config/db.js';
 
 export const getDashboardSummary = async (req, res, next) => {
   try {
-    const totalIncidents = await Incident.countDocuments();
-    const activeIncidents = await Incident.countDocuments({
-      status: { $in: ['Submitted', 'Acknowledged', 'Assigned', 'Dispatched', 'On Scene'] }
-    });
-    const criticalIncidents = await Incident.countDocuments({
-      severity: 'critical',
-      status: { $in: ['Submitted', 'Acknowledged', 'Assigned', 'Dispatched', 'On Scene'] }
-    });
-    const resolvedIncidents = await Incident.countDocuments({ status: 'Resolved' });
+    const activeStatusFilter = { $in: ['Submitted', 'Acknowledged', 'Assigned', 'Dispatched', 'On Scene'] };
 
-    // Calculate real average response time in minutes from genuine timestamps
-    // Response time = time from reportedAt to acknowledgedAt (or dispatchedAt)
-    const acknowledgedList = await Incident.find({
-      reportedAt: { $ne: null },
-      acknowledgedAt: { $ne: null }
-    }).select('reportedAt acknowledgedAt');
+    const [
+      totalIncidents,
+      activeIncidents,
+      criticalIncidents,
+      resolvedIncidents,
+      acknowledgedList,
+      totalResponders,
+      availableResponders,
+      dispatchedResponders,
+      totalUsers
+    ] = await Promise.all([
+      Incident.countDocuments(),
+      Incident.countDocuments({ status: activeStatusFilter }),
+      Incident.countDocuments({ severity: 'critical', status: activeStatusFilter }),
+      Incident.countDocuments({ status: 'Resolved' }),
+      Incident.find({
+        reportedAt: { $ne: null },
+        acknowledgedAt: { $ne: null }
+      }).select('reportedAt acknowledgedAt').lean().limit(100),
+      Responder.countDocuments(),
+      Responder.countDocuments({ availabilityStatus: 'available' }),
+      Responder.countDocuments({ availabilityStatus: 'dispatched' }),
+      User.countDocuments()
+    ]);
 
     let totalResponseMinutes = 0;
     let validResponseCount = 0;
@@ -38,14 +48,6 @@ export const getDashboardSummary = async (req, res, next) => {
     const avgResponseTimeMinutes = validResponseCount > 0
       ? (totalResponseMinutes / validResponseCount).toFixed(1)
       : '0.0';
-
-    // Responder fleet readiness
-    const totalResponders = await Responder.countDocuments();
-    const availableResponders = await Responder.countDocuments({ availabilityStatus: 'available' });
-    const dispatchedResponders = await Responder.countDocuments({ availabilityStatus: 'dispatched' });
-
-    // User counts
-    const totalUsers = await User.countDocuments();
 
     res.json({
       success: true,

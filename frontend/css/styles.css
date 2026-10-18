@@ -1,113 +1,74 @@
-/* CampusShield — Modern University Safety & Emergency Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* CampusShield — Clean & Practical College Safety System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Official Design System Tokens */
   --bg-page: #F8FAFC;
   --bg-card: #FFFFFF;
-  --primary-navy: #1E3A5F;
-  --primary-blue: #2563EB;
   --text-main: #0F172A;
   --text-muted: #64748B;
   --border-color: #E2E8F0;
-  --border-strong: #CBD5E1;
-
+  
+  --primary-navy: #1E3A5F;
+  --primary-blue: #2563EB;
   --color-emergency: #DC2626;
   --color-warning: #D97706;
-  --color-success: #15803D;
-  --color-neutral: #475569;
-
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --color-success: #16A34A;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-page);
   color: var(--text-main);
   line-height: 1.5;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Subtle, Clean Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+/* Form inputs & interactive targets */
+button, input, select, textarea {
+  font-family: inherit;
 }
 
-/* Base Card & Container Styles */
-.card-base,
-.tactical-glass,
-.tactical-glass-elevated {
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Clean Cards */
+.card-base {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-  border-radius: 0.75rem;
+  border-radius: 8px;
 }
 
-.card-hover {
-  transition: all 0.15s ease-in-out;
-}
-.card-hover:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-md);
-}
-
-/* Emergency Button Pulse (Reserved only for active SOS) */
-@keyframes emergency-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 16px rgba(220, 38, 38, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
-  }
-}
-
-.pulse-emergency {
-  animation: emergency-pulse 2s infinite;
-}
-
-/* Active Incident Selection in Queue */
-.incident-active-selected {
-  border-color: var(--primary-blue) !important;
-  background-color: #EFF6FF !important;
-}
-
-/* Toast Notifications (Clean, accessible, floating top-right) */
+/* Toast Notifications */
 #toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
+  top: 16px;
+  right: 16px;
+  left: 16px;
+  margin-left: auto;
+  max-width: 360px;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: none;
-  max-width: 380px;
-  width: calc(100% - 40px);
 }
 
 .toast-msg {
@@ -115,27 +76,16 @@ body {
   background-color: #FFFFFF;
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 12px 16px;
-  box-shadow: var(--shadow-lg);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  animation: toast-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
 }
 
-@keyframes toast-slide {
-  from {
-    transform: translateY(-12px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Clean Leaflet Map Styling (Light university look) */
+/* Leaflet Container */
 .leaflet-container {
   background-color: #E2E8F0 !important;
   font-family: 'Inter', sans-serif !important;
@@ -151,13 +101,14 @@ body {
   height: 100% !important;
   min-height: 200px !important;
   background-color: #F1F5F9 !important;
+  border-radius: 8px;
 }
 
 .leaflet-popup-content-wrapper {
   background: #FFFFFF !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-  box-shadow: var(--shadow-md) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
   color: var(--text-main) !important;
   padding: 4px 6px !important;
 }
@@ -167,30 +118,7 @@ body {
   border: 1px solid var(--border-color) !important;
 }
 
-.leaflet-bar {
-  border: 1px solid var(--border-color) !important;
-  box-shadow: var(--shadow-sm) !important;
-  border-radius: 0.5rem !important;
-  overflow: hidden !important;
-}
-
-.leaflet-bar a {
-  background-color: #FFFFFF !important;
-  color: var(--text-main) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-}
-
-.leaflet-bar a:hover {
-  background-color: #F8FAFC !important;
-  color: var(--primary-blue) !important;
-}
-
-.leaflet-bar a:last-child {
-  border-bottom: none !important;
-}
-
 /* Modal Backdrop */
 .modal-backdrop {
   background-color: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
 }

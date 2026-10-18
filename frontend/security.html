@@ -2,83 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CampusShield — Security Console</title>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#1E3A5F" />
-  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
-  <!-- Tailwind CSS CDN -->
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              navy: '#1E3A5F',
-              blue: '#2563EB',
-              emergency: '#DC2626'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <link rel="stylesheet" href="./css/styles.css" />
-  <!-- Leaflet CSS & JS for Campus Map -->
   <link rel="stylesheet" href="./css/leaflet.css" />
   <script src="./js/leaflet.js"></script>
   <script src="./js/socket.io.min.js"></script>
 </head>
-<body class="bg-white text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
-  <!-- TOP APP BAR -->
+  <!-- Header -->
   <header class="border-b border-slate-200 bg-white sticky top-0 z-40 px-4 py-2.5">
     <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
       
       <!-- Brand & Title -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-lg text-[#1E3A5F]">
-          🛡️
-        </div>
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🛡️</span>
         <div>
-          <h1 class="text-sm font-bold text-[#1E3A5F] leading-tight">CampusShield</h1>
-          <p class="text-[11px] text-slate-500">Security Operations Console</p>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm font-bold text-[#1E3A5F] leading-tight">CampusShield</h1>
+            <span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 font-semibold text-[10px] rounded">Security</span>
+          </div>
+          <p class="text-[11px] text-slate-500">Incident Management Console</p>
         </div>
       </div>
 
-      <!-- Navigation Portals -->
-      <nav class="hidden md:flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-medium">
-        <a href="security.html" class="px-3 py-1 rounded-md bg-[#1E3A5F] text-white shadow-xs font-semibold">
-          Security Console
-        </a>
-        <a href="student.html" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-          Student Portal
-        </a>
-        <a href="admin.html" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-          Administration
-        </a>
-      </nav>
+
 
       <!-- System Status & Officer Profile -->
       <div class="flex items-center gap-2">
-        <div id="backend-status-badge" class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+        <div id="backend-status-badge" class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span class="text-[11px] font-semibold">Online</span>
+          <span class="text-[11px] font-medium">System Online</span>
         </div>
 
-        <div id="auth-user-badge" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs">
-          <span class="w-2 h-2 rounded-full bg-[#1E3A5F]"></span>
-          <span id="user-display-name" class="font-semibold text-slate-800 text-xs">Security Officer</span>
+        <div id="auth-user-badge" class="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs">
+          <span class="font-medium text-slate-800 text-xs" id="user-display-name">Security Officer</span>
         </div>
 
         <button id="auth-logout-btn" 
                 onclick="if (window.csAuth?.logout) { window.csAuth.logout(); } else if (window.logout) { window.logout(); } else { localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }" 
-                class="px-2.5 py-1 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-slate-200 font-medium transition cursor-pointer">
+                class="px-2.5 py-1 text-xs text-slate-600 hover:text-red-700 hover:bg-red-50 rounded border border-slate-200 transition">
           Sign Out
         </button>
 
-        <!-- Hidden badges for socket and notification handling -->
         <span id="socket-status-dot" class="hidden"></span>
         <span id="socket-status-text" class="hidden"></span>
         <div id="push-notification-badge" class="hidden"></div>
@@ -87,147 +56,121 @@
     </div>
   </header>
 
-  <!-- METRIC SUMMARY STRIP -->
-  <section class="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-    <div class="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-      
-      <div class="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
-        <div>
-          <div class="text-[10px] uppercase font-semibold text-slate-500">Active Incidents</div>
-          <div id="stat-active-incidents" class="text-xl font-bold text-red-600 mt-0.5 font-mono">0</div>
+  <!-- Essential Incident Stats -->
+  <section class="border-b border-slate-200 bg-white px-4 py-2">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 font-medium">Active Incidents:</span>
+          <span id="stat-active-incidents" class="font-bold text-red-600 font-mono text-sm">0</span>
         </div>
-        <span class="text-xl">🚨</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 font-medium">Critical Incidents:</span>
+          <span id="stat-critical-alarms" class="font-bold text-amber-600 font-mono text-sm">0</span>
+        </div>
       </div>
 
-      <div class="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
-        <div>
-          <div class="text-[10px] uppercase font-semibold text-slate-500">Critical Alarms</div>
-          <div id="stat-critical-alarms" class="text-xl font-bold text-amber-600 mt-0.5 font-mono">0</div>
-        </div>
-        <span class="text-xl">⚠️</span>
+      <!-- Hidden compatibility stats -->
+      <div class="hidden">
+        <span id="stat-avg-response">0.0m</span>
+        <span id="stat-fleet-readiness">0/0</span>
       </div>
-
-      <div class="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
-        <div>
-          <div class="text-[10px] uppercase font-semibold text-slate-500">Avg Response Time</div>
-          <div id="stat-avg-response" class="text-xl font-bold text-blue-600 mt-0.5 font-mono">0.0m</div>
-        </div>
-        <span class="text-xl">⏱️</span>
-      </div>
-
-      <div class="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
-        <div>
-          <div class="text-[10px] uppercase font-semibold text-slate-500">Available Responders</div>
-          <div id="stat-fleet-readiness" class="text-xl font-bold text-emerald-600 mt-0.5 font-mono">0/0</div>
-        </div>
-        <span class="text-xl">🚔</span>
-      </div>
-
     </div>
   </section>
 
-  <!-- Hidden legacy view-switcher buttons to preserve JS compatibility -->
+  <!-- Hidden legacy view-switcher buttons for JS compatibility -->
   <div class="hidden">
     <button id="view-tab-operations" onclick="window.csSecurity.switchView('operations')"></button>
     <button id="view-tab-fullmap" onclick="window.csSecurity.switchView('fullmap')"></button>
   </div>
 
-  <!-- MAIN OPERATIONS CONSOLE (3-COLUMN WORKSPACE) -->
+  <!-- Main Security Workspace -->
   <main id="operations-center-view" class="flex-1 max-w-[1600px] w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
     
-    <!-- LEFT COLUMN: INCIDENT QUEUE (3 COLUMNS) -->
+    <!-- LEFT COLUMN: INCIDENT QUEUE -->
     <aside class="lg:col-span-3 flex flex-col gap-3">
-      <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex-1 flex flex-col">
+      <div class="p-3.5 bg-white rounded-lg border border-slate-200 shadow-xs flex-1 flex flex-col">
         
-        <div class="flex items-center justify-between mb-2.5">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-            <span>🚨</span> Incident Queue
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+            Incident Queue
           </h2>
-          <span id="queue-count-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600">
-            0 INCIDENTS
+          <span id="queue-count-badge" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600">
+            0 Incidents
           </span>
         </div>
 
         <!-- Search Bar -->
-        <div class="relative mb-2.5">
+        <div class="mb-2">
           <input type="text" id="queue-search-input" oninput="window.csSecurity.renderIncidentQueue()" 
                  placeholder="Search ID, category, location..." 
-                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] transition" />
+                 class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F]" />
         </div>
 
         <!-- Filter Buttons -->
         <div class="flex gap-1 mb-2.5 text-xs">
-          <button onclick="window.csSecurity.setQueueFilter('ALL')" data-filter="ALL" class="queue-filter-btn px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#1E3A5F] text-white cursor-pointer shadow-xs">
+          <button onclick="window.csSecurity.setQueueFilter('ALL')" data-filter="ALL" class="queue-filter-btn px-2 py-1 text-[11px] font-bold rounded bg-[#1E3A5F] text-white">
             ALL
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('ACTIVE')" data-filter="ACTIVE" class="queue-filter-btn px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-600 hover:text-slate-900 cursor-pointer">
+          <button onclick="window.csSecurity.setQueueFilter('ACTIVE')" data-filter="ACTIVE" class="queue-filter-btn px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 text-slate-600 hover:text-slate-900">
             ACTIVE
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('SUBMITTED')" data-filter="SUBMITTED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-600 hover:text-slate-900 cursor-pointer">
-            NEW
+          <button onclick="window.csSecurity.setQueueFilter('SUBMITTED')" data-filter="SUBMITTED" class="queue-filter-btn px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 text-slate-600 hover:text-slate-900">
+            PENDING
           </button>
-          <button onclick="window.csSecurity.setQueueFilter('RESOLVED')" data-filter="RESOLVED" class="queue-filter-btn px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-600 hover:text-slate-900 cursor-pointer">
+          <button onclick="window.csSecurity.setQueueFilter('RESOLVED')" data-filter="RESOLVED" class="queue-filter-btn px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 text-slate-600 hover:text-slate-900">
             RESOLVED
           </button>
         </div>
 
-        <!-- Queue Scroll Container -->
-        <div id="incident-queue-list" class="flex-1 overflow-y-auto space-y-2 max-h-[640px] pr-1">
-          <!-- Dynamic Cards Injected via security.js -->
-        </div>
+        <!-- Incident Queue Scroll Container -->
+        <div id="incident-queue-list" class="flex-1 overflow-y-auto space-y-2 max-h-[640px] pr-1"></div>
 
       </div>
     </aside>
 
-    <!-- MIDDLE COLUMN: INCIDENT DOSSIER & ACTIONS (5 COLUMNS) -->
+    <!-- MIDDLE COLUMN: INCIDENT DETAILS & ACTIONS -->
     <section class="lg:col-span-5 flex flex-col gap-3">
       <div id="emergency-dossier-panel">
-        <!-- Dynamic Dossier Injected via security.js -->
+        <!-- Injected via security.js: Incident details, location, severity, assigned personnel, status, actions (Acknowledge, Assign, Resolve), and False Alarm Verification -->
       </div>
     </section>
 
-    <!-- RIGHT COLUMN: CAMPUS MAP & FLEET (4 COLUMNS) -->
-    <aside class="lg:col-span-4 flex flex-col gap-4">
+    <!-- RIGHT COLUMN: CAMPUS MAP & PERSONNEL -->
+    <aside class="lg:col-span-4 flex flex-col gap-3">
       
-      <!-- CAMPUS MAP CARD -->
-      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-          <div class="flex items-center gap-1.5 font-bold text-slate-800">
-            <span>🗺️</span> Campus Safety Map
-          </div>
+      <!-- Incident Map Card -->
+      <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs">
+        <div class="p-2.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-800">📍 Incident Location Map</span>
           <div class="flex items-center gap-1">
-            <button onclick="window.csSecurity.recenterMap()" title="Recenter Campus" class="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-[11px] text-slate-700 font-medium cursor-pointer">
+            <button onclick="window.csSecurity.recenterMap()" class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] text-slate-700 hover:bg-slate-50">
               Recenter
             </button>
-            <button onclick="window.csSecurity.focusActiveEmergency()" title="Focus Emergency" class="px-2 py-1 bg-red-50 hover:bg-red-100 border border-red-200 text-[11px] text-red-700 font-bold rounded cursor-pointer">
-              Focus SOS
+            <button onclick="window.csSecurity.focusActiveEmergency()" class="px-2 py-0.5 bg-red-50 border border-red-200 text-red-700 rounded text-[11px] font-semibold hover:bg-red-100">
+              Focus Active
             </button>
           </div>
         </div>
         
-        <!-- Leaflet Map Container -->
-        <div class="relative w-full h-[360px] bg-slate-100 overflow-hidden">
-          <div id="tactical-campus-map" class="w-full h-full z-0"></div>
+        <div class="relative w-full h-[320px] bg-slate-100">
+          <div id="tactical-campus-map" class="w-full h-full"></div>
         </div>
       </div>
 
-      <!-- FLEET STATUS CARD -->
-      <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-            <span>🚔</span> Available Patrol Units
-          </h3>
-        </div>
-        <div id="fleet-status-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs">
-          <!-- Injected via security.js -->
-        </div>
+      <!-- Assigned Personnel List -->
+      <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-xs">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          Security Personnel On Duty
+        </h3>
+        <div id="fleet-status-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs"></div>
       </div>
 
     </aside>
 
   </main>
 
-  <!-- Hidden Full Map View for JS compatibility -->
+  <!-- Hidden elements for JS compatibility -->
   <div id="full-map-view-container" class="hidden">
     <div id="full-tactical-campus-map"></div>
     <span id="fullmap-incident-count"></span>
@@ -238,7 +181,6 @@
 
   <div id="toast-container"></div>
 
-  <!-- Scripts -->
   <script type="module" src="./js/api.js"></script>
   <script type="module" src="./js/auth.js"></script>
   <script type="module" src="./js/security.js"></script>

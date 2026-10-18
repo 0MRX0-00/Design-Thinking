@@ -97,7 +97,8 @@ export const createIncident = async (req, res, next) => {
     }
 
     // Geofence Validation: Ensure incident is within KEC Campus Boundary
-    if (parsedLat !== null && parsedLng !== null && req.body.isDemoSimulated !== true) {
+    const allowDemoOverride = process.env.NODE_ENV !== 'production' && req.body.isDemoSimulated === true;
+    if (parsedLat !== null && parsedLng !== null && !allowDemoOverride) {
       const geoCheck = checkCampusGeofence(parsedLat, parsedLng);
       if (!geoCheck.inside) {
         const kmOutside = (geoCheck.distanceMeters / 1000).toFixed(1);
@@ -114,6 +115,22 @@ export const createIncident = async (req, res, next) => {
           ]
         });
       }
+    }
+
+    // Prevent duplicate submissions caused by rapid double-clicks or retries (within 5 seconds)
+    const recentDuplicate = await Incident.findOne({
+      reporter: req.user._id,
+      category,
+      reportedAt: { $gte: new Date(Date.now() - 5000) }
+    }).populate('reporter', 'name email phone identifier department role');
+
+    if (recentDuplicate) {
+      return res.status(200).json({
+        success: true,
+        duplicatePrevented: true,
+        message: 'Emergency alert already received and being processed.',
+        incident: recentDuplicate
+      });
     }
 
     const incidentId = await Incident.generateIncidentId();
@@ -220,37 +237,43 @@ export const getIncidents = async (req, res, next) => {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const total = await Incident.countDocuments(query);
+    const limitNum = parseInt(limit);
 
-    const incidents = await Incident.find(query)
-      .populate('reporter', 'name email phone identifier department role')
-      .populate({
-        path: 'assignedResponder',
-        populate: { path: 'user', select: 'name email phone' }
-      })
-      .sort({ reportedAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const [total, incidents] = await Promise.all([
+      Incident.countDocuments(query),
+      Incident.find(query)
+        .populate('reporter', 'name email phone identifier department role')
+        .populate({
+          path: 'assignedResponder',
+          populate: { path: 'user', select: 'name email phone' }
+        })
+        .sort({ reportedAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean()
+    ]);
 
-    // Populate false alarm verification records for all returned incidents
-    const incidentIds = incidents.map((i) => i.incidentId);
-    const falseAlarmRecords = await FalseAlarmRecord.find({ incidentId: { $in: incidentIds } })
-      .populate('verifiedBy', 'name email role identifier');
-    const faMap = new Map();
-    falseAlarmRecords.forEach((r) => faMap.set(r.incidentId, r));
+    let enrichedIncidents = incidents;
+    if (incidents.length > 0) {
+      const incidentIds = incidents.map((i) => i.incidentId);
+      const falseAlarmRecords = await FalseAlarmRecord.find({ incidentId: { $in: incidentIds } })
+        .populate('verifiedBy', 'name email role identifier')
+        .lean();
+      const faMap = new Map();
+      falseAlarmRecords.forEach((r) => faMap.set(r.incidentId, r));
 
-    const enrichedIncidents = incidents.map((inc) => {
-      const obj = inc.toObject();
-      obj.falseAlarmRecord = faMap.get(inc.incidentId) || null;
-      return obj;
-    });
+      enrichedIncidents = incidents.map((inc) => ({
+        ...inc,
+        falseAlarmRecord: faMap.get(inc.incidentId) || null
+      }));
+    }
 
     res.json({
       success: true,
       count: enrichedIncidents.length,
       total,
       page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
+      totalPages: Math.ceil(total / limitNum),
       incidents: enrichedIncidents
     });
   } catch (error) {
@@ -265,19 +288,24 @@ export const getMyIncidents = async (req, res, next) => {
         path: 'assignedResponder',
         populate: { path: 'user', select: 'name phone' }
       })
-      .sort({ reportedAt: -1 });
+      .sort({ reportedAt: -1 })
+      .limit(50)
+      .lean();
 
-    const incidentIds = incidents.map((i) => i.incidentId);
-    const falseAlarmRecords = await FalseAlarmRecord.find({ incidentId: { $in: incidentIds } })
-      .populate('verifiedBy', 'name email role identifier');
-    const faMap = new Map();
-    falseAlarmRecords.forEach((r) => faMap.set(r.incidentId, r));
+    let enrichedIncidents = incidents;
+    if (incidents.length > 0) {
+      const incidentIds = incidents.map((i) => i.incidentId);
+      const falseAlarmRecords = await FalseAlarmRecord.find({ incidentId: { $in: incidentIds } })
+        .populate('verifiedBy', 'name email role identifier')
+        .lean();
+      const faMap = new Map();
+      falseAlarmRecords.forEach((r) => faMap.set(r.incidentId, r));
 
-    const enrichedIncidents = incidents.map((inc) => {
-      const obj = inc.toObject();
-      obj.falseAlarmRecord = faMap.get(inc.incidentId) || null;
-      return obj;
-    });
+      enrichedIncidents = incidents.map((inc) => ({
+        ...inc,
+        falseAlarmRecord: faMap.get(inc.incidentId) || null
+      }));
+    }
 
     res.json({
       success: true,

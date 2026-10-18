@@ -76,12 +76,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Request browser geolocation with consent
   initGeolocation();
 
-  // Load initial data
+  // Load initial essential data concurrently
   await Promise.all([
     loadMyIncidents(),
     loadEmergencyContacts(),
     loadNotifications(),
-    loadSafeWalkSession(),
     loadFalseAlarmStatusAndHistory()
   ]);
 });
@@ -237,10 +236,8 @@ export function evaluateCampusGeofence(lat, lng) {
   userGps.geofenceDistance = distanceMeters;
 
   if (!inside) {
-    if (!window._offCampusAcknowledged) {
-      isGeofenceLocked = true;
-      showGeofenceLock(distanceMeters, lat, lng);
-    }
+    isGeofenceLocked = true;
+    showGeofenceLock(distanceMeters, lat, lng);
   } else {
     isGeofenceLocked = false;
     dismissGeofenceLock();
@@ -252,25 +249,9 @@ export function evaluateCampusGeofence(lat, lng) {
 
 export function updateGeofenceUIBadge(inside, distanceMeters, isSimulated) {
   const badge = document.getElementById('campus-geofence-status-badge');
-  const simBtn = document.getElementById('demo-simulation-indicator-btn');
-
   if (badge) {
-    if (isSimulated) {
-      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700 flex items-center gap-1';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span> DEMO IN-CAMPUS SIMULATED';
-    } else if (inside) {
-      const distLabel = distanceMeters > 0 ? ` (${distanceMeters}m)` : '';
-      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1';
-      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> IN CAMPUS ZONE${distLabel}`;
-    } else {
-      const km = (distanceMeters / 1000).toFixed(1);
-      badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse flex items-center gap-1';
-      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> OUT OF CAMPUS (+${km}km)`;
-    }
-  }
-
-  if (simBtn) {
-    simBtn.classList.toggle('hidden', !isSimulated && inside);
+    badge.className = inside ? 'text-[11px] font-medium text-emerald-700' : 'text-[11px] font-medium text-slate-500';
+    badge.textContent = inside ? 'Inside Campus' : 'Outside Campus';
   }
 }
 
@@ -286,32 +267,30 @@ export function getCapacitorGeolocation() {
 
 /**
  * Primary GPS Unlock Handler
- * Directly checks device GPS / satellite fix and unlocks the Student Portal.
+ * Directly checks device GPS and unlocks the Student Portal if within campus.
  */
 export async function unlockStudentWithGps(userInitiated = true) {
-  console.log('[CampusShield GPS] Unlocking student portal via GPS request...');
+  console.log('[CampusShield GPS] Checking student location via GPS request...');
   const btn = document.getElementById('btn-unlock-gps');
   const subtextEl = document.getElementById('gps-lock-subtext');
 
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = `
-      <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin inline-block mr-2"></span>
-      <span>Connecting Satellite GPS...</span>
+      <span class="w-4 h-4 border-2 border-slate-700 border-t-transparent rounded-full animate-spin inline-block mr-2"></span>
+      <span>Checking Location...</span>
     `;
     btn.classList.add('opacity-80', 'cursor-wait');
   }
 
-  showToast('Connecting GPS 📡', 'Checking device satellite & location sensors...', 'info');
+  showToast('Checking Location', 'Checking device location...', 'info');
 
   const capGeo = getCapacitorGeolocation();
 
   // Helper when coordinates are acquired
   const onLocationSuccess = (coords) => {
-    console.log('[CampusShield GPS] Satellite lock acquired successfully:', coords);
-    window._offCampusAcknowledged = true; // prevent trapping student off-campus
+    console.log('[CampusShield GPS] Location acquired successfully:', coords);
     dismissGpsDisabledLock();
-    dismissGeofenceLock();
 
     userGps.latitude = parseFloat(coords.latitude.toFixed(6));
     userGps.longitude = parseFloat(coords.longitude.toFixed(6));
@@ -413,90 +392,41 @@ export async function unlockStudentWithGps(userInitiated = true) {
 export function showGpsDisabledLock(reason = 'Location services are disabled on this device.') {
   if (isDemoSimulationActive) return;
 
-  // If we already have locked GPS coordinates, do not show lock
   if (userGps.status === 'locked' && userGps.latitude && userGps.longitude) {
     return;
   }
 
-  let lockModal = document.getElementById('campus-gps-required-lock-screen');
-  if (!lockModal) {
-    lockModal = document.createElement('div');
-    lockModal.id = 'campus-gps-required-lock-screen';
-    lockModal.className = 'fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 overflow-y-auto';
-    document.body.appendChild(lockModal);
-  }
+  // Ensure no full-screen blocking overlay remains
+  const oldModal = document.getElementById('campus-gps-required-lock-screen');
+  if (oldModal) oldModal.remove();
 
-  lockModal.innerHTML = `
-    <div class="max-w-lg w-full bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 animate-fade-in my-auto">
-      
-      <!-- Pulsing Radar GPS Icon -->
-      <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full bg-amber-500/20 animate-ping pointer-events-none"></div>
-        <div class="w-16 h-16 rounded-full bg-amber-950 border-2 border-amber-500 flex items-center justify-center text-3xl shadow-xl">
-          📡
-        </div>
-      </div>
+  const container = document.getElementById('student-safety-banner-container');
+  if (!container) return;
 
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/80 border border-amber-700 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> GPS Telemetry Mandatory
+  container.innerHTML = `
+    <div id="campus-gps-required-banner" class="bg-slate-100 border border-slate-300 rounded-lg p-3.5 text-xs text-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+      <div class="flex items-start gap-2.5">
+        <div class="text-slate-600 mt-0.5 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
         </div>
-        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">GPS REQUIRED TO USE APP</h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
-          The <strong>Student Safety Portal</strong> is restricted and will not function unless GPS location is enabled on your phone.
-        </p>
-      </div>
-
-      <div id="gps-lock-subtext"></div>
-
-      <!-- Mandatory Security Policy Rules -->
-      <div class="bg-black/60 rounded-2xl p-4 border border-slate-800 text-left space-y-2.5 text-xs">
-        <div class="flex items-start gap-2.5 text-slate-300">
-          <span class="text-amber-400 text-base leading-none">📍</span>
-          <div>
-            <div class="font-bold text-white">Campus Boundary Verification</div>
-            <div class="text-[11px] text-slate-400">Verifies you are physically within the 167-acre Kongu Engineering College safe perimeter.</div>
-          </div>
-        </div>
-        <div class="flex items-start gap-2.5 text-slate-300 pt-2 border-t border-slate-800/80">
-          <span class="text-rose-400 text-base leading-none">🚨</span>
-          <div>
-            <div class="font-bold text-white">Rapid Emergency Dispatch</div>
-            <div class="text-[11px] text-slate-400">Security quick-reaction patrol units require exact satellite coordinates to reach you in distress.</div>
-          </div>
-        </div>
-        <div class="flex items-start gap-2.5 text-slate-300 pt-2 border-t border-slate-800/80">
-          <span class="text-cyan-400 text-base leading-none">🛡️</span>
-          <div>
-            <div class="font-bold text-white">SafeWalk & Anti-Spoofing Protocol</div>
-            <div class="text-[11px] text-slate-400">Live coordinate breadcrumbs verify your journey across campus without false alerts.</div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Location Access Required</div>
+          <div class="text-slate-600 mt-0.5 leading-relaxed">
+            Please enable location services to verify your campus presence for emergency dispatch.
           </div>
         </div>
       </div>
-
-      <!-- Action Buttons -->
-      <div class="pt-1 flex flex-col gap-2.5">
+      <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
         <button id="btn-unlock-gps"
-                class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-amber-950/50">
-          <span>⚡ Turn On GPS & Unlock Portal</span>
-        </button>
-
-        <button id="btn-simulate-gps"
-                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <span>🧪</span> Demo Testing: Simulate Campus GPS
+                class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition cursor-pointer">
+          Retry Location
         </button>
       </div>
-
-      <!-- Emergency Helpline Fallback -->
-      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-        <span>Need urgent help without GPS?</span>
-        <a href="tel:112" class="font-mono font-bold text-rose-400 hover:underline">Call 112 (Police)</a>
-      </div>
-
     </div>
   `;
 
-  // Attach direct event listeners for maximum reliability
   const btnUnlock = document.getElementById('btn-unlock-gps');
   if (btnUnlock) {
     btnUnlock.onclick = (e) => {
@@ -504,155 +434,74 @@ export function showGpsDisabledLock(reason = 'Location services are disabled on 
       unlockStudentWithGps(true);
     };
   }
-
-  const btnSim = document.getElementById('btn-simulate-gps');
-  if (btnSim) {
-    btnSim.onclick = (e) => {
-      e.preventDefault();
-      simulateCampusLocation();
-    };
-  }
 }
 
 export function dismissGpsDisabledLock() {
+  const banner = document.getElementById('campus-gps-required-banner');
+  if (banner) banner.remove();
   const lockModal = document.getElementById('campus-gps-required-lock-screen');
-  if (lockModal) {
-    lockModal.remove();
-  }
+  if (lockModal) lockModal.remove();
 }
 
 export function showGeofenceLock(distanceMeters = 5000, lat = 11.0, lng = 76.9) {
-  let lockModal = document.getElementById('campus-geofence-lock-screen');
-  const kmOutside = (distanceMeters / 1000).toFixed(1);
+  isGeofenceLocked = true;
 
-  if (!lockModal) {
-    lockModal = document.createElement('div');
-    lockModal.id = 'campus-geofence-lock-screen';
-    lockModal.className = 'fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 overflow-y-auto';
-    document.body.appendChild(lockModal);
-  }
+  // Ensure no full-screen blocking overlay remains
+  const oldModal = document.getElementById('campus-geofence-lock-screen');
+  if (oldModal) oldModal.remove();
 
-  lockModal.innerHTML = `
-    <div class="max-w-lg w-full bg-slate-900 border-2 border-rose-600 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6 my-auto animate-fade-in">
-      
-      <!-- Pulsing Lock Shield Icon -->
-      <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full bg-rose-600/30 radar-ping pointer-events-none"></div>
-        <div class="w-18 h-18 rounded-full bg-rose-950 border-2 border-rose-500 flex items-center justify-center text-3xl shadow-2xl">
-          🔒
+  const container = document.getElementById('student-safety-banner-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div id="campus-geofence-banner" class="bg-amber-50 border border-amber-200 rounded-lg p-3.5 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+      <div class="flex items-start gap-2.5">
+        <div class="text-amber-600 mt-0.5 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="font-bold text-amber-950 text-sm">Outside Campus Area</div>
+          <div class="text-slate-600 mt-0.5 leading-relaxed">
+            CampusShield's campus-based features are available only within the authorized campus area. Please return to campus to access these features.
+          </div>
         </div>
       </div>
-
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950 border border-rose-800 text-rose-300 font-mono text-xs font-bold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Campus Boundary Enforced
-        </div>
-        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">OUT OF CAMPUS — APP LOCKED</h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
-          CampusShield emergency dispatch, SafeWalk, and in-app reporting are strictly restricted to 
-          <strong class="text-white">Kongu Engineering College (KEC)</strong> campus grounds.
-        </p>
-      </div>
-
-      <!-- Distance and Coordinates Inspection Card -->
-      <div class="bg-black/70 rounded-2xl p-4 border border-slate-800 text-left space-y-2 text-xs font-mono">
-        <div class="flex justify-between items-center py-1 border-b border-slate-800">
-          <span class="text-slate-400">Current GPS Fix:</span>
-          <span class="text-slate-200 font-bold">${typeof lat === 'number' ? lat.toFixed(5) : lat}° N, ${typeof lng === 'number' ? lng.toFixed(5) : lng}° E</span>
-        </div>
-        <div class="flex justify-between items-center py-1 border-b border-slate-800">
-          <span class="text-slate-400">Distance to KEC Campus:</span>
-          <span class="text-rose-400 font-bold">~${kmOutside} km outside boundary</span>
-        </div>
-        <div class="flex justify-between items-center py-1">
-          <span class="text-slate-400">Authorized Campus Radius:</span>
-          <span class="text-cyan-400 font-bold">1.8 km (167-Acre Campus)</span>
-        </div>
-      </div>
-
-      <!-- Emergency Helplines (Available Off-Campus) -->
-      <div class="space-y-2 text-left">
-        <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider font-bold">
-          🚨 Off-Campus Emergency Helplines:
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <a href="tel:112" class="p-3 bg-rose-950/70 hover:bg-rose-900 border border-rose-800 rounded-xl flex items-center justify-between text-xs transition">
-            <div>
-              <div class="font-bold text-white">National Emergency</div>
-              <div class="text-[10px] text-rose-300">Police / Fire / Medical</div>
-            </div>
-            <span class="font-mono text-lg font-black text-white">112</span>
-          </a>
-          <a href="tel:1091" class="p-3 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 rounded-xl flex items-center justify-between text-xs transition">
-            <div>
-              <div class="font-bold text-white">Women Safety</div>
-              <div class="text-[10px] text-amber-300">24/7 Helpline</div>
-            </div>
-            <span class="font-mono text-lg font-black text-white">1091</span>
-          </a>
-          <a href="tel:04294220233" class="p-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-between text-xs transition col-span-1 sm:col-span-2">
-            <div>
-              <div class="font-bold text-white">Perundurai Police Station</div>
-              <div class="text-[10px] text-slate-400">Local Jurisdictional Police</div>
-            </div>
-            <span class="font-mono text-xs font-bold text-cyan-300">04294-220233</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="pt-2 flex flex-col gap-2.5">
+      <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
         <button id="btn-geofence-recheck"
-                class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg">
-          <span>🔄</span> Re-Check Live Satellite GPS
-        </button>
-
-        <button id="btn-geofence-simulate"
-                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <span>🧪</span> Demo Override: Simulate Inside KEC Campus
-        </button>
-
-        <button id="btn-geofence-proceed"
-                class="w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs rounded-xl border border-slate-600 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <span>📱 Proceed to Student Portal (Off-Campus Mode)</span>
+                class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition cursor-pointer">
+          Retry Location
         </button>
       </div>
-
     </div>
   `;
 
   const btnRecheck = document.getElementById('btn-geofence-recheck');
   if (btnRecheck) {
-    btnRecheck.onclick = (e) => {
+    btnRecheck.onclick = async (e) => {
       e.preventDefault();
-      unlockStudentWithGps(true);
-    };
-  }
-
-  const btnSim = document.getElementById('btn-geofence-simulate');
-  if (btnSim) {
-    btnSim.onclick = (e) => {
-      e.preventDefault();
-      simulateCampusLocation();
-    };
-  }
-
-  const btnProceed = document.getElementById('btn-geofence-proceed');
-  if (btnProceed) {
-    btnProceed.onclick = (e) => {
-      e.preventDefault();
-      dismissGeofenceLock();
-      showToast('Off-Campus Mode', 'Student portal is accessible in off-campus safety mode.', 'info');
+      btnRecheck.disabled = true;
+      btnRecheck.innerText = 'Checking Location...';
+      try {
+        await unlockStudentWithGps(true);
+      } finally {
+        if (btnRecheck) {
+          btnRecheck.disabled = false;
+          btnRecheck.innerText = 'Retry Location';
+        }
+      }
     };
   }
 }
 
 export function dismissGeofenceLock() {
-  window._offCampusAcknowledged = true;
+  isGeofenceLocked = false;
+  const banner = document.getElementById('campus-geofence-banner');
+  if (banner) banner.remove();
   const lockModal = document.getElementById('campus-geofence-lock-screen');
-  if (lockModal) {
-    lockModal.remove();
-  }
+  if (lockModal) lockModal.remove();
 }
 
 export function simulateCampusLocation() {
@@ -837,8 +686,8 @@ export function requestRealGps(userInitiated = false) {
   const statusEl = document.getElementById('gps-status-indicator');
   if (statusEl) {
     statusEl.innerHTML = `
-      <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-      <span class="text-slate-400 font-mono">Acquiring live GPS satellite lock...</span>
+      <span class="w-2 h-2 rounded-full bg-amber-500 inline-block mr-1"></span>
+      <span class="text-slate-600">Checking location...</span>
     `;
   }
 
@@ -849,8 +698,8 @@ export function requestRealGps(userInitiated = false) {
     updateGpsUI();
     if (statusEl) {
       statusEl.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        <span class="text-rose-300 font-mono">GPS: Browser unsupported</span>
+        <span class="w-2 h-2 rounded-full bg-slate-400 inline-block mr-1"></span>
+        <span class="text-slate-600">Location unavailable</span>
       `;
     }
     showGpsDisabledLock('Browser geolocation is unavailable or unsupported on this device.');
@@ -961,34 +810,21 @@ export function updateGpsUI() {
   const accBadge = document.getElementById('student-accuracy-badge');
 
   if (userGps.latitude) {
-    const latStr = userGps.latitude.toFixed(5);
-    const lngStr = userGps.longitude.toFixed(5);
-
     if (statusEl) {
-      const addressLabel = userGps.address ? ` • <strong class="text-white">${userGps.address}</strong>` : '';
       statusEl.innerHTML = `
-        <span class="w-2.5 h-2.5 rounded-full ${userGps.status === 'pinpointed' ? 'bg-cyan-400' : 'bg-emerald-400'} animate-pulse"></span>
-        <span class="text-emerald-300 font-mono font-bold">📍 GPS: ${latStr}° N, ${lngStr}° E (±${userGps.accuracy}m)${addressLabel}</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>
+        <span class="text-slate-700 font-medium">GPS Active</span>
       `;
     }
 
     if (addressDisplay) {
       addressDisplay.innerText = userGps.address 
-        ? `${userGps.address} (${latStr}, ${lngStr})` 
-        : `Kongu Campus Coordinates: ${latStr}, ${lngStr}`;
+        ? userGps.address 
+        : 'Kongu Engineering College Campus';
     }
 
     if (accBadge) {
-      if (userGps.status === 'pinpointed') {
-        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700';
-        accBadge.innerText = '● PINPOINT EXACT (±5m)';
-      } else if (userGps.accuracy <= 25) {
-        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700';
-        accBadge.innerText = `● HIGH ACCURACY (±${userGps.accuracy}m)`;
-      } else {
-        accBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800';
-        accBadge.innerText = `⚠️ WI-FI ESTIMATE (±${userGps.accuracy}m)`;
-      }
+      accBadge.className = 'hidden';
     }
   }
 
@@ -1022,8 +858,8 @@ function updateModalGpsDisplay() {
       modalGpsMap.classList.remove('hidden');
     }
     if (modalGpsBadge) {
-      modalGpsBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-300 border border-emerald-700';
-      modalGpsBadge.innerText = '● LIVE SATELLITE FIX';
+      modalGpsBadge.className = 'text-[10px] px-2 py-0.5 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+      modalGpsBadge.innerText = 'Location Verified';
     }
   }
 }
@@ -1112,8 +948,38 @@ export function openSosModal(initialCategory = null) {
 
   // Enforce Geofence Limitation Check
   if (isGeofenceLocked && !isDemoSimulationActive) {
-    showToast('Boundary Locked', 'You are outside Kongu campus boundary. App is locked.', 'critical');
-    showGeofenceLock(userGps.geofenceDistance || 5000, userGps.latitude, userGps.longitude);
+    showToast('Outside Campus Area', 'Campus emergency dispatch is restricted to campus grounds.', 'warning');
+    const existingNotice = document.getElementById('sos-offcampus-notice-modal');
+    if (existingNotice) existingNotice.remove();
+
+    const noticeModal = document.createElement('div');
+    noticeModal.id = 'sos-offcampus-notice-modal';
+    noticeModal.className = 'fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4';
+    noticeModal.innerHTML = `
+      <div class="bg-white border border-slate-200 rounded-xl w-full max-w-sm p-6 shadow-xl space-y-3.5 text-center my-auto">
+        <div class="w-10 h-10 mx-auto rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Outside Campus Area</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Campus security emergency dispatch is available only within the authorized campus boundary.
+          For immediate emergency assistance outside campus, please call National Emergency (112) or consult Emergency Contacts.
+        </p>
+        <div class="flex flex-col gap-2 pt-1">
+          <button onclick="document.getElementById('sos-offcampus-notice-modal').remove(); window.csStudent?.switchTab('hotlines')"
+                  class="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition cursor-pointer">
+            View Emergency Contacts (112)
+          </button>
+          <button onclick="document.getElementById('sos-offcampus-notice-modal').remove()"
+                  class="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs transition cursor-pointer">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(noticeModal);
     return;
   }
 
@@ -1128,7 +994,7 @@ export function openSosModal(initialCategory = null) {
   }
   modal.className = 'fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 overflow-y-auto';
   modal.innerHTML = `
-    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl relative my-auto space-y-4">
+    <div class="bg-white border border-slate-200 rounded-xl w-full max-w-md p-6 shadow-xl relative my-auto space-y-4">
       
       <!-- Close Button -->
       <button onclick="document.getElementById('sos-report-modal').remove()" 
@@ -1138,21 +1004,18 @@ export function openSosModal(initialCategory = null) {
 
       <!-- Modal Header -->
       <div class="text-center space-y-1">
-        <div class="w-12 h-12 mx-auto rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-2xl">
+        <div class="w-10 h-10 mx-auto rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-xl">
           🚨
         </div>
-        <h3 class="text-lg font-bold text-slate-900 tracking-tight">
+        <h3 class="text-base font-bold text-slate-900 tracking-tight">
           Report an Emergency
         </h3>
         <p class="text-xs text-slate-500">
           Select incident type to dispatch campus emergency responders immediately
         </p>
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] font-mono text-emerald-700 mt-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>📍 GPS: ${currentLat}, ${currentLng} (${currentAcc})</span>
-        </div>
-        <div id="modal-gps-address" class="text-xs text-slate-600 font-medium ${userGps.address ? '' : 'hidden'}">
-          📍 ${userGps.address || ''}
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 mt-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Location: ${userGps.address || 'Campus Grounds'}</span>
         </div>
       </div>
 
@@ -1236,6 +1099,13 @@ export async function instantSos(category = 'Medical emergency') {
   if ((!userGps.latitude || !userGps.longitude || userGps.status === 'disabled') && !isDemoSimulationActive) {
     showToast('GPS Disabled', 'GPS must be enabled to transmit emergency dispatch.', 'critical');
     showGpsDisabledLock('Active GPS is required to transmit emergency coordinates.');
+    return;
+  }
+
+  // Enforce Geofence Limitation Check
+  if (isGeofenceLocked && !isDemoSimulationActive) {
+    showToast('Outside Campus', 'Campus security dispatch is restricted to campus grounds. Please use Emergency Contacts.', 'warning');
+    switchTab('hotlines');
     return;
   }
 
@@ -1582,8 +1452,7 @@ export async function startSafeWalkSession() {
   }
 
   if (isGeofenceLocked && !isDemoSimulationActive) {
-    showToast('Boundary Locked', 'SafeWalk companion service is only available inside Kongu campus.', 'critical');
-    showGeofenceLock(userGps.geofenceDistance || 5000, userGps.latitude, userGps.longitude);
+    showToast('Outside Campus', 'Safe Walk companion escort is only available on campus grounds.', 'warning');
     return;
   }
 
@@ -1689,26 +1558,40 @@ export function renderSafeWalkUI() {
   }
 }
 
-// Emergency Contacts Directory
+// Emergency Contacts Directory with in-memory caching
+let cachedContacts = null;
+
+function renderEmergencyContactsList(contacts) {
+  const container = document.getElementById('emergency-contacts-list');
+  if (!container) return;
+  container.innerHTML = contacts.map((c) => `
+    <div class="p-3 bg-white rounded border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition">
+      <div>
+        <div class="font-bold text-slate-900">${c.name}</div>
+        <div class="text-[11px] text-[#1E3A5F] font-medium">${c.role}</div>
+        <div class="text-[10px] text-slate-500">${c.location || 'Campus'}</div>
+      </div>
+      <a href="tel:${c.phone}" class="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-mono text-xs rounded border border-slate-200 flex items-center gap-1 font-semibold">
+        ${c.phone}
+      </a>
+    </div>
+  `).join('');
+}
+
 export async function loadEmergencyContacts() {
   const container = document.getElementById('emergency-contacts-list');
   if (!container) return;
 
+  if (cachedContacts && cachedContacts.length > 0) {
+    renderEmergencyContactsList(cachedContacts);
+    return;
+  }
+
   try {
     const res = await api.get('/api/admin/contacts');
     if (res.success && res.contacts) {
-      container.innerHTML = res.contacts.map((c) => `
-        <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition">
-          <div>
-            <div class="font-bold text-slate-900">${c.name}</div>
-            <div class="text-[11px] text-blue-600 font-medium">${c.role}</div>
-            <div class="text-[10px] text-slate-500">📍 ${c.location}</div>
-          </div>
-          <a href="tel:${c.phone}" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold font-mono rounded-lg border border-emerald-200 flex items-center gap-1">
-            📞 ${c.phone}
-          </a>
-        </div>
-      `).join('');
+      cachedContacts = res.contacts;
+      renderEmergencyContactsList(cachedContacts);
     }
   } catch (err) {
     console.warn('[CampusShield Student] Could not load emergency contacts:', err.message);
@@ -2075,65 +1958,58 @@ export function showRestrictedSosModal(extraData = {}) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'restricted-sos-safety-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.className = 'fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 overflow-y-auto';
     document.body.appendChild(modal);
   }
 
   const contacts = extraData.alternativeEmergencyContacts || [
-    { name: 'Campus Security Main Control Room', phone: '+91 4294 226500', role: '24/7 Control Room' },
-    { name: 'Chief Security Officer (Emergency)', phone: '+91 98422 44556', role: 'Security Head' },
-    { name: 'Campus Health & Medical Clinic', phone: '+91 4294 226501', role: 'Medical First Aid' },
-    { name: 'Perundurai Police Station', phone: '+91 4294 220233', role: 'Local Police (100)' }
+    { name: 'Campus Security Control Room', phone: '+91 94433 11223', role: 'Security Office' },
+    { name: 'Health Center & Ambulance', phone: '+91 98422 66778', role: 'Medical Emergency' },
+    { name: 'Women\'s Safety Helpline', phone: '+91 94890 00100', role: 'Helpline' },
+    { name: 'National Emergency', phone: '112', role: 'Emergency Services' }
   ];
 
   modal.innerHTML = `
-    <div class="bg-slate-900 border-2 border-rose-600 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative my-auto space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-rose-600/20 border border-rose-500 flex items-center justify-center text-2xl">
-            🛑
-          </div>
+    <div class="bg-white border border-slate-200 rounded-lg w-full max-w-md p-5 shadow-lg relative my-auto space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚠️</span>
           <div>
-            <h3 class="text-base font-black text-white uppercase tracking-wider">
-              SOS Alert Access Restricted
+            <h3 class="text-sm font-bold text-red-700">
+              SOS Access Restricted
             </h3>
-            <p class="text-xs text-rose-300 font-medium">
-              Policy Safety Safeguard Notice
+            <p class="text-[11px] text-slate-500">
+              Campus Safety Policy Notice
             </p>
           </div>
         </div>
-        <button onclick="document.getElementById('restricted-sos-safety-modal').remove()" class="text-slate-400 hover:text-white p-1 rounded-xl text-lg">
+        <button onclick="document.getElementById('restricted-sos-safety-modal').remove()" class="text-slate-400 hover:text-slate-600 text-sm">
           ✕
         </button>
       </div>
 
-      <div class="p-3.5 bg-rose-950/60 rounded-xl border border-rose-800 text-xs text-rose-200 leading-relaxed">
-        <strong>Why is SOS disabled?</strong> Your account has accumulated confirmed intentional false alarms exceeding campus safety policy thresholds. Automated alert privileges are restricted pending Disciplinary Committee resolution.
+      <div class="p-3 bg-red-50 rounded border border-red-200 text-xs text-red-800 leading-relaxed">
+        <strong>Notice:</strong> Your SOS button access has been restricted due to confirmed false alarms exceeding the safety limit. An inquiry is pending review.
       </div>
 
-      <!-- Vital Safety Assurance: Alternative Helplines are NEVER blocked -->
-      <div class="space-y-2 pt-1">
-        <div class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-          <span>📞</span> Immediate Emergency Helplines (Direct Calling Active):
+      <div class="space-y-2">
+        <div class="text-xs font-semibold text-slate-800">
+          Direct Emergency Contacts:
         </div>
-        <p class="text-[11px] text-slate-400">
-          In an actual life safety crisis, you can call security and emergency personnel directly using the verified campus hotlines below:
-        </p>
-
-        <div class="space-y-2 pt-2">
+        <div class="space-y-1.5">
           ${contacts
             .map(
               (c) => `
             <a href="tel:${c.phone}" 
-               class="p-3 bg-slate-950 border border-slate-800 hover:border-emerald-500/80 rounded-xl flex items-center justify-between transition group">
+               class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded flex items-center justify-between text-xs transition">
               <div>
-                <div class="text-xs font-bold text-white group-hover:text-emerald-300">${c.name}</div>
-                <div class="text-[10px] text-slate-400">${c.role || 'Helpline'}</div>
+                <div class="font-semibold text-slate-800">${c.name}</div>
+                <div class="text-[10px] text-slate-500">${c.role || 'Helpline'}</div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-mono text-emerald-400 text-xs font-bold">${c.phone}</span>
-                <span class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[10px] rounded-lg">
-                  CALL
+                <span class="font-mono text-slate-700 text-xs">${c.phone}</span>
+                <span class="px-2 py-0.5 bg-[#1E3A5F] text-white font-semibold text-[10px] rounded">
+                  Call
                 </span>
               </div>
             </a>
@@ -2143,21 +2019,19 @@ export function showRestrictedSosModal(extraData = {}) {
         </div>
       </div>
 
-      <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
-        <a href="#disciplinary-cases-section" onclick="document.getElementById('restricted-sos-safety-modal').remove()" class="text-cyan-400 underline font-semibold">
-          View Disciplinary Case & Appeal →
-        </a>
-        <button onclick="document.getElementById('restricted-sos-safety-modal').remove()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs">
-          Dismiss
+      <div class="pt-2 border-t border-slate-100 flex justify-end gap-2 text-xs">
+        <button onclick="document.getElementById('restricted-sos-safety-modal').remove()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium">
+          Close
         </button>
       </div>
     </div>
   `;
 }
 
-// Tab switching handler for simple & clean mobile experience
+// Tab switching handler for simple & clean student dashboard experience
 export function switchTab(tabName) {
-  const tabs = ['sos', 'safewalk', 'hotlines', 'status'];
+  if (tabName === 'safewalk') tabName = 'sos';
+  const tabs = ['sos', 'status', 'hotlines'];
   tabs.forEach(t => {
     const panel = document.getElementById(`tab-panel-${t}`);
     const deskBtn = document.getElementById(`tab-btn-${t}`);
@@ -2171,16 +2045,16 @@ export function switchTab(tabName) {
     }
     if (deskBtn) {
       if (t === tabName) {
-        deskBtn.className = 'student-tab-btn flex-1 py-2 rounded-md bg-[#1E3A5F] text-white shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer font-bold text-xs';
+        deskBtn.className = 'student-tab-btn py-2 px-3 border-b-2 border-[#1E3A5F] text-[#1E3A5F] font-bold text-xs transition';
       } else {
-        deskBtn.className = 'student-tab-btn flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 cursor-pointer font-semibold text-xs';
+        deskBtn.className = 'student-tab-btn py-2 px-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs transition';
       }
     }
     if (mobBtn) {
       if (t === tabName) {
-        mobBtn.className = 'mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center ' + (t === 'sos' ? 'text-red-600' : 'text-[#1E3A5F]') + ' font-bold text-[10px] cursor-pointer';
+        mobBtn.className = 'mobile-tab-btn flex-1 py-1.5 flex flex-col items-center justify-center ' + (t === 'sos' ? 'text-red-600 font-bold' : 'text-[#1E3A5F] font-bold') + ' text-[10px] cursor-pointer';
       } else {
-        mobBtn.className = 'mobile-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 transition font-medium text-[10px] cursor-pointer';
+        mobBtn.className = 'mobile-tab-btn flex-1 py-1.5 flex flex-col items-center justify-center text-slate-600 font-medium text-[10px] cursor-pointer';
       }
     }
   });

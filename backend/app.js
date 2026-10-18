@@ -16,7 +16,7 @@ import disciplinaryRoutes from './routes/disciplinaryRoutes.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 import { generalLimiter } from './middleware/rateLimiter.js';
-import { isDbConnected } from './config/db.js';
+import { isDbConnected, isMemoryFallback } from './config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,12 +45,45 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const connected = isDbConnected();
+  const memoryFallback = isMemoryFallback();
+
+  if (!connected) {
+    return res.status(503).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      persistent: false,
+      system: 'CampusShield - Smart Campus Safety and Emergency Response System',
+      institution: 'Kongu Engineering College, Perundurai, Erode',
+      version: '1.0.0',
+      dbConnected: false,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime())
+    });
+  }
+
+  if (memoryFallback) {
+    return res.status(200).json({
+      status: 'degraded',
+      database: 'in-memory-fallback',
+      persistent: false,
+      system: 'CampusShield - Smart Campus Safety and Emergency Response System',
+      institution: 'Kongu Engineering College, Perundurai, Erode',
+      version: '1.0.0',
+      dbConnected: true,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime())
+    });
+  }
+
   res.json({
     status: 'ok',
+    database: 'connected',
+    persistent: true,
     system: 'CampusShield - Smart Campus Safety and Emergency Response System',
     institution: 'Kongu Engineering College, Perundurai, Erode',
     version: '1.0.0',
-    dbConnected: isDbConnected(),
+    dbConnected: true,
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime())
   });
@@ -88,8 +121,12 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(frontendPath, 'manifest.json'));
 });
 
-// Serve frontend static files
-app.use(express.static(frontendPath));
+// Serve frontend static files with browser cache headers (1 hour for static assets)
+app.use(express.static(frontendPath, {
+  maxAge: '1h',
+  etag: true,
+  lastModified: true
+}));
 
 // Fallback for HTML routing
 app.get(['/', '/login'], (req, res) => {

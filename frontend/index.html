@@ -2,183 +2,114 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CampusShield — Sign In</title>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#1E3A5F" />
-  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
-  <!-- Tailwind CSS CDN -->
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              navy: '#1E3A5F',
-              blue: '#2563EB',
-              emergency: '#DC2626'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
-<body class="bg-white text-slate-900 min-h-screen flex flex-col justify-between antialiased selection:bg-blue-100 selection:text-blue-900">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-center items-center p-4">
 
-  <!-- MAIN CENTERED AUTHENTICATION CARD -->
-  <main class="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
-    <div class="w-full max-w-sm">
+  <main class="w-full max-w-sm">
+    <!-- Header: Simple Logo & Title -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-[#1E3A5F] text-white text-xl font-bold mb-2 shadow-xs">
+        🛡️
+      </div>
+      <h1 class="text-xl font-bold text-[#1E3A5F]">CampusShield</h1>
+      <p class="text-xs text-slate-500">Campus Safety & Emergency Response</p>
+    </div>
 
-      <!-- Brand Header -->
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-2xl shadow-xs mb-3 text-[#1E3A5F]">
-          🛡️
-        </div>
-        <h1 class="text-2xl font-bold text-[#1E3A5F] tracking-tight">
-          CampusShield
-        </h1>
-        <p class="text-xs text-slate-500 mt-1">
-          Campus Safety & Emergency Response
-        </p>
+    <!-- Login Box -->
+    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-4">
+      
+      <!-- Role Selection -->
+      <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded text-xs font-semibold">
+        <button type="button" id="tab-student" onclick="selectRole('student')" 
+                class="role-tab-btn py-1.5 rounded text-center transition bg-[#1E3A5F] text-white">
+          Student
+        </button>
+        <button type="button" id="tab-security" onclick="selectRole('security')" 
+                class="role-tab-btn py-1.5 rounded text-center transition text-slate-600 hover:text-slate-900">
+          Security
+        </button>
+        <button type="button" id="tab-admin" onclick="selectRole('admin')" 
+                class="role-tab-btn py-1.5 rounded text-center transition text-slate-600 hover:text-slate-900">
+          Admin
+        </button>
       </div>
 
-      <!-- Authentication Box -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-4">
+      <!-- Error / Validation Banner -->
+      <div id="auth-alert-banner" class="hidden p-3 rounded text-xs font-medium border flex items-start gap-2">
+        <span id="auth-alert-icon" class="shrink-0 text-sm">⚠️</span>
+        <div id="auth-alert-msg" class="flex-1"></div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
         
-        <!-- Portal Role Selector Tabs -->
         <div>
-          <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg text-xs font-semibold">
-            <button type="button" id="tab-student" onclick="selectRole('student')" 
-                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-white bg-[#1E3A5F] shadow-xs">
-              Student
-            </button>
-            <button type="button" id="tab-security" onclick="selectRole('security')" 
-                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900">
-              Security
-            </button>
-            <button type="button" id="tab-admin" onclick="selectRole('admin')" 
-                    class="role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900">
-              Admin
-            </button>
-          </div>
+          <label id="credential-label" for="login-credential" class="block text-xs font-semibold text-slate-700 mb-1">
+            Email or Roll Number
+          </label>
+          <input type="text" id="login-credential" required autocomplete="username"
+                 placeholder="e.g. 22CS001 or student@college.edu"
+                 class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F]" />
         </div>
 
-        <!-- Alert / Feedback Banner -->
-        <div id="auth-alert-banner" class="hidden p-3 rounded-lg text-xs font-medium border flex items-start gap-2">
-          <span id="auth-alert-icon" class="text-base shrink-0">⚠️</span>
-          <div id="auth-alert-msg" class="flex-1"></div>
-        </div>
-
-        <!-- Login Form -->
-        <form id="campus-login-form" onsubmit="handleFormSubmit(event)" class="space-y-3.5">
-          
-          <!-- Email / Identifier -->
-          <div>
-            <label id="credential-label" for="login-credential" class="block text-xs font-semibold text-slate-700 mb-1">
-              Email or Roll Number
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="login-password" class="block text-xs font-semibold text-slate-700">
+              Password
             </label>
-            <input type="text" id="login-credential" required autocomplete="username"
-                   placeholder="e.g. student@college.edu or 22CS001"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F] transition" />
-          </div>
-
-          <!-- Password -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label for="login-password" class="block text-xs font-semibold text-slate-700">
-                Password
-              </label>
-              <button type="button" onclick="openForgotPasswordModal()" class="text-xs text-[#2563EB] hover:underline">
-                Forgot?
-              </button>
-            </div>
-            <div class="relative">
-              <input type="password" id="login-password" required autocomplete="current-password"
-                     placeholder="Enter password"
-                     class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F] transition pr-9" />
-              <button type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password"
-                      class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-sm">
-                <span id="password-toggle-icon">👁️</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" id="login-submit-btn"
-                  class="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#152843] text-white font-semibold text-sm rounded-lg shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
-            <span id="login-btn-text">Sign In</span>
-            <div id="login-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          </button>
-        </form>
-
-        <!-- Quick 1-Click Demo Profiles for Professors -->
-        <div class="pt-3 border-t border-slate-100">
-          <div class="text-[11px] text-slate-500 font-medium mb-1.5 text-center">
-            Demo Accounts (1-Click Fill):
-          </div>
-          <div class="grid grid-cols-3 gap-1 text-xs">
-            <button type="button" onclick="quickFillPersona('student')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
-              Student
-            </button>
-            <button type="button" onclick="quickFillPersona('security')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
-              Security
-            </button>
-            <button type="button" onclick="quickFillPersona('admin')" 
-                    class="py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-700 text-center font-semibold transition cursor-pointer">
-              Admin
+            <button type="button" onclick="openForgotPasswordModal()" class="text-xs text-blue-600 hover:underline">
+              Forgot?
             </button>
           </div>
-          <div class="mt-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-0.5 font-mono">
-            <div><strong class="text-slate-700 font-sans">Student:</strong> sumanth@kongu.edu</div>
-            <div><strong class="text-slate-700 font-sans">Security:</strong> security.raman@campusshield.kec.edu</div>
-            <div><strong class="text-slate-700 font-sans">Admin:</strong> admin@campusshield.kec.edu</div>
-            <div><strong class="text-slate-700 font-sans">Password:</strong> Password@123</div>
+          <div class="relative">
+            <input type="password" id="login-password" required autocomplete="current-password"
+                   placeholder="Enter password"
+                   class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#1E3A5F] focus:ring-1 focus:ring-[#1E3A5F] pr-10" />
+            <button type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password"
+                    class="absolute right-0 top-0 bottom-0 px-3 flex items-center text-slate-400 hover:text-slate-600 text-xs">
+              <span id="password-toggle-icon">👁️</span>
+            </button>
           </div>
         </div>
 
-      </div>
-
-      <!-- Discreet Footer -->
-      <div class="text-center mt-5 text-xs text-slate-400 flex items-center justify-center gap-2">
-        <span>🔒 Secure Campus Safety System</span>
-        <!-- Hidden backend status badge for API discovery -->
-        <div id="backend-status-badge" onclick="window.csApi?.showBackendSettingsModal()" class="cursor-pointer">
-          <span id="login-server-name" class="hidden">Online</span>
-        </div>
-      </div>
+        <button type="submit" id="login-submit-btn"
+                class="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#152843] text-white font-semibold text-sm rounded shadow-xs transition flex items-center justify-center gap-2">
+          <span id="login-btn-text">Sign In</span>
+          <div id="login-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        </button>
+      </form>
 
     </div>
+
+    <!-- Hidden element for API discovery compatibility -->
+    <div id="backend-status-badge" class="hidden"><span id="login-server-name"></span></div>
   </main>
 
-  <!-- PASSWORD RECOVERY MODAL -->
+  <!-- Password Reset Modal -->
   <div id="forgot-password-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-    <div class="bg-white max-w-sm w-full p-5 rounded-xl border border-slate-200 shadow-md space-y-3">
+    <div class="bg-white max-w-sm w-full p-5 rounded-lg border border-slate-200 shadow-md space-y-3">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <h3 class="text-sm font-bold text-slate-900">
-          Reset Password
-        </h3>
+        <h3 class="text-sm font-bold text-slate-900">Reset Password</h3>
         <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
       </div>
-      <p class="text-xs text-slate-600">
-        Enter your institutional email or ID to generate a reset token.
+      <p class="text-xs text-slate-500">
+        Enter your institutional email or Roll Number to receive a reset token.
       </p>
       <form onsubmit="handleForgotPassword(event)" class="space-y-3">
-        <div>
-          <input type="text" id="forgot-credential" required
-                 placeholder="e.g. student@college.edu"
-                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#1E3A5F]" />
-        </div>
-        <div id="forgot-alert-box" class="hidden p-2.5 rounded-lg text-xs border"></div>
-        <div class="flex items-center justify-end gap-2 pt-1">
-          <button type="button" onclick="closeForgotPasswordModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">
+        <input type="text" id="forgot-credential" required
+               placeholder="e.g. 22CS001 or student@college.edu"
+               class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#1E3A5F]" />
+        <div id="forgot-alert-box" class="hidden p-2.5 rounded text-xs border"></div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="closeForgotPasswordModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded">
             Cancel
           </button>
-          <button type="submit" id="forgot-submit-btn" class="px-3 py-1.5 text-xs font-semibold text-white bg-[#1E3A5F] hover:bg-[#152843] rounded-lg">
+          <button type="submit" id="forgot-submit-btn" class="px-3 py-1.5 text-xs font-semibold text-white bg-[#1E3A5F] hover:bg-[#152843] rounded">
             Submit
           </button>
         </div>
@@ -186,7 +117,6 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script type="module" src="./js/api.js"></script>
   <script type="module" src="./js/auth.js"></script>
   <script>
@@ -194,14 +124,13 @@
 
     window.selectRole = function(role) {
       currentRole = role;
-      const roles = ['student', 'security', 'admin'];
-      roles.forEach(r => {
+      ['student', 'security', 'admin'].forEach(r => {
         const btn = document.getElementById(`tab-${r}`);
         if (!btn) return;
         if (r === role) {
-          btn.className = 'role-tab-btn py-2 px-1 rounded-md text-center transition text-white bg-[#1E3A5F] shadow-xs font-semibold';
+          btn.className = 'role-tab-btn py-1.5 rounded text-center transition bg-[#1E3A5F] text-white';
         } else {
-          btn.className = 'role-tab-btn py-2 px-1 rounded-md text-center transition text-slate-600 hover:text-slate-900 font-semibold';
+          btn.className = 'role-tab-btn py-1.5 rounded text-center transition text-slate-600 hover:text-slate-900';
         }
       });
 
@@ -209,47 +138,22 @@
       const input = document.getElementById('login-credential');
       if (label && input) {
         if (role === 'student') {
-          label.innerText = 'Email or Student Roll Number';
-          input.placeholder = 'e.g. student@college.edu or 22CS001';
+          label.innerText = 'Email or Roll Number';
+          input.placeholder = 'e.g. 22CS001 or student@college.edu';
         } else if (role === 'security') {
           label.innerText = 'Officer Email or Badge ID';
-          input.placeholder = 'e.g. security@college.edu or SEC-001';
+          input.placeholder = 'e.g. SEC-001 or officer@college.edu';
         } else if (role === 'admin') {
-          label.innerText = 'Admin Email or Administrator ID';
-          input.placeholder = 'e.g. admin@college.edu or ADM-001';
+          label.innerText = 'Admin Email or Admin ID';
+          input.placeholder = 'e.g. ADM-001 or admin@college.edu';
         }
-      }
-    };
-
-    window.quickFillPersona = function(role) {
-      selectRole(role);
-      const credInput = document.getElementById('login-credential');
-      const passInput = document.getElementById('login-password');
-      if (!credInput || !passInput) return;
-
-      if (role === 'student') {
-        credInput.value = 'sumanth@kongu.edu';
-        passInput.value = 'Password@123';
-      } else if (role === 'security') {
-        credInput.value = 'security.raman@campusshield.kec.edu';
-        passInput.value = 'Password@123';
-      } else if (role === 'admin') {
-        credInput.value = 'admin@campusshield.kec.edu';
-        passInput.value = 'Password@123';
       }
     };
 
     window.togglePasswordVisibility = function() {
       const input = document.getElementById('login-password');
-      const icon = document.getElementById('password-toggle-icon');
-      if (!input || !icon) return;
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.innerText = '🔒';
-      } else {
-        input.type = 'password';
-        icon.innerText = '👁️';
-      }
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
     };
 
     window.openForgotPasswordModal = function() {
@@ -269,13 +173,13 @@
 
       try {
         btn.disabled = true;
-        btn.innerText = 'Generating...';
+        btn.innerText = 'Submitting...';
         const res = await window.csAuth.forgotPassword(cred);
-        alertBox.className = 'p-2.5 rounded-lg text-xs border border-emerald-300 bg-emerald-50 text-emerald-800';
-        alertBox.innerHTML = `<strong>Token generated:</strong> <code class="font-mono bg-white px-1 py-0.5 rounded border">${res.resetToken || 'TOKEN-SENT'}</code><br><span class="text-[11px] text-slate-500">Use this token to reset your password.</span>`;
+        alertBox.className = 'p-2.5 rounded text-xs border border-emerald-300 bg-emerald-50 text-emerald-800';
+        alertBox.innerHTML = `<strong>Reset Token:</strong> <code class="font-mono bg-white px-1 py-0.5 rounded border">${res.resetToken || 'TOKEN-SENT'}</code>`;
         alertBox.classList.remove('hidden');
       } catch (err) {
-        alertBox.className = 'p-2.5 rounded-lg text-xs border border-red-300 bg-red-50 text-red-800';
+        alertBox.className = 'p-2.5 rounded text-xs border border-red-300 bg-red-50 text-red-800';
         alertBox.innerText = err.message || 'Could not initiate reset.';
         alertBox.classList.remove('hidden');
       } finally {
@@ -300,7 +204,7 @@
       if (!credential || !password) {
         if (banner && bannerMsg) {
           bannerMsg.innerText = 'Please enter both your identifier and password.';
-          banner.className = 'p-3 rounded-lg text-xs font-medium border border-amber-300 bg-amber-50 text-amber-900 flex items-start gap-2';
+          banner.className = 'p-3 rounded text-xs font-medium border border-amber-300 bg-amber-50 text-amber-900 flex items-start gap-2';
           banner.classList.remove('hidden');
         }
         return;
@@ -317,7 +221,7 @@
       } catch (err) {
         if (banner && bannerMsg) {
           bannerMsg.innerText = err.message || 'Authentication failed. Please verify credentials.';
-          banner.className = 'p-3 rounded-lg text-xs font-medium border border-red-300 bg-red-50 text-red-900 flex items-start gap-2';
+          banner.className = 'p-3 rounded text-xs font-medium border border-red-300 bg-red-50 text-red-900 flex items-start gap-2';
           banner.classList.remove('hidden');
         }
       } finally {

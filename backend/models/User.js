@@ -63,6 +63,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index({ identifier: 1 });
+userSchema.index({ role: 1, accountStatus: 1 });
+
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };

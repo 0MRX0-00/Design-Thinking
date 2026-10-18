@@ -17,9 +17,14 @@ dotenv.config();
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campusshield';
 
 const seedDatabase = async () => {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    throw new Error('[CampusShield Safety Gate] Seeding is blocked in production to protect real records. Set ALLOW_PRODUCTION_SEED=true only if intentional.');
+  }
+
   try {
     if (mongoose.connection.readyState !== 1) {
-      console.log(`[CampusShield Seed] Connecting to MongoDB: ${MONGODB_URI}...`);
+      const maskedUri = MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+      console.log(`[CampusShield Seed] Connecting to MongoDB: ${maskedUri}...`);
       await mongoose.connect(MONGODB_URI);
     }
     console.log('[CampusShield Seed] Connected. Clearing development collections...');
@@ -577,6 +582,7 @@ const seedDatabase = async () => {
   }
 };
 
+export { seedDatabase };
 export const seedDatabaseData = seedDatabase;
 
 // Run directly from CLI

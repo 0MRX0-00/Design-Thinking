@@ -164,12 +164,18 @@ const incidentSchema = new mongoose.Schema(
   }
 );
 
+// Compound indexes for high-frequency queries
+incidentSchema.index({ reporter: 1, reportedAt: -1 });
+incidentSchema.index({ status: 1, reportedAt: -1 });
+incidentSchema.index({ severity: 1, status: 1 });
+incidentSchema.index({ assignedResponder: 1, status: 1 });
+
 // Helper method to generate unique human-readable ID
 incidentSchema.statics.generateIncidentId = async function () {
   const year = new Date().getFullYear();
-  const count = await this.countDocuments();
+  const timeSlice = Date.now().toString().slice(-4);
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  return `CS-${year}-${String(count + 1).padStart(4, '0')}-${randomSuffix}`;
+  return `CS-${year}-${timeSlice}-${randomSuffix}`;
 };
 
 export const Incident = mongoose.model('Incident', incidentSchema);

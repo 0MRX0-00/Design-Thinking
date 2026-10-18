@@ -17,19 +17,23 @@ export const getUsers = async (req, res, next) => {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const total = await User.countDocuments(filter);
+    const limitNum = parseInt(limit);
 
-    const users = await User.find(filter)
-      .select('-passwordHash')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const [total, users] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter)
+        .select('-passwordHash')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean()
+    ]);
 
     res.json({
       success: true,
       total,
       page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
+      totalPages: Math.ceil(total / limitNum),
       users
     });
   } catch (error) {
@@ -163,7 +167,7 @@ export const getAuditLogs = async (req, res, next) => {
 
 export const getEmergencyContacts = async (req, res, next) => {
   try {
-    const contacts = await EmergencyContact.find().sort({ priority: 1, name: 1 });
+    const contacts = await EmergencyContact.find().sort({ priority: 1, name: 1 }).lean();
     res.json({
       success: true,
       contacts
