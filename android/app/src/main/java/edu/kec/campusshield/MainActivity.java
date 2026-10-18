@@ -1,5 +1,7 @@
 package edu.kec.campusshield;
 
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -16,6 +18,22 @@ public class MainActivity extends BridgeActivity {
             WebSettings settings = webView.getSettings();
             settings.setDomStorageEnabled(true);
             settings.setDatabaseEnabled(true);
+        }
+
+        // Start Persistent Background Emergency Monitoring Service
+        startEmergencyService();
+    }
+
+    private void startEmergencyService() {
+        try {
+            Intent serviceIntent = new Intent(this, EmergencyAlertService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "Could not start EmergencyAlertService: " + e.getMessage());
         }
     }
 

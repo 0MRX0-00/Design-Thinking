@@ -4,6 +4,7 @@ import {
   getIncidents,
   getMyIncidents,
   getIncidentById,
+  getEmergencyCheck,
   updateIncidentStatus,
   assignResponder,
   updateIncidentLocation,
@@ -13,6 +14,9 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { emergencyLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
+
+// Emergency check for background service monitoring (no strict token required)
+router.get('/emergency-check', getEmergencyCheck);
 
 // Student/all roles incident reporting
 router.post('/', authenticate, emergencyLimiter, createIncident);

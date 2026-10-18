@@ -211,6 +211,37 @@ export const createIncident = async (req, res, next) => {
   }
 };
 
+/**
+ * Lightweight endpoint for Android background services to check for active emergencies
+ */
+export const getEmergencyCheck = async (req, res, next) => {
+  try {
+    const { since } = req.query;
+    // Default to last 60 seconds if since timestamp is not provided
+    const sinceDate = since ? new Date(parseInt(since) || since) : new Date(Date.now() - 60000);
+
+    const query = {
+      reportedAt: { $gt: sinceDate },
+      status: { $in: ['REPORTED', 'ACKNOWLEDGED', 'INVESTIGATING', 'DISPATCHED'] }
+    };
+
+    const latest = await Incident.find(query)
+      .select('incidentId category severity location reportedAt status description')
+      .sort({ reportedAt: -1 })
+      .limit(5)
+      .lean();
+
+    res.json({
+      success: true,
+      timestamp: Date.now(),
+      count: latest.length,
+      incidents: latest
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getIncidents = async (req, res, next) => {
   try {
     const { status, severity, category, responder, search, page = 1, limit = 50 } = req.query;
