@@ -7,6 +7,37 @@
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./css/styles.css" />
+  <script>
+    // Immediate Auto-Login check before DOM renders to prevent reset on app relaunch
+    (function() {
+      try {
+        const token = localStorage.getItem('cs_token');
+        const userStr = localStorage.getItem('cs_user');
+        if (token && userStr) {
+          const user = JSON.parse(userStr);
+          if (user && user.role) {
+            const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+            if (redirectParam) {
+              window.location.replace(redirectParam);
+              return;
+            }
+            if (user.role === 'admin' || user.role === 'faculty') {
+              window.location.replace('admin.html');
+              return;
+            } else if (user.role === 'security') {
+              window.location.replace('security.html');
+              return;
+            } else {
+              window.location.replace('student.html');
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Auto-login fast check error:', err);
+      }
+    })();
+  </script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-center items-center p-4">
 
@@ -77,6 +108,19 @@
           </div>
         </div>
 
+        <!-- Persistent Credentials Option -->
+        <div class="flex items-center justify-between text-xs pt-0.5">
+          <label class="flex items-center gap-1.5 cursor-pointer text-slate-700 select-none">
+            <input type="checkbox" id="remember-credentials" checked
+                   class="w-3.5 h-3.5 rounded border-slate-300 text-[#1E3A5F] focus:ring-[#1E3A5F]" />
+            <span class="font-medium">Remember credentials</span>
+          </label>
+          <span class="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+            Stay signed in
+          </span>
+        </div>
+
         <button type="submit" id="login-submit-btn"
                 class="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#152843] text-white font-semibold text-sm rounded shadow-xs transition flex items-center justify-center gap-2">
           <span id="login-btn-text">Sign In</span>
@@ -122,8 +166,26 @@
   <script>
     let currentRole = 'student';
 
-    window.selectRole = function(role) {
+    // Standard credential templates per persona
+    const ROLE_DEFAULTS = {
+      student: {
+        credential: 'sumanth@kongu.edu',
+        password: 'Password@123'
+      },
+      security: {
+        credential: 'security.raman@campusshield.kec.edu',
+        password: 'Password@123'
+      },
+      admin: {
+        credential: 'admin@campusshield.kec.edu',
+        password: 'Password@123'
+      }
+    };
+
+    window.selectRole = function(role, autoPopulate = true) {
       currentRole = role;
+      localStorage.setItem('cs_last_selected_role', role);
+
       ['student', 'security', 'admin'].forEach(r => {
         const btn = document.getElementById(`tab-${r}`);
         if (!btn) return;
@@ -135,17 +197,28 @@
       });
 
       const label = document.getElementById('credential-label');
-      const input = document.getElementById('login-credential');
-      if (label && input) {
+      const credInput = document.getElementById('login-credential');
+      const pwdInput = document.getElementById('login-password');
+      const rememberCheckbox = document.getElementById('remember-credentials');
+
+      if (label && credInput) {
         if (role === 'student') {
           label.innerText = 'Email or Roll Number';
-          input.placeholder = 'e.g. 22CS001 or student@college.edu';
+          credInput.placeholder = 'e.g. 22CS001 or student@college.edu';
         } else if (role === 'security') {
           label.innerText = 'Officer Email or Badge ID';
-          input.placeholder = 'e.g. SEC-001 or officer@college.edu';
+          credInput.placeholder = 'e.g. SEC-001 or security.raman@campusshield.kec.edu';
         } else if (role === 'admin') {
           label.innerText = 'Admin Email or Admin ID';
-          input.placeholder = 'e.g. ADM-001 or admin@college.edu';
+          credInput.placeholder = 'e.g. ADM-001 or admin@campusshield.kec.edu';
+        }
+
+        // Restore remembered credentials for this role so they never reset
+        if (autoPopulate && (!rememberCheckbox || rememberCheckbox.checked)) {
+          const savedCred = localStorage.getItem(`cs_saved_cred_${role}`) || ROLE_DEFAULTS[role]?.credential || '';
+          const savedPwd = localStorage.getItem(`cs_saved_pwd_${role}`) || ROLE_DEFAULTS[role]?.password || '';
+          if (savedCred) credInput.value = savedCred;
+          if (pwdInput && savedPwd) pwdInput.value = savedPwd;
         }
       }
     };
@@ -195,6 +268,7 @@
       const spinner = document.getElementById('login-spinner');
       const btnText = document.getElementById('login-btn-text');
       const submitBtn = document.getElementById('login-submit-btn');
+      const rememberCheckbox = document.getElementById('remember-credentials');
 
       if (banner) banner.classList.add('hidden');
 
@@ -208,6 +282,16 @@
           banner.classList.remove('hidden');
         }
         return;
+      }
+
+      // Persist credentials if remember is checked so they never reset on exit
+      if (!rememberCheckbox || rememberCheckbox.checked) {
+        localStorage.setItem('cs_remember_me', 'true');
+        localStorage.setItem(`cs_saved_cred_${currentRole}`, credential);
+        localStorage.setItem(`cs_saved_pwd_${currentRole}`, password);
+        localStorage.setItem('cs_last_selected_role', currentRole);
+      } else {
+        localStorage.setItem('cs_remember_me', 'false');
       }
 
       try {
@@ -230,6 +314,16 @@
         if (submitBtn) submitBtn.disabled = false;
       }
     };
+
+    // Auto-populate remembered role and credentials on initial page display
+    document.addEventListener('DOMContentLoaded', () => {
+      const rememberCheckbox = document.getElementById('remember-credentials');
+      const isRemembered = localStorage.getItem('cs_remember_me') !== 'false';
+      if (rememberCheckbox) rememberCheckbox.checked = isRemembered;
+
+      const initialRole = localStorage.getItem('cs_last_selected_role') || 'student';
+      selectRole(initialRole, true);
+    });
   </script>
 </body>
 </html>

@@ -79,6 +79,13 @@ export async function initAuth(requiredRole = null) {
       currentUser = JSON.parse(cachedUserStr);
       updateAuthUI(currentUser);
 
+      // Instant pre-validation: redirect from login page immediately to dashboard
+      if (isLoginPage && currentUser && currentUser.role) {
+        const redirectUrl = getQueryParam('redirect') || getDashboardUrl(currentUser.role);
+        window.location.replace(redirectUrl);
+        return currentUser;
+      }
+
       // Instant pre-validation: check role immediately before any network request
       if (requiredRole && currentUser && currentUser.role) {
         const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
