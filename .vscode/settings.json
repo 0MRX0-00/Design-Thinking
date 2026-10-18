@@ -1,0 +1,6 @@
+{
+  "java.project.sourcePaths": [
+    "android/app/src/main/java"
+  ],
+  "java.errors.incompleteClasspath.severity": "ignore"
+}
